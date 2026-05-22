@@ -1,0 +1,44 @@
+name: customer_detail_management
+description: Offline Customer Detail Management App for Insurance and Finance.
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  
+  # State Management
+  flutter_riverpod: ^2.5.1
+  
+  # Database
+  isar: ^3.1.0+1
+  isar_flutter_libs: ^3.1.0+1
+  path_provider: ^2.1.2
+  
+  # Security
+  flutter_secure_storage: ^9.0.0
+  crypto: ^3.0.3
+  
+  # Networking & Sync
+  shelf: ^1.4.1
+  shelf_router: ^1.1.4
+  http: ^1.2.1
+  bonsoir: ^2.1.1
+  uuid: ^4.3.3
+  
+  # UI Components
+  intl: ^0.19.0
+  image_picker: ^1.0.7
+  file_picker: ^8.0.0+1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  isar_generator: ^3.1.0+1
+  build_runner: any
+
+flutter:
+  uses-material-design: true

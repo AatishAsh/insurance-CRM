@@ -1,0 +1,600 @@
+Offline Customer Detail Management App
+
+Objective
+Develop a cross-platform application (Windows .exe and Android .apk) for an insurance client to securely store and manage customer details offline, featuring a local Wi-Fi database and file sync.
+
+Proposed Architecture
+- Framework: Flutter (Dart) - Allows building both Android and Windows native apps from a single codebase.
+- Local Database: Isar (NoSQL) - High-performance, cross-platform NoSQL database optimized for Flutter. Excellent for offline-first applications.
+- File Storage: Local app directory storage for images, utilizing relative paths to decouple files from absolute device structures.
+- Sync Mechanism: Local Wi-Fi sync using mDNS (Multicast DNS) for device discovery and a lightweight internal HTTP server for data and binary file exchange. 
+- Conflict Resolution: "Last Write Wins" based on globally unique identifiers (UUIDs) and updatedAt timestamps for every record.
+- Security: App-level password protection. The password hash is stored securely via flutter_secure_storage. No external auth servers.
+
+Implementation Steps
+
+Phase 1: Project Setup & Core UI
+1. Initialize a new Flutter project configured for both android and windows platforms.
+2. Set up the routing and state management (e.g., using provider or riverpod).
+3. Build the core UI screens with a Main Navigation system (Bottom Nav for Android / Side Navigation for Windows):
+   - Password Lock Screen: Mandatory on startup and app resume.
+   - Tab 1: Customer Details: 
+     - Customer list view with a Global Search Bar.
+     - Search capabilities: Capable of filtering the list by name, customerId, or by specific uploaded document labels (e.g., searching "John Doe Aadhaar" will yield John Doe's profile and highlight the Aadhaar document).
+	"Personal":[
+
+		"Full Name",
+		"Father's Name",
+		"Date of Birth",
+		"Marital Status",
+		"Spouse Name",
+		"Nationality",
+		"Aadhaar Number",
+		"Qualification",
+		"Height",
+		"Weight"
+
+	],
+
+
+	"Family":[
+
+		"Number of Children",
+		"DOB Of Each Children",
+		"Father's Age",
+		"Mother's Age",
+		"Spouse's Age",
+		"Brother's Age",
+		"Family DOB",
+		"Sister's Age"
+
+	],
+
+
+	"Professional":[
+
+		"Employer / Business Name",
+		"Designation",
+		"Nature of Business / Occupation",
+		"Annual Income"
+
+	],
+
+
+	"Contact":[
+
+		"Office Contact Number",
+		"Mobile Number 1",
+		"Mobile Number 2",
+		"Mobile Number 3",
+		"Mobile Number 4",
+		"Email ID"
+
+	],
+
+
+	"Identity Details":[
+
+		"PAN Number",
+		"Aadhar Number"
+
+	],
+
+	"Additional Details":[
+
+		"Wedding Anniversary"
+	
+	],
+
+
+	"Nominee Details":[
+
+		"Nominee Name",
+		"Nominee Relationship",
+		"Nominee DOB",
+		"Nominee Father's Name"
+
+	],
+
+
+	"Insurance Details":[
+
+		"Self Policy Number",
+		"Self Aadhaar Number",
+		"Self Sum Assured",
+		"Self Sum Assured 2",
+		"Self Year Of Issue",
+		"Self Company",
+
+		"Father Policy Number",
+		"Father Company",
+
+		"Mother Policy Number",
+		"Mother Company",
+
+		"Spouse Policy Number",
+		"Spouse Company",
+
+		"Children Policy Number",
+		"Children Company"
+
+	],
+
+
+	"Health Details":[
+
+		"Health Problems",
+		"Lifestyle habits (Smoking / Drinking)",
+		"Pregnancy Details",
+		"Other Remarks"
+
+	],
+
+
+	"Address Details":[
+
+		"Communication Address",
+		"Permanent Address"
+
+	],
+
+	"Plan Details":[
+
+		"Product Name",
+		"Premium Mode",
+		"Plan Sum Assured",
+		"Rider"
+
+	],
+
+
+	"Document Attachments":[
+
+		"Age Proof",
+		"ID Proof",
+		"Address Proof",
+		"Photo",
+		"School ID",
+		"Form 16",
+		"Bank Statement",
+		"Bank Cheque 1",
+		"Bank Cheque 2",
+		"Proposal Form 1",
+		"Proposal Form 2",
+		"Visiting Card",
+		"PAN Card Copy"
+
+	],
+
+
+	"Reference":[
+
+		"Friend's Name",
+		"Reference Mobile",
+		"Reference Age"
+
+	],
+
+
+	"PAN Card and Financial Details":[
+
+		"PAN Number",
+
+		"Risk Cover",
+		"Pension Plan",
+
+		"Investment Plan",
+		"Mutual Funds",
+
+		"Medi Claim",
+		"Money Bank Policy",
+
+		"Children's Education Plan",
+
+		"Reminder Date 1",
+		"Reminder Date 2"
+
+	],
+
+
+	"Notes":[
+
+		"Notes"
+
+	]
+
+     - Comprehensive Customer Form: Text inputs, Document/Image Uploads (with the ability to label/tag the uploaded document), Date Pickers, Checkboxes/Radios, and Multi-line Text Areas.
+	const FILE_FIELDS=[
+
+		"Age Proof",
+		"ID Proof",
+		"Address Proof",
+		"Photo",
+		"School ID",
+		"Form 16",
+		"Bank Statement",
+		"Bank Cheque 1",
+		"Bank Cheque 2",
+		"Proposal Form 1",
+		"Proposal Form 2",
+		"Visiting Card",
+		"PAN Card Copy"
+
+	];
+
+	const DATE_FIELDS=[
+
+		"Date of Birth",
+		"DOB Of Each Children",
+		"Family DOB",
+		"Wedding Anniversary",
+		"Nominee DOB",
+		"Reminder Date 1",
+		"Reminder Date 2"
+
+	];
+
+	Mutual Finance
+	{
+  "Basic Personal Information":[
+    "Investor Name",
+    "Father's Name",
+    "Mother's Name",
+    "Date of Birth",
+    "Marital Status",
+    "Spouse Name",
+    "Nationality",
+    "Qualification",
+    "Height",
+    "Weight"
+  ],
+
+  "Family Information":[
+    "Number Of Children",
+    "DOB Of Each Children",
+    "Father Age",
+    "Mother Age",
+    "Spouse Age",
+    "Brother Age",
+    "Sister Age"
+  ],
+
+  "Professional Information":[
+    "Employer / Business Name",
+    "Designation",
+    "Nature Of Business / Occupation",
+    "Annual Income"
+  ],
+
+  "Contact Information":[
+    "Office Contact Number",
+    "Mobile Number 1",
+    "Mobile Number 2",
+    "Mobile Number 3",
+    "Mobile Number 4",
+    "Email ID"
+  ],
+
+  "Identity Verification Details":[
+    "PAN Number",
+    "Aadhaar Number"
+  ],
+
+  "Address Information":[
+    "Communication Address",
+    "Permanent Address"
+  ],
+
+  "Nominee Information":[
+    "Nominee Name",
+    "Nominee Relationship",
+    "Nominee DOB",
+    "Nominee Father's Name",
+    "Nominee PAN",
+    "Nominee Mobile Number 1",
+    "Nominee Mobile Number 2",
+    "Nominee Email ID"
+  ],
+
+  "Insurance Policy Details":[
+    "Self Policy Number",
+    "Self Aadhaar Number",
+    "Self Sum Assured",
+    "Self Year Of Issue",
+    "Self Company",
+
+    "Father Policy Number",
+    "Father Company",
+
+    "Mother Policy Number",
+    "Mother Company",
+
+    "Spouse Policy Number",
+    "Spouse Company",
+
+    "Children Policy Number",
+    "Children Company"
+  ],
+
+  "Investment & Plan Details":[
+    "Product Name",
+    "Premium Mode",
+    "Plan Sum Assured",
+    "Risk Cover",
+    "Pension Plan",
+    "Investment Plan",
+    "Mutual Funds",
+    "Medi Claim",
+    "Money Back Policy",
+    "Children Education Plan",
+    "Rider"
+  ],
+
+  "Health Information":[
+    "Health Problems",
+    "Lifestyle Habits (Smoking / Drinking)",
+    "Pregnancy Details",
+    "Other Remarks"
+  ],
+
+  "Document & KYC Details":[
+    "Age Proof",
+    "ID Proof",
+    "Address Proof",
+    "PAN Card Copy",
+    "Photo Self",
+    "Photo Spouse",
+    "Photo Child 1",
+    "Photo Child 2",
+    "School ID",
+    "Form 16",
+    "Bank Statement",
+    "Bank Cheque 1",
+    "Bank Cheque 2",
+    "Proposal Form 1",
+    "Proposal Form 2",
+    "Visiting Card",
+    "KYC PAN",
+    "KYC Aadhaar",
+    "KYC Nominee PAN",
+    "KYC Nominee Aadhaar",
+    "KYC Minor PAN",
+    "KYC Minor Aadhaar",
+    "CG Statements (2025-2050)"
+  ],
+
+  "Reference Information":[
+    "Friend Name",
+    "Reference Mobile",
+    "Reference Age"
+  ],
+
+  "Reminder & Financial Details":[
+    "Reminder Date 1",
+    "Reminder Date 2"
+  ],
+
+  "Additional Information":[
+    "Wedding Anniversary",
+    "Notes"
+  ]
+}
+
+Health 
+{
+  "Personal Information":[
+    "Full Name",
+    "Father's Name",
+    "Date Of Birth",
+    "Nationality",
+    "Aadhaar Number",
+    "Designation",
+    "Annual Income"
+  ],
+
+  "Contact Information":[
+    "Mobile Number 1",
+    "Mobile Number 2",
+    "Email ID",
+    "PAN Number",
+    "Communication Address"
+  ],
+
+  "Family Information":[
+    "Self Age",
+    "Father DOB",
+    "Mother DOB",
+    "Spouse DOB",
+    "Brother DOB",
+    "Sister DOB",
+    "Children DOB (Maximum 3)"
+  ],
+
+  "Family Health Details":[
+    "Family Member Name",
+    "Height (cm)",
+    "Weight (kg)",
+    "PED & Medicine Name"
+  ],
+
+  "Nominee Information":[
+    "Nominee Name",
+    "Nominee DOB",
+    "Nominee Relationship"
+  ],
+
+  "Plan Information":[
+    "Product Name",
+    "Premium Amount",
+    "Premium Mode",
+    "Sum Assured (SA)"
+  ],
+
+  "Premium Frequency":[
+    "Yearly",
+    "Half-Yearly",
+    "Quarterly",
+    "Monthly"
+  ],
+
+  "Document Attachments":[
+    "Age Proof",
+    "ID Proof",
+    "Address Proof",
+    "Photo",
+    "Bank Cheque - 1"
+  ],
+
+  "Additional Attachment Notes":[
+    "5 Attachments for Each Family Member"
+  ]
+}
+
+   - Tab 2: Upcoming Events (Dashboard): 
+     - Dedicated view listing Birthdays, Anniversaries, and upcoming Meetings with associated notes.
+   - Tab 3: Review: 
+     - Placeholder screen (Functionality deferred/TBD).
+   - Tab 4: Company Assignment: 
+     - Manage a separate list of up to 15 Insurance Companies.
+     - UI to assign customers/policies to these specific companies.
+   - Settings/Sync Screen: Dedicated area for triggering Wi-Fi sync and managing the app password.
+	{
+  "Company Information":[
+    "Company ID",
+    "Company Name",
+    "Reference Number"
+  ],
+
+  "Work Details":[
+    "Work Description",
+    "Work Date",
+    "Assigned Date",
+    "Priority Level",
+    "Work Given To",
+    "Communication Method"
+  ],
+
+  "Work Status":[
+    "Completed",
+    "Pending",
+    "Under Process",
+    "No Response"
+  ],
+
+  "Priority Settings":[
+    "Urgent",
+    "Important",
+    "Normal"
+  ],
+
+  "Assignment Details":[
+    "Assigned Person Name",
+    "Assignment Type (In Person / WhatsApp / Email / Call)"
+  ],
+
+  "Carry Forward Details":[
+    "Carry Forward Required (Yes/No)",
+    "Carry Forward Date",
+    "Reason For Carry Forward"
+  ],
+
+  "Daily Work History":[
+    "Work Entry ID",
+    "Work Date",
+    "Work Description",
+    "Status",
+    "Remarks"
+  ],
+
+  "Company Work Tracking":[
+    "Company 1",
+    "Company 2",
+    "Company 3",
+    "Company 4",
+    "Company 5",
+    "Company 6",
+    "Company 7",
+    "Company 8",
+    "Company 9",
+    "Company 10",
+    "Company 11",
+    "Company 12",
+    "Company 13",
+    "Company 14",
+    "Company 15"
+  ],
+
+  "Additional Notes":[
+    "Daily Remarks",
+    "Future Reference Notes"
+  ]
+}
+
+	-Daily Work Management System
+
+This module is designed to manage and monitor daily company-related tasks and follow-up activities. It allows users to maintain records for multiple companies, assign work, set priorities, track progress, and store work history for future reference.
+
+Key Features:
+
+Manage work records for up to 15 companies
+Track work using statuses:
+Completed
+Pending
+Under Process
+No Response
+Assign work through:
+In Person
+WhatsApp
+Email
+Call
+Set task priorities:
+Urgent
+Important
+Normal
+Automatically carry forward incomplete tasks to the next day
+Save each day's activities for future tracking and reporting
+Maintain complete work history and remarks
+
+Phase 2: Database Layer (Isar) & File System
+1. Define the Company schema:
+   - id, uuid, name, updatedAt, isDeleted.
+2. Define the Customer schema. Required fields:
+   - id: Fast auto-incrementing local ID (for Isar requirements).
+   - customerId: A business-level identifier (String, e.g., "CUST-001") for search purposes.
+   - uuid: Universally Unique Identifier (String, crucial for syncing).
+   - name, contactNumber, email, etc.
+   - Assigned Company: Reference to the Company schema to map the customer to their respective insurance provider.
+   - Dates: dateOfBirth, anniversaryDate, nextMeetingDate (DateTime).
+   - Rich Content: generalNotes, meetingNotes (String).
+   - UI Data: Fields to support checkboxes (Booleans) and radio selections (Strings/Enums) for policy specifics.
+   - Documents/Images: Embedded list of CustomerDocument objects containing:
+     - documentName: Label or type of document (e.g., "Aadhaar", "Pan Card").
+     - fileName: The local filename of the saved binary image.
+   - updatedAt: Timestamp (DateTime, crucial for conflict resolution).
+   - isDeleted: Boolean (Soft deletes).
+3. Implement repository functions for Create, Read, Update, and Delete across all schemas, ensuring local file system operations (saving/deleting images) are tied to database transactions.
+
+Phase 3: Security & Password Lock
+1. Implement a lock screen that appears on app startup and when returning from the background.
+2. Store the user's defined password (hashed) using flutter_secure_storage.
+3. Provide an initial setup screen if no password exists yet.
+
+Phase 4: Wi-Fi Discovery & Syncing
+1. Discovery: Use the nsd (Network Service Discovery) or bonsoir package to broadcast a local service.
+2. Data & File Transfer Server: Spin up a lightweight HTTP REST server (shelf package) on the host device.
+   - Create endpoints for fetching JSON data.
+   - Create endpoints for downloading/uploading binary image files.
+3. Merge Logic:
+   - Device A connects to Device B.
+   - Data Sync: Exchange full lists of customer records. For every record matched by uuid, compare updatedAt. The newest record overwrites the older one.
+   - File Sync: Parse the imageFileNames from the latest records. If a device is missing an image file, it requests the binary file via the HTTP server and saves it locally.
+
+Phase 5: Build & Packaging
+1. Generate the Windows .exe using flutter build windows (packaged optionally with Inno Setup or MSIX).
+2. Generate the Android .apk using flutter build apk --release.
+
+Verification & Testing
+- Dashboard Integrity: Create customers with dates in the near future and verify they appear correctly on the upcoming events dashboard.
+- Rich Form Handling: Verify images can be selected, saved, and rendered correctly from local storage. Test all checkboxes, dates, and radio inputs.
+- Offline & Security Integrity: Verify app operates entirely offline and locks appropriately.
+- Complex Sync Simulation: Connect two instances. Modify records on both ends, attach a new image on Device A, and trigger a sync. Assert that both devices have the exact same database state and the same image files in their local directories.
