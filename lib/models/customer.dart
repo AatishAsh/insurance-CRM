@@ -116,7 +116,9 @@ class Customer {
 
   // Reminders
   DateTime? reminderDate1;
+  String? reminderNote1;
   DateTime? reminderDate2;
+  String? reminderNote2;
 
   // Reference
   String? referenceFriendName;

@@ -3,13 +3,35 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'screens/customer_list_screen.dart';
 import 'screens/work_management_screen.dart';
 import 'screens/upcoming_events_screen.dart';
+import 'screens/marketing_screen.dart';
+import 'services/database_service.dart';
+import 'screens/auth_gate.dart';
+import 'screens/sync_screen.dart';
+import 'providers/customer_provider.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final databaseService = await DatabaseService.init();
+  
   runApp(
-    const ProviderScope(
-      child: InsuranceApp(),
+    ProviderScope(
+      overrides: [
+        databaseServiceProvider.overrideWithValue(databaseService),
+      ],
+      child: const InsuranceApp(),
     ),
   );
+}
+
+class CurvedOverscrollBehavior extends MaterialScrollBehavior {
+  @override
+  Widget buildOverscrollIndicator(BuildContext context, Widget child, ScrollableDetails details) {
+    return GlowingOverscrollIndicator(
+      axisDirection: details.direction,
+      color: Colors.blueAccent,
+      child: child,
+    );
+  }
 }
 
 class InsuranceApp extends StatelessWidget {
@@ -23,30 +45,28 @@ class InsuranceApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
-      home: const MainNavigationShell(),
+      scrollBehavior: CurvedOverscrollBehavior(),
+      home: const AuthGate(
+        child: MainNavigationShell(),
+      ),
     );
   }
 }
 
-class MainNavigationShell extends StatefulWidget {
+class MainNavigationShell extends ConsumerWidget {
   const MainNavigationShell({super.key});
 
   @override
-  State<MainNavigationShell> createState() => _MainNavigationShellState();
-}
-
-class _MainNavigationShellState extends State<MainNavigationShell> {
-  int _selectedIndex = 0;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final bool isDesktop = MediaQuery.of(context).size.width > 600;
+    final int selectedIndex = ref.watch(navigationTabIndexProvider);
 
     final List<Widget> screens = [
       const CustomerListScreen(),
       const UpcomingEventsScreen(),
       const Center(child: Text('Tab 3: Review')),
       const WorkManagementScreen(),
+      const MarketingScreen(),
     ];
 
     return Scaffold(
@@ -56,13 +76,13 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
           IconButton(
             icon: const Icon(Icons.sync),
             onPressed: () {
-              // TODO: Implement Sync Dialog
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const SyncScreen()));
             },
           ),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              // TODO: Implement Settings
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const SyncScreen()));
             },
           ),
         ],
@@ -71,9 +91,9 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
         children: [
           if (isDesktop)
             NavigationRail(
-              selectedIndex: _selectedIndex,
+              selectedIndex: selectedIndex,
               onDestinationSelected: (int index) {
-                setState(() => _selectedIndex = index);
+                ref.read(navigationTabIndexProvider.notifier).state = index;
               },
               labelType: NavigationRailLabelType.all,
               destinations: const [
@@ -97,18 +117,23 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                   selectedIcon: Icon(Icons.assignment),
                   label: Text('Work'),
                 ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.campaign_outlined),
+                  selectedIcon: Icon(Icons.campaign),
+                  label: Text('Marketing'),
+                ),
               ],
             ),
           Expanded(
-            child: screens[_selectedIndex],
+            child: screens[selectedIndex],
           ),
         ],
       ),
       bottomNavigationBar: !isDesktop
           ? NavigationBar(
-              selectedIndex: _selectedIndex,
+              selectedIndex: selectedIndex,
               onDestinationSelected: (int index) {
-                setState(() => _selectedIndex = index);
+                ref.read(navigationTabIndexProvider.notifier).state = index;
               },
               destinations: const [
                 NavigationDestination(
@@ -130,6 +155,11 @@ class _MainNavigationShellState extends State<MainNavigationShell> {
                   icon: Icon(Icons.assignment_outlined),
                   selectedIcon: Icon(Icons.assignment),
                   label: 'Work',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.campaign_outlined),
+                  selectedIcon: Icon(Icons.campaign),
+                  label: 'Marketing',
                 ),
               ],
             )

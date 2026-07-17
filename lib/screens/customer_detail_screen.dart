@@ -1,0 +1,1022 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import '../models/customer.dart';
+import '../services/database_service.dart';
+import 'customer_form_screen.dart';
+import '../providers/customer_provider.dart';
+import '../providers/events_provider.dart';
+
+class CustomerDetailScreen extends ConsumerStatefulWidget {
+  final int customerId;
+
+  const CustomerDetailScreen({super.key, required this.customerId});
+
+  @override
+  ConsumerState<CustomerDetailScreen> createState() => _CustomerDetailScreenState();
+}
+
+class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
+  Customer? _customer;
+  bool _isLoading = true;
+  String? _localDocsDirPath;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCustomerData();
+  }
+
+  void _loadCustomerData() async {
+    setState(() => _isLoading = true);
+    final db = ref.read(databaseServiceProvider);
+    final cust = await db.getCustomerById(widget.customerId);
+    final appDir = await getApplicationDocumentsDirectory();
+    setState(() {
+      _customer = cust;
+      _localDocsDirPath = '${appDir.path}/customer_documents';
+      _isLoading = false;
+    });
+  }
+
+  Widget _buildDetailRow(String label, String? value) {
+    if (value == null || value.trim().isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 150,
+            child: Text(
+              label,
+              style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.w600, fontSize: 14),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: Colors.black87),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDateRow(String label, DateTime? date) {
+    if (date == null) return const SizedBox.shrink();
+    return _buildDetailRow(label, DateFormat('dd MMM yyyy').format(date));
+  }
+
+  Widget _buildAccordionSection(String title, IconData icon, List<Widget> rows) {
+    // Filter out empty/null rows to avoid rendering empty boxes
+    final validRows = rows.where((r) => r is! SizedBox).toList();
+    if (validRows.isEmpty) return const SizedBox.shrink();
+
+    return Card(
+      elevation: 0.5,
+      margin: const EdgeInsets.only(bottom: 8.0),
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: Colors.grey[200]!),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ExpansionTile(
+        leading: Icon(icon, color: Colors.blueAccent),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        initiallyExpanded: false, // ALL COLLAPSED AS REQUESTED
+        childrenPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        children: validRows,
+      ),
+    );
+  }
+
+  void _previewDocument(CustomerDocument doc) {
+    if (_localDocsDirPath == null || doc.fileName == null) return;
+    final file = File('$_localDocsDirPath/${doc.fileName}');
+    
+    if (!file.existsSync()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Document file not found on this device')),
+      );
+      return;
+    }
+
+    final isImage = ['.jpg', '.jpeg', '.png', '.gif']
+        .any((ext) => doc.fileName!.toLowerCase().endsWith(ext));
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AppBar(
+                  title: Text(doc.documentName ?? 'Attachment Preview'),
+                  leading: IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  foregroundColor: Colors.black87,
+                ),
+                const SizedBox(height: 8),
+                if (isImage)
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 450),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: InteractiveViewer(
+                        panEnabled: true,
+                        minScale: 1.0,
+                        maxScale: 5.0,
+                        child: Image.file(
+                          file,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  Container(
+                    height: 200,
+                    alignment: Alignment.center,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.insert_drive_file_outlined, size: 64, color: Colors.blueAccent),
+                        const SizedBox(height: 16),
+                        Text(doc.fileName ?? 'Unknown file type', textAlign: TextAlign.center),
+                        const SizedBox(height: 8),
+                        const Text('Preview only supported for images', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_customer == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Profile Error')),
+        body: const Center(child: Text('Customer profile not found.')),
+      );
+    }
+
+    final c = _customer!;
+    final int hash = c.name.hashCode;
+    final List<Color> colors = [Colors.blue, Colors.purple, Colors.teal, Colors.orange, Colors.indigo, Colors.pink, Colors.red, Colors.green];
+    final avatarColor = colors[hash.abs() % colors.length];
+    final bool isWide = MediaQuery.of(context).size.width > 900;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Customer Profile'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => CustomerFormScreen(customer: c)),
+              );
+              _loadCustomerData();
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Delete Customer?'),
+                  content: Text('Are you sure you want to delete ${c.name}? This action can be synced.'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                    TextButton(
+                      onPressed: () async {
+                        final db = ref.read(databaseServiceProvider);
+                        await db.deleteCustomer(c.id);
+                        if (context.mounted) {
+                          Navigator.pop(context); // Close dialog
+                          Navigator.pop(context); // Go back to list
+                        }
+                      },
+                      child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header Profile Card
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                side: BorderSide(color: Colors.grey[200]!),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 36,
+                      backgroundColor: avatarColor.withOpacity(0.15),
+                      child: Text(
+                        c.name.isNotEmpty ? c.name[0].toUpperCase() : '?',
+                        style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: avatarColor),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(c.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          Text(c.customerId ?? 'No Business ID', style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Text(
+                                  'ACTIVE',
+                                  style: TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Updated: ${DateFormat('dd MMM yy, hh:mm a').format(c.updatedAt)}',
+                                style: const TextStyle(fontSize: 11, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildQuickRemindersPanel(c),
+            const SizedBox(height: 16),
+
+            // Exposed Gorgeous Profile Panels (Direct Access UI/UX)
+            if (isWide)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 5,
+                    child: _buildPersonalDetailsSection(c),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 4,
+                    child: _buildContactDetailsSection(c),
+                  ),
+                ],
+              )
+            else ...[
+              _buildPersonalDetailsSection(c),
+              const SizedBox(height: 16),
+              _buildContactDetailsSection(c),
+            ],
+            const SizedBox(height: 16),
+
+            // Accordion sections
+            _buildAccordionSection('Family Details', Icons.family_restroom_outlined, [
+              _buildDetailRow("Number of Children", c.numberOfChildren?.toString()),
+              _buildDateRow("Family DOB", c.familyDOB),
+              _buildDetailRow("Father's Age", c.fatherAge),
+              _buildDetailRow("Mother's Age", c.motherAge),
+              _buildDetailRow("Spouse's Age", c.spouseAge),
+              _buildDetailRow("Brother's Age", c.brotherAge),
+              _buildDetailRow("Sister's Age", c.sisterAge),
+            ]),
+
+            _buildAccordionSection('Professional Information', Icons.business_center_outlined, [
+              _buildDetailRow("Employer / Business Name", c.employerBusinessName),
+              _buildDetailRow("Designation", c.designation),
+              _buildDetailRow("Nature of Business / Occupation", c.natureOfBusiness),
+              _buildDetailRow("Annual Income", c.annualIncome != null && c.annualIncome!.isNotEmpty ? '₹ ${c.annualIncome}' : null),
+            ]),
+
+            _buildAccordionSection('Nominee Details', Icons.badge_outlined, [
+              _buildDetailRow("Nominee Name", c.nomineeName),
+              _buildDetailRow("Relationship", c.nomineeRelationship),
+              _buildDateRow("Nominee DOB", c.nomineeDOB),
+              _buildDetailRow("Nominee Father's Name", c.nomineeFatherName),
+              _buildDetailRow("Nominee PAN", c.nomineePan),
+              _buildDetailRow("Nominee Mobile 1", c.nomineeMobile1),
+              _buildDetailRow("Nominee Mobile 2", c.nomineeMobile2),
+              _buildDetailRow("Nominee Email", c.nomineeEmail),
+            ]),
+
+            _buildAccordionSection('Insurance Details', Icons.security_outlined, [
+              _buildDetailRow("Self Company", c.selfCompany),
+              _buildDetailRow("Self Policy Number", c.selfPolicyNumber),
+              _buildDetailRow("Self Year of Issue", c.selfYearOfIssue),
+              _buildDetailRow("Sum Assured 1", c.selfSumAssured1),
+              _buildDetailRow("Sum Assured 2", c.selfSumAssured2),
+              _buildDetailRow("Father Policy", c.fatherPolicyNumber != null && c.fatherPolicyNumber!.isNotEmpty ? '${c.fatherPolicyNumber} (${c.fatherCompany ?? "N/A"})' : null),
+              _buildDetailRow("Mother Policy", c.motherPolicyNumber != null && c.motherPolicyNumber!.isNotEmpty ? '${c.motherPolicyNumber} (${c.motherCompany ?? "N/A"})' : null),
+              _buildDetailRow("Spouse Policy", c.spousePolicyNumber != null && c.spousePolicyNumber!.isNotEmpty ? '${c.spousePolicyNumber} (${c.spouseCompany ?? "N/A"})' : null),
+              _buildDetailRow("Children Policy", c.childrenPolicyNumber != null && c.childrenPolicyNumber!.isNotEmpty ? '${c.childrenPolicyNumber} (${c.childrenCompany ?? "N/A"})' : null),
+            ]),
+
+            _buildAccordionSection('Health Details', Icons.health_and_safety_outlined, [
+              _buildDetailRow("Health Problems", c.healthProblems),
+              _buildDetailRow("Lifestyle Habits", c.lifestyleHabits),
+              _buildDetailRow("Pregnancy Details", c.pregnancyDetails),
+              _buildDetailRow("Other Remarks", c.healthRemarks),
+            ]),
+
+            _buildAccordionSection('Plan Details', Icons.article_outlined, [
+              _buildDetailRow("Product Name", c.productName),
+              _buildDetailRow("Premium Mode", c.premiumMode),
+              _buildDetailRow("Plan Sum Assured", c.planSumAssured),
+              _buildDetailRow("Rider", c.rider),
+            ]),
+
+            _buildAccordionSection('PAN & Mutual Finance Details', Icons.account_balance_outlined, [
+              _buildDetailRow("PAN Number", c.panNumber),
+              _buildDetailRow("Risk Cover", c.riskCover),
+              _buildDetailRow("Pension Plan", c.pensionPlan),
+              _buildDetailRow("Investment Plan", c.investmentPlan),
+              _buildDetailRow("Mutual Funds", c.mutualFunds),
+              _buildDetailRow("Medi Claim", c.mediClaim),
+              _buildDetailRow("Money Back Policy", c.moneyBackPolicy),
+              _buildDetailRow("Children Education Plan", c.childrenEducationPlan),
+            ]),
+
+
+            _buildAccordionSection('References', Icons.people_outline, [
+              _buildDetailRow("Friend's Name", c.referenceFriendName),
+              _buildDetailRow("Reference Mobile", c.referenceMobile),
+              _buildDetailRow("Reference Age", c.referenceAge),
+            ]),
+
+            // Document Attachments
+            if (c.documents.isNotEmpty)
+              Card(
+                elevation: 0.5,
+                margin: const EdgeInsets.only(bottom: 8.0),
+                shape: RoundedRectangleBorder(
+                  side: BorderSide(color: Colors.grey[200]!),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: ExpansionTile(
+                  leading: const Icon(Icons.attach_file_outlined, color: Colors.blueAccent),
+                  title: const Text('Document Attachments', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                  initiallyExpanded: false,
+                  childrenPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  children: c.documents.map((doc) {
+                    return ListTile(
+                      leading: const Icon(Icons.description, color: Colors.blue),
+                      title: Text(doc.documentName ?? 'Unnamed Document'),
+                      subtitle: Text(doc.fileName ?? ''),
+                      trailing: const Icon(Icons.visibility, size: 20),
+                      onTap: () => _previewDocument(doc),
+                    );
+                  }).toList(),
+                ),
+              ),
+
+            _buildAccordionSection('Remarks / Notes', Icons.notes_outlined, [
+              _buildDetailRow("Notes", c.notes),
+            ]),
+
+            const SizedBox(height: 100),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => CustomerFormScreen(customer: c)),
+          );
+          _loadCustomerData();
+        },
+        label: const Text('Edit Profile'),
+        icon: const Icon(Icons.edit),
+        backgroundColor: Colors.blueAccent,
+        foregroundColor: Colors.white,
+      ),
+    );
+  }
+  Widget _buildQuickRemindersPanel(Customer c) {
+    final hasReminder1 = c.reminderDate1 != null;
+    final hasReminder2 = c.reminderDate2 != null;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: Colors.blueAccent.withOpacity(0.2)),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      color: Colors.blue.withOpacity(0.02),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.alarm, color: Colors.blueAccent, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Reminders & Follow-ups',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.blue[900]),
+                    ),
+                  ],
+                ),
+                if (!hasReminder1 || !hasReminder2)
+                  TextButton.icon(
+                    onPressed: () {
+                      final slot = !hasReminder1 ? 1 : 2;
+                      _showAddReminderDialog(slot);
+                    },
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text('Add', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                    style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+                  ),
+              ],
+            ),
+            const Divider(height: 16),
+            if (!hasReminder1 && !hasReminder2)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.0),
+                child: Text(
+                  'No reminders set for this customer.',
+                  style: TextStyle(color: Colors.grey, fontSize: 13, fontStyle: FontStyle.italic),
+                ),
+              )
+            else ...[
+              if (hasReminder1) _buildReminderTile(1, c.reminderDate1!, c.reminderNote1),
+              if (hasReminder1 && hasReminder2) const SizedBox(height: 8),
+              if (hasReminder2) _buildReminderTile(2, c.reminderDate2!, c.reminderNote2),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReminderTile(int slot, DateTime date, String? note) {
+    final dateFormat = DateFormat('dd MMM yyyy');
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.event, color: Colors.blue[700], size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Reminder $slot: ${dateFormat.format(date)}',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87),
+                ),
+                if (note != null && note.trim().isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    note,
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.grey),
+            onPressed: () => _showAddReminderDialog(slot, initialDate: date, initialNote: note),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+          const SizedBox(width: 12),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
+            onPressed: () => _deleteReminder(slot),
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _deleteReminder(int slot) async {
+    final check = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Reminder?'),
+        content: Text('Are you sure you want to delete Reminder $slot?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (check == true && _customer != null) {
+      final db = ref.read(databaseServiceProvider);
+      if (slot == 1) {
+        _customer!.reminderDate1 = null;
+        _customer!.reminderNote1 = null;
+      } else {
+        _customer!.reminderDate2 = null;
+        _customer!.reminderNote2 = null;
+      }
+      await db.saveCustomer(_customer!);
+      ref.invalidate(customerListProvider);
+      ref.invalidate(upcomingEventsProvider);
+      _loadCustomerData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Reminder $slot deleted')),
+        );
+      }
+    }
+  }
+
+  void _showAddReminderDialog(int slot, {DateTime? initialDate, String? initialNote}) {
+    DateTime? selectedDate = initialDate;
+    final noteController = TextEditingController(text: initialNote);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(initialDate == null ? 'Add Reminder $slot' : 'Edit Reminder $slot'),
+        content: StatefulBuilder(
+          builder: (context, setDialogState) {
+            final dateText = selectedDate == null ? 'Select Date' : DateFormat('dd MMM yyyy').format(selectedDate!);
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                InkWell(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: selectedDate ?? DateTime.now(),
+                      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                      lastDate: DateTime(2100),
+                    );
+                    if (picked != null) {
+                      setDialogState(() {
+                        selectedDate = picked;
+                      });
+                    }
+                  },
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Reminder Date *',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                      suffixIcon: Icon(Icons.calendar_today, size: 20),
+                    ),
+                    child: Text(
+                      dateText,
+                      style: TextStyle(color: selectedDate == null ? Colors.grey[600] : Colors.black87),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: noteController,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Reminder Note / Description',
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              if (selectedDate == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Please select a reminder date')),
+                );
+                return;
+              }
+              if (_customer != null) {
+                final db = ref.read(databaseServiceProvider);
+                if (slot == 1) {
+                  _customer!.reminderDate1 = selectedDate;
+                  _customer!.reminderNote1 = noteController.text.trim();
+                } else {
+                  _customer!.reminderDate2 = selectedDate;
+                  _customer!.reminderNote2 = noteController.text.trim();
+                }
+                await db.saveCustomer(_customer!);
+                ref.invalidate(customerListProvider);
+                ref.invalidate(upcomingEventsProvider);
+                _loadCustomerData();
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Reminder $slot saved successfully')),
+                  );
+                }
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPersonalDetailsSection(Customer c) {
+    final dateFormat = DateFormat('dd MMM yyyy');
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: Colors.grey[200]!),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.person, color: Colors.blueAccent[700], size: 22),
+                const SizedBox(width: 8),
+                const Text(
+                  'Personal Profile',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+                ),
+              ],
+            ),
+            const Divider(height: 24),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final crossAxisCount = constraints.maxWidth > 600 ? 3 : 2;
+                return GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: crossAxisCount,
+                  childAspectRatio: crossAxisCount == 3 ? 2.5 : 2.2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  children: [
+                    _buildGridDetailItem(
+                      Icons.cake_outlined,
+                      'Date of Birth',
+                      c.dateOfBirth != null ? dateFormat.format(c.dateOfBirth!) : 'Not Specified',
+                    ),
+                    _buildGridDetailItem(
+                      Icons.person_pin_outlined,
+                      "Father's Name",
+                      c.fatherName ?? 'Not Specified',
+                    ),
+                    _buildGridDetailItem(
+                      Icons.favorite_border,
+                      'Marital Status',
+                      c.maritalStatus ?? 'Not Specified',
+                    ),
+                    if (c.spouseName != null && c.spouseName!.isNotEmpty)
+                      _buildGridDetailItem(
+                        Icons.people_outline,
+                        'Spouse Name',
+                        c.spouseName!,
+                      ),
+                    _buildGridDetailItem(
+                      Icons.flag_outlined,
+                      'Nationality',
+                      c.nationality ?? 'Not Specified',
+                    ),
+                    _buildGridDetailItem(
+                      Icons.badge_outlined,
+                      'Aadhaar Number',
+                      c.aadhaarNumber ?? 'Not Specified',
+                    ),
+                    _buildGridDetailItem(
+                      Icons.school_outlined,
+                      'Qualification',
+                      c.qualification ?? 'Not Specified',
+                    ),
+                    _buildGridDetailItem(
+                      Icons.height,
+                      'Height',
+                      c.height ?? 'Not Specified',
+                    ),
+                    _buildGridDetailItem(
+                      Icons.monitor_weight_outlined,
+                      'Weight',
+                      c.weight ?? 'Not Specified',
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGridDetailItem(IconData icon, String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 16, color: Colors.grey[500]),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(fontSize: 11, color: Colors.grey[500], fontWeight: FontWeight.w500),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: Colors.black87),
+          overflow: TextOverflow.ellipsis,
+          maxLines: 2,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildContactDetailsSection(Customer c) {
+    final List<String> phones = [
+      if (c.mobileNumber1 != null && c.mobileNumber1!.isNotEmpty) c.mobileNumber1!,
+      if (c.mobileNumber2 != null && c.mobileNumber2!.isNotEmpty) c.mobileNumber2!,
+      if (c.mobileNumber3 != null && c.mobileNumber3!.isNotEmpty) c.mobileNumber3!,
+      if (c.mobileNumber4 != null && c.mobileNumber4!.isNotEmpty) c.mobileNumber4!,
+    ];
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: Colors.grey[200]!),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.call, color: Colors.green[700], size: 22),
+                const SizedBox(width: 8),
+                const Text(
+                  'Contact Information',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+                ),
+              ],
+            ),
+            const Divider(height: 24),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth > 600;
+                return Column(
+                  children: [
+                    if (isWide)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: _buildPhoneSection(phones, c.officeContactNumber)),
+                          Expanded(child: _buildEmailAndAddressSection(c)),
+                        ],
+                      )
+                    else ...[
+                      _buildPhoneSection(phones, c.officeContactNumber),
+                      const SizedBox(height: 16),
+                      _buildEmailAndAddressSection(c),
+                    ],
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPhoneSection(List<String> phones, String? officePhone) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'MOBILE NUMBERS',
+          style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 0.8),
+        ),
+        const SizedBox(height: 8),
+        if (phones.isEmpty)
+          const Text('No mobile numbers configured', style: TextStyle(color: Colors.grey, fontSize: 13))
+        else
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: phones.length,
+            itemBuilder: (context, idx) {
+              final isPrimary = idx == 0;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  children: [
+                    Icon(
+                      isPrimary ? Icons.star : Icons.phone_android,
+                      size: 16,
+                      color: isPrimary ? Colors.amber[700] : Colors.grey[500],
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      phones[idx],
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: isPrimary ? FontWeight.bold : FontWeight.normal,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    if (isPrimary) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'PRIMARY',
+                          style: TextStyle(color: Colors.amber[800], fontSize: 9, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            },
+          ),
+        if (officePhone != null && officePhone.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          const Text(
+            'OFFICE LINE',
+            style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 0.8),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Icon(Icons.business, size: 16, color: Colors.grey[500]),
+              const SizedBox(width: 8),
+              Text(
+                officePhone,
+                style: const TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildEmailAndAddressSection(Customer c) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'EMAIL & ADDRESSES',
+          style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 0.8),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Icon(Icons.email_outlined, size: 16, color: Colors.grey[500]),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                c.emailId != null && c.emailId!.isNotEmpty ? c.emailId! : 'No Email Registered',
+                style: TextStyle(
+                  fontSize: 13.5,
+                  color: c.emailId != null && c.emailId!.isNotEmpty ? Colors.blueAccent : Colors.grey[600],
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (c.communicationAddress != null && c.communicationAddress!.isNotEmpty) ...[
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.home_outlined, size: 16, color: Colors.grey[500]),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Communication Address',
+                      style: TextStyle(fontSize: 11, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      c.communicationAddress!,
+                      style: const TextStyle(fontSize: 13, color: Colors.black87),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+        if (c.permanentAddress != null && c.permanentAddress!.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.location_on_outlined, size: 16, color: Colors.grey[500]),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Permanent Address',
+                      style: TextStyle(fontSize: 11, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      c.permanentAddress!,
+                      style: const TextStyle(fontSize: 13, color: Colors.black87),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
