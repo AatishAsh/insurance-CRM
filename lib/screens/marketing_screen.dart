@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import '../models/marketing_lead.dart';
 import '../services/database_service.dart';
 import '../providers/marketing_provider.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/rename_file_dialog.dart';
 
 // Consistent status options
 const List<String> statusOptions = [
@@ -770,7 +770,6 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
                       },
                     ),
                     const DataColumn(label: Text('Attached Photo', style: TextStyle(fontWeight: FontWeight.bold))),
-                    const DataColumn(label: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold))),
                   ],
                   rows: List.generate(leads.length, (index) {
                     final lead = leads[index];
@@ -780,6 +779,7 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
                     final normStatus = getNormalizedStatus(lead.status);
 
                     return DataRow(
+                      key: ValueKey(lead.id),
                       onSelectChanged: (_) => _openAddEditDialog(existingLead: lead),
                       cells: [
                         DataCell(Text('${index + 1}')),
@@ -806,43 +806,64 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
                             ),
                           ),
                         ),
-                        // Dropdown Status badge wrapped in GestureDetector to prevent DataRow triggering
+                        // Dropdown Status badge using PopupMenuButton to avoid focus/hover glitches
                         DataCell(
                           GestureDetector(
                             onTap: () {}, // Swallows click to avoid row selection popups
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10),
-                              height: 32,
-                              decoration: BoxDecoration(
-                                color: getStatusColor(normStatus).withOpacity(0.08),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: getStatusColor(normStatus).withOpacity(0.3)),
-                              ),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  value: statusOptions.contains(normStatus) ? normStatus : statusOptions.first,
-                                  icon: Icon(Icons.arrow_drop_down, color: getStatusColor(normStatus), size: 16),
-                                  style: TextStyle(
-                                    color: getStatusColor(normStatus),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                  items: statusOptions.map((s) {
-                                    return DropdownMenuItem<String>(
-                                      value: s,
-                                      child: Text(s),
-                                    );
-                                  }).toList(),
-                                  onChanged: (newStatus) async {
-                                    if (newStatus != null) {
-                                      final db = ref.read(databaseServiceProvider);
-                                      lead.status = newStatus;
-                                      lead.updatedAt = DateTime.now();
-                                      await db.saveMarketingLead(lead);
-                                      ref.invalidate(marketingListProvider);
-                                    }
-                                  },
+                            child: PopupMenuButton<String>(
+                              initialValue: normStatus,
+                              tooltip: 'Change Status',
+                              onSelected: (newStatus) async {
+                                final db = ref.read(databaseServiceProvider);
+                                lead.status = newStatus;
+                                lead.updatedAt = DateTime.now();
+                                await db.saveMarketingLead(lead);
+                              },
+                              itemBuilder: (BuildContext context) {
+                                return statusOptions.map((String s) {
+                                  return PopupMenuItem<String>(
+                                    value: s,
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 10,
+                                          height: 10,
+                                          decoration: BoxDecoration(
+                                            color: getStatusColor(s),
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          s,
+                                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList();
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: getStatusColor(normStatus).withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: getStatusColor(normStatus).withOpacity(0.3)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      normStatus,
+                                      style: TextStyle(
+                                        color: getStatusColor(normStatus),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(Icons.arrow_drop_down, color: getStatusColor(normStatus), size: 16),
+                                  ],
                                 ),
                               ),
                             ),
@@ -869,31 +890,6 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
                                   ),
                                 )
                               : const Text('--', style: TextStyle(color: Colors.grey)),
-                        ),
-                        // Action buttons column wrapped in GestureDetector
-                        DataCell(
-                          GestureDetector(
-                            onTap: () {}, // Swallows row-tap propagation
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 18),
-                                  onPressed: () => _openAddEditDialog(existingLead: lead),
-                                  tooltip: 'Edit',
-                                  constraints: const BoxConstraints(),
-                                  padding: const EdgeInsets.all(6),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
-                                  onPressed: () => _deleteLead(lead.id),
-                                  tooltip: 'Delete',
-                                  constraints: const BoxConstraints(),
-                                  padding: const EdgeInsets.all(6),
-                                ),
-                              ],
-                            ),
-                          ),
                         ),
                       ],
                     );
@@ -990,42 +986,63 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
                                   ],
                                 ),
                               ),
-                              // Status Dropdown on mobile card
+                              // Status Dropdown on mobile card using PopupMenuButton
                               GestureDetector(
                                 onTap: () {}, // Swallows card tap
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                                  height: 28,
-                                  decoration: BoxDecoration(
-                                    color: statusColor.withOpacity(0.08),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: statusColor.withOpacity(0.3)),
-                                  ),
-                                  child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<String>(
-                                      value: statusOptions.contains(normStatus) ? normStatus : statusOptions.first,
-                                      icon: Icon(Icons.arrow_drop_down, color: statusColor, size: 14),
-                                      style: TextStyle(
-                                        color: statusColor,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                child: PopupMenuButton<String>(
+                                  initialValue: normStatus,
+                                  tooltip: 'Change Status',
+                                  onSelected: (newStatus) async {
+                                    final db = ref.read(databaseServiceProvider);
+                                    lead.status = newStatus;
+                                    lead.updatedAt = DateTime.now();
+                                    await db.saveMarketingLead(lead);
+                                  },
+                                  itemBuilder: (BuildContext context) {
+                                    return statusOptions.map((String s) {
+                                      return PopupMenuItem<String>(
+                                        value: s,
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 10,
+                                              height: 10,
+                                              decoration: BoxDecoration(
+                                                color: getStatusColor(s),
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              s,
+                                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }).toList();
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: statusColor.withOpacity(0.08),
                                       borderRadius: BorderRadius.circular(12),
-                                      items: statusOptions.map((s) {
-                                        return DropdownMenuItem<String>(
-                                          value: s,
-                                          child: Text(s),
-                                        );
-                                      }).toList(),
-                                      onChanged: (newStatus) async {
-                                        if (newStatus != null) {
-                                          final db = ref.read(databaseServiceProvider);
-                                          lead.status = newStatus;
-                                          lead.updatedAt = DateTime.now();
-                                          await db.saveMarketingLead(lead);
-                                          ref.invalidate(marketingListProvider);
-                                        }
-                                      },
+                                      border: Border.all(color: statusColor.withOpacity(0.3)),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          normStatus,
+                                          style: TextStyle(
+                                            color: statusColor,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 2),
+                                        Icon(Icons.arrow_drop_down, color: statusColor, size: 14),
+                                      ],
                                     ),
                                   ),
                                 ),
@@ -1266,6 +1283,12 @@ class _AddEditMarketingLeadDialogState extends ConsumerState<AddEditMarketingLea
     if (result != null && result.files.single.path != null) {
       final File srcFile = File(result.files.single.path!);
       
+      // Ask user to rename attachment
+      final customFileName = await showRenameFileDialog(context, srcFile.path);
+      if (customFileName == null) {
+        return; // User canceled upload
+      }
+
       // Save locally
       final appDir = await getApplicationDocumentsDirectory();
       final docsDir = Directory('${appDir.path}/customer_documents');
@@ -1273,7 +1296,7 @@ class _AddEditMarketingLeadDialogState extends ConsumerState<AddEditMarketingLea
         await docsDir.create(recursive: true);
       }
 
-      final localFileName = 'marketing_${DateTime.now().millisecondsSinceEpoch}_${p.basename(srcFile.path)}';
+      final localFileName = 'marketing_${DateTime.now().millisecondsSinceEpoch}_$customFileName';
       await srcFile.copy('${docsDir.path}/$localFileName');
 
       setState(() {

@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import '../models/customer.dart';
 import '../services/database_service.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/rename_file_dialog.dart';
 
 class CustomerFormScreen extends ConsumerStatefulWidget {
   final Customer? customer;
@@ -235,6 +235,12 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
       if (result != null && result.files.single.path != null) {
         final File srcFile = File(result.files.single.path!);
         
+        // Ask user to rename attachment
+        final customFileName = await showRenameFileDialog(context, srcFile.path);
+        if (customFileName == null) {
+          return; // User canceled upload
+        }
+
         // Save locally using relative path
         final appDir = await getApplicationDocumentsDirectory();
         final docsDir = Directory('${appDir.path}/customer_documents');
@@ -242,7 +248,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
           await docsDir.create(recursive: true);
         }
 
-        final localFileName = '${DateTime.now().millisecondsSinceEpoch}_${p.basename(srcFile.path)}';
+        final localFileName = '${DateTime.now().millisecondsSinceEpoch}_$customFileName';
         await srcFile.copy('${docsDir.path}/$localFileName');
 
         setState(() {
