@@ -222,7 +222,33 @@ class SyncService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // --- SYNC WORKER & CONFLICT RESOLUTION ---
+  Future<List<String>> getLocalIpAddresses() async {
+    final List<String> ips = [];
+    try {
+      final interfaces = await NetworkInterface.list(
+        type: InternetAddressType.IPv4,
+        includeLinkLocal: false,
+      );
+      for (final interface in interfaces) {
+        for (final addr in interface.addresses) {
+          if (!addr.isLoopback) {
+            ips.add(addr.address);
+          }
+        }
+      }
+    } catch (_) {}
+    return ips;
+  }
+
+  Future<void> triggerSyncWithIp(String host, int port) async {
+    final device = DiscoveredDevice(
+      id: 'manual_$host:$port',
+      name: 'Manual ($host)',
+      host: host.trim(),
+      port: port,
+    );
+    await triggerSyncWith(device);
+  }
 
   Future<void> triggerSyncWith(DiscoveredDevice device) async {
     if (_isSyncing) return;

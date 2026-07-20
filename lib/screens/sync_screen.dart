@@ -65,6 +65,80 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
     }
   }
 
+  void _openDirectConnectDialog(BuildContext context, SyncService syncService) {
+    final ipController = TextEditingController();
+    final portController = TextEditingController(text: '${syncService.serverPort}');
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: const [
+              Icon(Icons.lan_outlined, color: Colors.blueAccent),
+              SizedBox(width: 8),
+              Text('Direct Connect via IP'),
+            ],
+          ),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'If auto-discovery is blocked by Wi-Fi router or firewall, enter the target IP and port shown on the other device.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: ipController,
+                  decoration: const InputDecoration(
+                    labelText: 'IP Address *',
+                    hintText: 'e.g. 192.168.1.15',
+                    prefixIcon: Icon(Icons.computer),
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (v) => v == null || v.trim().isEmpty ? 'IP address is required' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: portController,
+                  decoration: const InputDecoration(
+                    labelText: 'Port *',
+                    prefixIcon: Icon(Icons.numbers),
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                  validator: (v) => v == null || v.trim().isEmpty ? 'Port is required' : null,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                if (formKey.currentState!.validate()) {
+                  final ip = ipController.text.trim();
+                  final port = int.tryParse(portController.text.trim()) ?? 8080;
+                  Navigator.pop(context);
+                  syncService.triggerSyncWithIp(ip, port);
+                }
+              },
+              icon: const Icon(Icons.sync_alt, size: 18),
+              label: const Text('Sync Now'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final syncService = ref.watch(syncServiceProvider);
@@ -122,22 +196,31 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
                     ),
                     if (syncService.isServerRunning) ...[
                       const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.info_outline, size: 16, color: Colors.blueAccent),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Service Name: ShineCRM_${syncService.serverPort}',
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.blueAccent),
+                      FutureBuilder<List<String>>(
+                        future: syncService.getLocalIpAddresses(),
+                        builder: (context, snapshot) {
+                          final ips = snapshot.data ?? [];
+                          final ipText = ips.isNotEmpty ? ips.join(', ') : 'Fetching IP...';
+                          return Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                          ],
-                        ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.info_outline, size: 16, color: Colors.blueAccent),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'IP Address: $ipText  •  Port: ${syncService.serverPort}',
+                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.blueAccent),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ],
@@ -168,18 +251,27 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
                             Text('Discover Nearby Devices', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                           ],
                         ),
-                        IconButton(
-                          icon: Icon(
-                            syncService.isDiscovering ? Icons.stop_circle_outlined : Icons.play_arrow_outlined,
-                            color: syncService.isDiscovering ? Colors.redAccent : Colors.green,
-                          ),
-                          onPressed: () {
-                            if (syncService.isDiscovering) {
-                              syncService.stopDiscovery();
-                            } else {
-                              syncService.startDiscovery();
-                            }
-                          },
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.lan_outlined, color: Colors.blueAccent),
+                              tooltip: 'Direct Connect via IP',
+                              onPressed: () => _openDirectConnectDialog(context, syncService),
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                syncService.isDiscovering ? Icons.stop_circle_outlined : Icons.play_arrow_outlined,
+                                color: syncService.isDiscovering ? Colors.redAccent : Colors.green,
+                              ),
+                              onPressed: () {
+                                if (syncService.isDiscovering) {
+                                  syncService.stopDiscovery();
+                                } else {
+                                  syncService.startDiscovery();
+                                }
+                              },
+                            ),
+                          ],
                         ),
                       ],
                     ),
