@@ -163,16 +163,37 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
     return nextVisit;
   }
 
+  List<String> _getAllLeadPhotos(MarketingLead lead) {
+    final List<String> photos = [];
+    for (final visit in lead.visits) {
+      if (visit.attachedPhotos.isNotEmpty) {
+        for (final p in visit.attachedPhotos) {
+          if (p.isNotEmpty && !photos.contains(p)) {
+            photos.add(p);
+          }
+        }
+      } else if (visit.attachedPhoto != null && visit.attachedPhoto!.isNotEmpty) {
+        if (!photos.contains(visit.attachedPhoto!)) {
+          photos.add(visit.attachedPhoto!);
+        }
+      }
+    }
+    return photos;
+  }
+
   void _previewPhoto(String fileName, String label) {
     if (_localDocsDirPath == null) return;
     final file = File('$_localDocsDirPath/$fileName');
 
     if (!file.existsSync()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Photo not found on this device')),
+        const SnackBar(content: Text('Document file not found on this device')),
       );
       return;
     }
+
+    final isImage = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+        .any((ext) => fileName.toLowerCase().endsWith(ext));
 
     showDialog(
       context: context,
@@ -180,7 +201,7 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
         return Dialog(
           backgroundColor: Colors.transparent,
           child: Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
@@ -189,7 +210,7 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 AppBar(
-                  title: Text(label),
+                  title: Text(label, style: const TextStyle(fontSize: 16)),
                   leading: IconButton(
                     icon: const Icon(Icons.close),
                     onPressed: () => Navigator.pop(context),
@@ -199,21 +220,43 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
                   foregroundColor: Colors.black87,
                 ),
                 const SizedBox(height: 8),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 450),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: InteractiveViewer(
-                      panEnabled: true,
-                      minScale: 1.0,
-                      maxScale: 5.0,
-                      child: Image.file(
-                        file,
-                        fit: BoxFit.contain,
+                if (isImage)
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 450),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: InteractiveViewer(
+                        panEnabled: true,
+                        minScale: 1.0,
+                        maxScale: 5.0,
+                        child: Image.file(
+                          file,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.insert_drive_file, size: 64, color: Colors.blueAccent),
+                        const SizedBox(height: 12),
+                        Text(
+                          fileName,
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Document file saved on device',
+                          style: TextStyle(color: Colors.grey, fontSize: 12),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
                 const SizedBox(height: 12),
               ],
             ),
@@ -774,8 +817,7 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
                   rows: List.generate(leads.length, (index) {
                     final lead = leads[index];
                     final nextVisit = _getNextFutureVisit(lead.visits);
-                    final photo = nextVisit?.attachedPhoto;
-                    final hasPhoto = photo != null && _localDocsDirPath != null;
+                    final allPhotos = _getAllLeadPhotos(lead);
                     final normStatus = getNormalizedStatus(lead.status);
 
                     return DataRow(
@@ -871,22 +913,45 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
                         ),
                         // Photo column wrapped in GestureDetector
                         DataCell(
-                          hasPhoto
+                          allPhotos.isNotEmpty && _localDocsDirPath != null
                               ? GestureDetector(
                                   onTap: () {}, // Swallows tap
-                                  child: InkWell(
-                                    onTap: () => _previewPhoto(photo, lead.name),
-                                    borderRadius: BorderRadius.circular(4),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(6),
-                                      child: Image.file(
-                                        File('$_localDocsDirPath/$photo'),
-                                        width: 36,
-                                        height: 36,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, size: 24, color: Colors.grey),
-                                      ),
-                                    ),
+                                  child: Wrap(
+                                    spacing: 4,
+                                    runSpacing: 4,
+                                    children: allPhotos.map((photo) {
+                                      final isImg = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+                                          .any((ext) => photo.toLowerCase().endsWith(ext));
+                                      return InkWell(
+                                        onTap: () => _previewPhoto(photo, lead.name),
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(6),
+                                          child: isImg
+                                              ? Image.file(
+                                                  File('$_localDocsDirPath/$photo'),
+                                                  width: 36,
+                                                  height: 36,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (_, __, ___) => Container(
+                                                    width: 36,
+                                                    height: 36,
+                                                    color: Colors.grey[200],
+                                                    child: const Icon(Icons.insert_drive_file, size: 20, color: Colors.grey),
+                                                  ),
+                                                )
+                                              : Container(
+                                                  width: 36,
+                                                  height: 36,
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.blue.withOpacity(0.1),
+                                                    borderRadius: BorderRadius.circular(6),
+                                                  ),
+                                                  child: const Icon(Icons.insert_drive_file, size: 20, color: Colors.blueAccent),
+                                                ),
+                                        ),
+                                      );
+                                    }).toList(),
                                   ),
                                 )
                               : const Text('--', style: TextStyle(color: Colors.grey)),
@@ -910,7 +975,7 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
       itemBuilder: (context, index) {
         final lead = leads[index];
         final nextVisit = _getNextFutureVisit(lead.visits);
-        final photo = nextVisit?.attachedPhoto;
+        final allPhotos = _getAllLeadPhotos(lead);
         final normStatus = getNormalizedStatus(lead.status);
         final statusColor = getStatusColor(normStatus);
 
@@ -1107,23 +1172,46 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
                                   ],
                                 ),
                               ),
-                              if (photo != null && _localDocsDirPath != null) ...[
+                              if (allPhotos.isNotEmpty && _localDocsDirPath != null) ...[
                                 const SizedBox(width: 12),
                                 GestureDetector(
                                   onTap: () {}, // Swallows card tap
-                                  child: InkWell(
-                                    onTap: () => _previewPhoto(photo, lead.name),
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.file(
-                                        File('$_localDocsDirPath/$photo'),
-                                        width: 54,
-                                        height: 54,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, size: 28, color: Colors.grey),
-                                      ),
-                                    ),
+                                  child: Wrap(
+                                    spacing: 4,
+                                    runSpacing: 4,
+                                    children: allPhotos.map((photo) {
+                                      final isImg = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+                                          .any((ext) => photo.toLowerCase().endsWith(ext));
+                                      return InkWell(
+                                        onTap: () => _previewPhoto(photo, lead.name),
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(8),
+                                          child: isImg
+                                              ? Image.file(
+                                                  File('$_localDocsDirPath/$photo'),
+                                                  width: 54,
+                                                  height: 54,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (_, __, ___) => Container(
+                                                    width: 54,
+                                                    height: 54,
+                                                    color: Colors.grey[200],
+                                                    child: const Icon(Icons.insert_drive_file, size: 28, color: Colors.grey),
+                                                  ),
+                                                )
+                                              : Container(
+                                                  width: 54,
+                                                  height: 54,
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.blue.withOpacity(0.1),
+                                                    borderRadius: BorderRadius.circular(8),
+                                                  ),
+                                                  child: const Icon(Icons.insert_drive_file, size: 28, color: Colors.blueAccent),
+                                                ),
+                                        ),
+                                      );
+                                    }).toList(),
                                   ),
                                 ),
                               ],
@@ -1195,7 +1283,7 @@ class _AddEditMarketingLeadDialogState extends ConsumerState<AddEditMarketingLea
   final List<DateTime?> _visitDates = [];
   final List<String> _visitTimes = [];
   final List<TextEditingController> _visitNoteControllers = [];
-  final List<String?> _visitPhotos = [];
+  final List<List<String>> _visitPhotos = [];
 
   @override
   void initState() {
@@ -1210,7 +1298,13 @@ class _AddEditMarketingLeadDialogState extends ConsumerState<AddEditMarketingLea
         _visitDates.add(visit.visitDate);
         _visitTimes.add(visit.visitTime ?? '');
         _visitNoteControllers.add(TextEditingController(text: visit.visitNote ?? ''));
-        _visitPhotos.add(visit.attachedPhoto);
+        final photos = <String>[];
+        if (visit.attachedPhotos.isNotEmpty) {
+          photos.addAll(visit.attachedPhotos);
+        } else if (visit.attachedPhoto != null && visit.attachedPhoto!.isNotEmpty) {
+          photos.add(visit.attachedPhoto!);
+        }
+        _visitPhotos.add(photos);
       }
     } else {
       // Initialize with at least 1 visit
@@ -1224,7 +1318,7 @@ class _AddEditMarketingLeadDialogState extends ConsumerState<AddEditMarketingLea
       _visitDates.add(null);
       _visitTimes.add('');
       _visitNoteControllers.add(TextEditingController());
-      _visitPhotos.add(null);
+      _visitPhotos.add([]);
     });
   }
 
@@ -1274,34 +1368,33 @@ class _AddEditMarketingLeadDialogState extends ConsumerState<AddEditMarketingLea
 
   Future<void> _pickPhoto(int index) async {
     ref.read(isPickingFileProvider.notifier).state = true;
-    FilePickerResult? result;
     try {
-      result = await FilePicker.platform.pickFiles(type: FileType.image);
+      final result = await FilePicker.platform.pickFiles(type: FileType.any);
+      if (result != null && result.files.single.path != null) {
+        final File srcFile = File(result.files.single.path!);
+        
+        // Ask user to rename attachment
+        final customFileName = await showRenameFileDialog(context, srcFile.path);
+        if (customFileName == null) {
+          return; // User canceled upload
+        }
+
+        // Save locally
+        final appDir = await getApplicationDocumentsDirectory();
+        final docsDir = Directory('${appDir.path}/customer_documents');
+        if (!await docsDir.exists()) {
+          await docsDir.create(recursive: true);
+        }
+
+        final localFileName = 'marketing_${DateTime.now().millisecondsSinceEpoch}_$customFileName';
+        await srcFile.copy('${docsDir.path}/$localFileName');
+
+        setState(() {
+          _visitPhotos[index].add(localFileName);
+        });
+      }
     } finally {
       ref.read(isPickingFileProvider.notifier).state = false;
-    }
-    if (result != null && result.files.single.path != null) {
-      final File srcFile = File(result.files.single.path!);
-      
-      // Ask user to rename attachment
-      final customFileName = await showRenameFileDialog(context, srcFile.path);
-      if (customFileName == null) {
-        return; // User canceled upload
-      }
-
-      // Save locally
-      final appDir = await getApplicationDocumentsDirectory();
-      final docsDir = Directory('${appDir.path}/customer_documents');
-      if (!await docsDir.exists()) {
-        await docsDir.create(recursive: true);
-      }
-
-      final localFileName = 'marketing_${DateTime.now().millisecondsSinceEpoch}_$customFileName';
-      await srcFile.copy('${docsDir.path}/$localFileName');
-
-      setState(() {
-        _visitPhotos[index] = localFileName;
-      });
     }
   }
 
@@ -1359,12 +1452,14 @@ class _AddEditMarketingLeadDialogState extends ConsumerState<AddEditMarketingLea
     // Construct visits list
     final List<MarketingVisit> visits = [];
     for (int i = 0; i < _visitDates.length; i++) {
+      final photosList = List<String>.from(_visitPhotos[i]);
       visits.add(
         MarketingVisit()
           ..visitDate = _visitDates[i]
           ..visitTime = _visitTimes[i]
           ..visitNote = _visitNoteControllers[i].text.trim()
-          ..attachedPhoto = _visitPhotos[i],
+          ..attachedPhotos = photosList
+          ..attachedPhoto = photosList.isNotEmpty ? photosList.first : null,
       );
     }
     lead.visits = visits;
@@ -1488,11 +1583,6 @@ class _AddEditMarketingLeadDialogState extends ConsumerState<AddEditMarketingLea
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: _visitDates.length,
                         itemBuilder: (context, index) {
-                          final photoFileName = _visitPhotos[index];
-                          final photoFile = photoFileName != null && widget.localDocsDirPath != null
-                              ? File('${widget.localDocsDirPath}/$photoFileName')
-                              : null;
-
                           return Card(
                             color: Colors.grey[50],
                             margin: const EdgeInsets.only(bottom: 16),
@@ -1558,47 +1648,87 @@ class _AddEditMarketingLeadDialogState extends ConsumerState<AddEditMarketingLea
                                     maxLines: 2,
                                   ),
                                   const SizedBox(height: 12),
-                                  Row(
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Expanded(
-                                        child: OutlinedButton.icon(
-                                          onPressed: () => _pickPhoto(index),
-                                          icon: const Icon(Icons.photo_outlined, size: 16),
-                                          label: const Text('Attach Photo', style: TextStyle(fontSize: 13)),
-                                        ),
+                                      OutlinedButton.icon(
+                                        onPressed: () => _pickPhoto(index),
+                                        icon: const Icon(Icons.attach_file_outlined, size: 16),
+                                        label: const Text('Attach Document / Photo', style: TextStyle(fontSize: 13)),
                                       ),
-                                      const SizedBox(width: 12),
-                                      if (photoFile != null && photoFile.existsSync())
-                                        Stack(
-                                          alignment: Alignment.topRight,
-                                          children: [
-                                            ClipRRect(
-                                              borderRadius: BorderRadius.circular(4),
-                                              child: Image.file(
-                                                photoFile,
-                                                width: 50,
-                                                height: 50,
-                                                fit: BoxFit.cover,
-                                              ),
-                                            ),
-                                            GestureDetector(
-                                              onTap: () {
-                                                setState(() {
-                                                  _visitPhotos[index] = null;
-                                                });
-                                              },
-                                              child: Container(
-                                                decoration: const BoxDecoration(
-                                                  color: Colors.red,
-                                                  shape: BoxShape.circle,
+                                      if (_visitPhotos[index].isNotEmpty) ...[
+                                        const SizedBox(height: 10),
+                                        Wrap(
+                                          spacing: 8,
+                                          runSpacing: 8,
+                                          children: _visitPhotos[index].asMap().entries.map((entry) {
+                                            final photoIdx = entry.key;
+                                            final photoFileName = entry.value;
+                                            final photoFile = widget.localDocsDirPath != null
+                                                ? File('${widget.localDocsDirPath}/$photoFileName')
+                                                : null;
+                                            final isImg = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+                                                .any((ext) => photoFileName.toLowerCase().endsWith(ext));
+
+                                            return Stack(
+                                              alignment: Alignment.topRight,
+                                              children: [
+                                                Container(
+                                                  margin: const EdgeInsets.only(top: 4, right: 4),
+                                                  decoration: BoxDecoration(
+                                                    border: Border.all(color: Colors.grey[300]!),
+                                                    borderRadius: BorderRadius.circular(8),
+                                                  ),
+                                                  child: ClipRRect(
+                                                    borderRadius: BorderRadius.circular(7),
+                                                    child: isImg && photoFile != null && photoFile.existsSync()
+                                                        ? Image.file(
+                                                            photoFile,
+                                                            width: 60,
+                                                            height: 60,
+                                                            fit: BoxFit.cover,
+                                                          )
+                                                        : Container(
+                                                            width: 60,
+                                                            height: 60,
+                                                            padding: const EdgeInsets.all(4),
+                                                            color: Colors.blue.withOpacity(0.08),
+                                                            child: Column(
+                                                              mainAxisAlignment: MainAxisAlignment.center,
+                                                              children: [
+                                                                const Icon(Icons.insert_drive_file, size: 22, color: Colors.blueAccent),
+                                                                const SizedBox(height: 2),
+                                                                Text(
+                                                                  photoFileName.contains('_') ? photoFileName.split('_').last : photoFileName,
+                                                                  style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+                                                                  overflow: TextOverflow.ellipsis,
+                                                                  textAlign: TextAlign.center,
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                  ),
                                                 ),
-                                                child: const Icon(Icons.close, size: 14, color: Colors.white),
-                                              ),
-                                            ),
-                                          ],
-                                        )
-                                      else
-                                        const Text('No photo', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                                                GestureDetector(
+                                                  onTap: () {
+                                                    setState(() {
+                                                      _visitPhotos[index].removeAt(photoIdx);
+                                                    });
+                                                  },
+                                                  child: Container(
+                                                    decoration: const BoxDecoration(
+                                                      color: Colors.red,
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    padding: const EdgeInsets.all(2),
+                                                    child: const Icon(Icons.close, size: 14, color: Colors.white),
+                                                  ),
+                                                ),
+                                              ],
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ],
                                     ],
                                   ),
                                 ],

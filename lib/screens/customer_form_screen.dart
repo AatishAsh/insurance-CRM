@@ -226,36 +226,35 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     if (labelSelected == true && selectedLabel != null) {
       // Pick File
       ref.read(isPickingFileProvider.notifier).state = true;
-      FilePickerResult? result;
       try {
-        result = await FilePicker.platform.pickFiles(type: FileType.any);
+        final result = await FilePicker.platform.pickFiles(type: FileType.any);
+        if (result != null && result.files.single.path != null) {
+          final File srcFile = File(result.files.single.path!);
+          
+          // Ask user to rename attachment
+          final customFileName = await showRenameFileDialog(context, srcFile.path);
+          if (customFileName == null) {
+            return; // User canceled upload
+          }
+
+          // Save locally using relative path
+          final appDir = await getApplicationDocumentsDirectory();
+          final docsDir = Directory('${appDir.path}/customer_documents');
+          if (!await docsDir.exists()) {
+            await docsDir.create(recursive: true);
+          }
+
+          final localFileName = '${DateTime.now().millisecondsSinceEpoch}_$customFileName';
+          await srcFile.copy('${docsDir.path}/$localFileName');
+
+          setState(() {
+            _documents.add(CustomerDocument()
+              ..documentName = selectedLabel
+              ..fileName = localFileName);
+          });
+        }
       } finally {
         ref.read(isPickingFileProvider.notifier).state = false;
-      }
-      if (result != null && result.files.single.path != null) {
-        final File srcFile = File(result.files.single.path!);
-        
-        // Ask user to rename attachment
-        final customFileName = await showRenameFileDialog(context, srcFile.path);
-        if (customFileName == null) {
-          return; // User canceled upload
-        }
-
-        // Save locally using relative path
-        final appDir = await getApplicationDocumentsDirectory();
-        final docsDir = Directory('${appDir.path}/customer_documents');
-        if (!await docsDir.exists()) {
-          await docsDir.create(recursive: true);
-        }
-
-        final localFileName = '${DateTime.now().millisecondsSinceEpoch}_$customFileName';
-        await srcFile.copy('${docsDir.path}/$localFileName');
-
-        setState(() {
-          _documents.add(CustomerDocument()
-            ..documentName = selectedLabel
-            ..fileName = localFileName);
-        });
       }
     }
   }

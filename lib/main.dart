@@ -64,7 +64,38 @@ class MainNavigationShell extends ConsumerWidget {
     final List<Widget> screens = [
       const CustomerListScreen(),
       const UpcomingEventsScreen(),
-      const Center(child: Text('Tab 3: Review')),
+      Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.construction_rounded, size: 72, color: Colors.blue[300]),
+            const SizedBox(height: 16),
+            const Text(
+              'Performance Dashboard',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.black87),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.amber[100],
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.amber[600]!),
+              ),
+              child: Text(
+                'Still in Development',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.amber[900]),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Analytics and performance reporting features are coming soon.',
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
       const WorkManagementScreen(),
       const MarketingScreen(),
     ];
@@ -108,9 +139,9 @@ class MainNavigationShell extends ConsumerWidget {
                   label: Text('Events'),
                 ),
                 NavigationRailDestination(
-                  icon: Icon(Icons.rate_review_outlined),
-                  selectedIcon: Icon(Icons.rate_review),
-                  label: Text('Review'),
+                  icon: Icon(Icons.analytics_outlined),
+                  selectedIcon: Icon(Icons.analytics),
+                  label: Text('Performance'),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.assignment_outlined),
@@ -147,9 +178,9 @@ class MainNavigationShell extends ConsumerWidget {
                   label: 'Events',
                 ),
                 NavigationDestination(
-                  icon: Icon(Icons.rate_review_outlined),
-                  selectedIcon: Icon(Icons.rate_review),
-                  label: 'Review',
+                  icon: Icon(Icons.analytics_outlined),
+                  selectedIcon: Icon(Icons.analytics),
+                  label: 'Performance',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.assignment_outlined),

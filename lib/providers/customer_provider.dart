@@ -4,6 +4,8 @@ import '../services/database_service.dart';
 
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
+final customerSearchTabProvider = StateProvider<String>((ref) => 'All'); // 'All', 'Profiles', 'Documents'
+
 final navigationTabIndexProvider = StateProvider<int>((ref) => 0);
 
 final customerPageProvider = StateProvider<int>((ref) => 0);

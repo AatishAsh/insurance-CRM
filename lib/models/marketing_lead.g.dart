@@ -1532,18 +1532,23 @@ const MarketingVisitSchema = Schema(
       name: r'attachedPhoto',
       type: IsarType.string,
     ),
-    r'visitDate': PropertySchema(
+    r'attachedPhotos': PropertySchema(
       id: 1,
+      name: r'attachedPhotos',
+      type: IsarType.stringList,
+    ),
+    r'visitDate': PropertySchema(
+      id: 2,
       name: r'visitDate',
       type: IsarType.dateTime,
     ),
     r'visitNote': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'visitNote',
       type: IsarType.string,
     ),
     r'visitTime': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'visitTime',
       type: IsarType.string,
     )
@@ -1564,6 +1569,13 @@ int _marketingVisitEstimateSize(
     final value = object.attachedPhoto;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
+    }
+  }
+  bytesCount += 3 + object.attachedPhotos.length * 3;
+  {
+    for (var i = 0; i < object.attachedPhotos.length; i++) {
+      final value = object.attachedPhotos[i];
+      bytesCount += value.length * 3;
     }
   }
   {
@@ -1588,9 +1600,10 @@ void _marketingVisitSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeString(offsets[0], object.attachedPhoto);
-  writer.writeDateTime(offsets[1], object.visitDate);
-  writer.writeString(offsets[2], object.visitNote);
-  writer.writeString(offsets[3], object.visitTime);
+  writer.writeStringList(offsets[1], object.attachedPhotos);
+  writer.writeDateTime(offsets[2], object.visitDate);
+  writer.writeString(offsets[3], object.visitNote);
+  writer.writeString(offsets[4], object.visitTime);
 }
 
 MarketingVisit _marketingVisitDeserialize(
@@ -1601,9 +1614,10 @@ MarketingVisit _marketingVisitDeserialize(
 ) {
   final object = MarketingVisit();
   object.attachedPhoto = reader.readStringOrNull(offsets[0]);
-  object.visitDate = reader.readDateTimeOrNull(offsets[1]);
-  object.visitNote = reader.readStringOrNull(offsets[2]);
-  object.visitTime = reader.readStringOrNull(offsets[3]);
+  object.attachedPhotos = reader.readStringList(offsets[1]) ?? [];
+  object.visitDate = reader.readDateTimeOrNull(offsets[2]);
+  object.visitNote = reader.readStringOrNull(offsets[3]);
+  object.visitTime = reader.readStringOrNull(offsets[4]);
   return object;
 }
 
@@ -1617,10 +1631,12 @@ P _marketingVisitDeserializeProp<P>(
     case 0:
       return (reader.readStringOrNull(offset)) as P;
     case 1:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readStringList(offset) ?? []) as P;
     case 2:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 3:
+      return (reader.readStringOrNull(offset)) as P;
+    case 4:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1780,6 +1796,232 @@ extension MarketingVisitQueryFilter
         property: r'attachedPhoto',
         value: '',
       ));
+    });
+  }
+
+  QueryBuilder<MarketingVisit, MarketingVisit, QAfterFilterCondition>
+      attachedPhotosElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'attachedPhotos',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MarketingVisit, MarketingVisit, QAfterFilterCondition>
+      attachedPhotosElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'attachedPhotos',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MarketingVisit, MarketingVisit, QAfterFilterCondition>
+      attachedPhotosElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'attachedPhotos',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MarketingVisit, MarketingVisit, QAfterFilterCondition>
+      attachedPhotosElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'attachedPhotos',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MarketingVisit, MarketingVisit, QAfterFilterCondition>
+      attachedPhotosElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'attachedPhotos',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MarketingVisit, MarketingVisit, QAfterFilterCondition>
+      attachedPhotosElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'attachedPhotos',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MarketingVisit, MarketingVisit, QAfterFilterCondition>
+      attachedPhotosElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'attachedPhotos',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MarketingVisit, MarketingVisit, QAfterFilterCondition>
+      attachedPhotosElementMatches(String pattern,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'attachedPhotos',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<MarketingVisit, MarketingVisit, QAfterFilterCondition>
+      attachedPhotosElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'attachedPhotos',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<MarketingVisit, MarketingVisit, QAfterFilterCondition>
+      attachedPhotosElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'attachedPhotos',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<MarketingVisit, MarketingVisit, QAfterFilterCondition>
+      attachedPhotosLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'attachedPhotos',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<MarketingVisit, MarketingVisit, QAfterFilterCondition>
+      attachedPhotosIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'attachedPhotos',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<MarketingVisit, MarketingVisit, QAfterFilterCondition>
+      attachedPhotosIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'attachedPhotos',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<MarketingVisit, MarketingVisit, QAfterFilterCondition>
+      attachedPhotosLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'attachedPhotos',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<MarketingVisit, MarketingVisit, QAfterFilterCondition>
+      attachedPhotosLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'attachedPhotos',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<MarketingVisit, MarketingVisit, QAfterFilterCondition>
+      attachedPhotosLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'attachedPhotos',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
     });
   }
 

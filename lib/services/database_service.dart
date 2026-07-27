@@ -77,8 +77,14 @@ class DatabaseService {
       return keywords.every((keyword) {
         final nameMatch = cust.name.toLowerCase().contains(keyword);
         final idMatch = cust.customerId?.toLowerCase().contains(keyword) ?? false;
-        final docMatch = cust.documents.any((doc) => doc.documentName?.toLowerCase().contains(keyword) ?? false);
-        return nameMatch || idMatch || docMatch;
+        final fatherMatch = cust.fatherName?.toLowerCase().contains(keyword) ?? false;
+        final mobileMatch = (cust.mobileNumber1?.toLowerCase().contains(keyword) ?? false) ||
+            (cust.mobileNumber2?.toLowerCase().contains(keyword) ?? false);
+        final policyMatch = cust.selfPolicyNumber?.toLowerCase().contains(keyword) ?? false;
+        final docMatch = cust.documents.any((doc) =>
+            (doc.documentName?.toLowerCase().contains(keyword) ?? false) ||
+            (doc.fileName?.toLowerCase().contains(keyword) ?? false));
+        return nameMatch || idMatch || fatherMatch || mobileMatch || policyMatch || docMatch;
       });
     }).toList();
   }

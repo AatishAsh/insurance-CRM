@@ -7,7 +7,8 @@ class MarketingVisit {
   DateTime? visitDate;
   String? visitTime; // e.g. "10:30 AM"
   String? visitNote;
-  String? attachedPhoto; // Filename of the locally saved image
+  String? attachedPhoto; // Legacy filename of locally saved image
+  List<String> attachedPhotos = []; // List of all locally saved document/image filenames
 }
 
 @collection

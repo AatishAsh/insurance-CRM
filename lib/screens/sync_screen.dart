@@ -540,6 +540,41 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
                       icon: const Icon(Icons.playlist_add),
                       label: const Text('Seed Dummy Data'),
                       onPressed: () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (context) {
+                            return AlertDialog(
+                              icon: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 40),
+                              title: const Text(
+                                'Erase Current Data & Seed Dummy Data?',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                              ),
+                              content: const Text(
+                                'WARNING: This action cannot be undone!\n\nSeeding dummy data will PERMANENTLY ERASE all existing customers, work tasks, and marketing leads, and replace them with sample dummy data.\n\nAre you sure you want to erase your current data?',
+                                style: TextStyle(fontSize: 14, height: 1.4),
+                              ),
+                              actions: [
+                                OutlinedButton(
+                                  onPressed: () => Navigator.pop(context, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                ElevatedButton.icon(
+                                  icon: const Icon(Icons.delete_forever, size: 18),
+                                  label: const Text('Erase & Seed Dummy Data'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red[700],
+                                    foregroundColor: Colors.white,
+                                  ),
+                                  onPressed: () => Navigator.pop(context, true),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+
+                        if (confirm != true) return;
+
                         final db = ref.read(databaseServiceProvider);
                         await db.seedDummyData();
                         
@@ -550,10 +585,10 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
                         ref.invalidate(taskListProvider);
                         ref.invalidate(todayTasksProvider);
                         
-                        if (mounted) {
+                        if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('5 customers and 3 work tasks seeded successfully!'),
+                              content: Text('Database reset: 5 customers, work tasks, and marketing leads seeded successfully!'),
                               backgroundColor: Colors.green,
                             ),
                           );
@@ -568,6 +603,35 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 24),
+            Center(
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.code_rounded, size: 16, color: Colors.blueAccent),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Crafted by Shine Craft Technologies',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[700],
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Offline Customer Detail Management System v1.0.0',
+                    style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
           ],
         ),
       ),
