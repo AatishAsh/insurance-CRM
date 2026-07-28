@@ -1,0 +1,62 @@
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.buildDir = "../build"
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+subprojects {
+    project.evaluationDependsOn(":app")
+}
+subprojects { subproject ->
+    def fixSubproject = { p ->
+        if (p.hasProperty("android")) {
+            try {
+                p.android {
+                    compileOptions {
+                        sourceCompatibility = JavaVersion.VERSION_1_8
+                        targetCompatibility = JavaVersion.VERSION_1_8
+                    }
+                }
+                def manifestFile = p.file("src/main/AndroidManifest.xml")
+                if (manifestFile.exists()) {
+                    def text = manifestFile.text
+                    def matcher = text =~ /package="([^"]+)"/
+                    if (matcher.find()) {
+                        def pkgName = matcher[0][1]
+                        if (p.android.namespace == null) {
+                            p.android.namespace = pkgName
+                        }
+                        manifestFile.text = text.replaceAll(/package="[^"]+"/, '')
+                    }
+                }
+                if (p.android.namespace == null) {
+                    p.android.namespace = "com.example.${p.name.replace('-', '_')}"
+                }
+            } catch (Exception ignored) {}
+        }
+        try {
+            p.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+                kotlinOptions {
+                    jvmTarget = "1.8"
+                }
+            }
+        } catch (Exception ignored) {}
+    }
+
+    if (subproject.state.executed) {
+        fixSubproject(subproject)
+    } else {
+        subproject.afterEvaluate {
+            fixSubproject(subproject)
+        }
+    }
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.buildDir
+}
