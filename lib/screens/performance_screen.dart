@@ -279,6 +279,7 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
       backgroundColor: Colors.grey[50],
       body: CustomScrollView(
         slivers: [
+          // Top Header Bar
           SliverToBoxAdapter(
             child: Container(
               color: Colors.white,
@@ -288,11 +289,18 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.analytics_rounded, color: Theme.of(context).primaryColor, size: 28),
-                      const SizedBox(width: 10),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.analytics_rounded, color: Colors.blueAccent, size: 26),
+                      ),
+                      const SizedBox(width: 12),
                       const Text(
-                        'Performance Metrics',
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                        'Performance Dashboard',
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
                       ),
                     ],
                   ),
@@ -300,8 +308,12 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
 
                   // Year and Month Selector Row
                   Card(
-                    elevation: 1.5,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    elevation: 0,
+                    color: Colors.grey.shade50,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      side: BorderSide(color: Colors.grey.shade200),
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.all(12.0),
                       child: Wrap(
@@ -314,11 +326,11 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.calendar_today_rounded, size: 20, color: Colors.blueAccent),
+                              const Icon(Icons.calendar_today_rounded, size: 18, color: Colors.blueAccent),
                               const SizedBox(width: 8),
-                              const Text('Year: ', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                              const Text('Year: ', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.black87)),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: Colors.blue.shade50,
                                   borderRadius: BorderRadius.circular(8),
@@ -328,7 +340,7 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                                   child: DropdownButton<int>(
                                     value: selectedYear,
                                     isDense: true,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent, fontSize: 16),
+                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent, fontSize: 15),
                                     items: _availableYears.map((yr) {
                                       return DropdownMenuItem<int>(
                                         value: yr,
@@ -350,17 +362,22 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.date_range_rounded, size: 20, color: Colors.blueAccent),
+                              const Icon(Icons.date_range_rounded, size: 18, color: Colors.blueAccent),
                               const SizedBox(width: 8),
-                              const Text('Month: ', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
-                              IconButton(
-                                icon: const Icon(Icons.arrow_back_ios_rounded, size: 18),
-                                tooltip: 'Previous Month',
-                                onPressed: () => _previousMonth(selectedYear, selectedMonth),
-                                color: Colors.blueAccent,
+                              const Text('Month: ', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.black87)),
+                              Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(20),
+                                  onTap: () => _previousMonth(selectedYear, selectedMonth),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(6.0),
+                                    child: Icon(Icons.arrow_back_ios_rounded, size: 16, color: Colors.blue.shade700),
+                                  ),
+                                ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: Colors.blue.shade50,
                                   borderRadius: BorderRadius.circular(8),
@@ -370,7 +387,7 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                                   child: DropdownButton<int>(
                                     value: selectedMonth,
                                     isDense: true,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent, fontSize: 16),
+                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent, fontSize: 15),
                                     items: List.generate(12, (index) => index + 1).map((m) {
                                       return DropdownMenuItem<int>(
                                         value: m,
@@ -385,11 +402,16 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                                   ),
                                 ),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
-                                tooltip: 'Next Month',
-                                onPressed: () => _nextMonth(selectedYear, selectedMonth),
-                                color: Colors.blueAccent,
+                              Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(20),
+                                  onTap: () => _nextMonth(selectedYear, selectedMonth),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(6.0),
+                                    child: Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.blue.shade700),
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -398,13 +420,13 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                             decoration: BoxDecoration(
-                              color: Colors.green.shade50,
+                              color: Colors.blue.shade50,
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.green.shade300),
+                              border: Border.all(color: Colors.blue.shade200),
                             ),
                             child: Text(
-                              'Data for ${_monthNames[selectedMonth - 1]} $selectedYear',
-                              style: TextStyle(fontWeight: FontWeight.w600, color: Colors.green.shade800, fontSize: 13),
+                              '${_monthNames[selectedMonth - 1]} $selectedYear',
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade800, fontSize: 13),
                             ),
                           ),
                         ],
@@ -416,15 +438,13 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
             ),
           ),
 
-          // TAB CONTENT - DIVIDED INTO TWO HALVES
+          // Main Performance Cards Grid/Flex Layout
           SliverPadding(
             padding: const EdgeInsets.all(16.0),
             sliver: SliverToBoxAdapter(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // ==================== FIRST HALF ====================
-                  // Main Performance Cards Grid/Flex Layout
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final double boxWidth = isDesktop ? (constraints.maxWidth - 16) / 2 : constraints.maxWidth;
@@ -464,23 +484,21 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
 
                   // ==================== ADDITIONAL ANALYTICS & REPORTS ====================
                   Card(
-                    elevation: 1.5,
-                    color: Colors.grey.shade100,
+                    elevation: 0,
+                    color: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
-                      side: BorderStyle.solid == BorderStyle.solid
-                          ? BorderSide(color: Colors.grey.shade300, width: 1.5)
-                          : BorderSide.none,
+                      side: BorderSide(color: Colors.grey.shade200, width: 1.5),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(24.0),
                       child: Column(
                         children: [
-                          Icon(Icons.analytics_outlined, size: 40, color: Colors.grey.shade500),
+                          Icon(Icons.analytics_outlined, size: 38, color: Colors.blue.shade300),
                           const SizedBox(height: 12),
                           Text(
                             'Additional Analytics & Reports',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey.shade700),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey.shade800),
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -501,14 +519,14 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
     );
   }
 
-  // Build Box One Card with the 5 required input text fields
+  // Section 1: Primary Metrics Card
   Widget _buildBoxOneCard(BuildContext context, PerformanceNotifier notifier) {
     return Card(
-      elevation: 2,
+      elevation: 1,
       color: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.blue.shade200, width: 1.5),
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: Colors.blue.shade100, width: 1.5),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -520,15 +538,15 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade100,
-                    borderRadius: BorderRadius.circular(6),
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Icon(Icons.dashboard_rounded, color: Colors.blueAccent, size: 20),
                 ),
                 const SizedBox(width: 10),
                 const Text(
                   'Primary Metrics',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
                 ),
               ],
             ),
@@ -587,14 +605,14 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
     );
   }
 
-  // Build Box Two Card with 2 rows of fields
+  // Section 2: Days & Earnings Card
   Widget _buildBoxTwoCard(BuildContext context, PerformanceNotifier notifier) {
     return Card(
-      elevation: 2,
+      elevation: 1,
       color: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.indigo.shade200, width: 1.5),
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: Colors.blue.shade100, width: 1.5),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -606,15 +624,15 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: Colors.indigo.shade100,
-                    borderRadius: BorderRadius.circular(6),
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.work_history_rounded, color: Colors.indigo, size: 20),
+                  child: const Icon(Icons.work_history_rounded, color: Colors.blueAccent, size: 20),
                 ),
                 const SizedBox(width: 10),
                 const Text(
                   'Days & Earnings',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.indigo),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
                 ),
               ],
             ),
@@ -673,52 +691,47 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
     );
   }
 
-  // Build Box Three Card with 5 Column Headers, each having 4 Input Rows below
+  // Section 3: JJ Workway & Targets Card (5 Column Headers x 4 Input Rows)
   Widget _buildBoxThreeCard(BuildContext context, PerformanceNotifier notifier) {
     final columns = [
       {
         'title': 'JJ workway',
         'icon': Icons.alt_route_rounded,
-        'color': Colors.teal,
         'controllers': _box3JjWorkwayControllers,
         'prefixKey': 'box3JjWorkwayCol',
       },
       {
         'title': 'Target',
         'icon': Icons.track_changes_rounded,
-        'color': Colors.deepOrange,
         'controllers': _box3TargetControllers,
         'prefixKey': 'box3TargetCol',
       },
       {
         'title': 'YY',
         'icon': Icons.analytics_outlined,
-        'color': Colors.purple,
         'controllers': _box3YyControllers,
         'prefixKey': 'box3YyCol',
       },
       {
         'title': 'ZZ',
         'icon': Icons.assessment_outlined,
-        'color': Colors.blue,
         'controllers': _box3ZzControllers,
         'prefixKey': 'box3ZzCol',
       },
       {
         'title': 'Percentage',
         'icon': Icons.percent_rounded,
-        'color': Colors.green,
         'controllers': _box3PercentageControllers,
         'prefixKey': 'box3PercentageCol',
       },
     ];
 
     return Card(
-      elevation: 2,
+      elevation: 1,
       color: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.teal.shade200, width: 1.5),
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: Colors.blue.shade100, width: 1.5),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -730,15 +743,15 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: Colors.teal.shade100,
-                    borderRadius: BorderRadius.circular(6),
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.table_chart_rounded, color: Colors.teal, size: 20),
+                  child: const Icon(Icons.table_chart_rounded, color: Colors.blueAccent, size: 20),
                 ),
                 const SizedBox(width: 10),
                 const Text(
                   'JJ Workway & Targets',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.teal),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
                 ),
               ],
             ),
@@ -752,7 +765,6 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                 children: columns.map((col) {
                   final String title = col['title'] as String;
                   final IconData icon = col['icon'] as IconData;
-                  final Color color = col['color'] as Color;
                   final List<TextEditingController> controllers = col['controllers'] as List<TextEditingController>;
                   final String prefixKey = col['prefixKey'] as String;
 
@@ -767,20 +779,20 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
                           decoration: BoxDecoration(
-                            color: color.withOpacity(0.12),
+                            color: Colors.blue.shade50,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: color.withOpacity(0.3)),
+                            border: Border.all(color: Colors.blue.shade200),
                           ),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(icon, size: 16, color: color),
+                              Icon(icon, size: 16, color: Colors.blueAccent),
                               const SizedBox(height: 4),
                               Text(
                                 title,
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: color,
+                                  color: Colors.blueAccent,
                                   fontSize: 12,
                                 ),
                                 textAlign: TextAlign.center,
@@ -813,10 +825,10 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(6),
-                                  borderSide: BorderSide(color: color, width: 1.5),
+                                  borderSide: const BorderSide(color: Colors.blueAccent, width: 1.5),
                                 ),
                                 filled: true,
-                                fillColor: Colors.white,
+                                fillColor: Colors.grey.shade50,
                               ),
                             ),
                           );
@@ -833,14 +845,14 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
     );
   }
 
-  // Build Box Four Card ("For MDRT") with 3 input text fields
+  // Section 4: For MDRT Card
   Widget _buildBoxFourCard(BuildContext context, PerformanceNotifier notifier) {
     return Card(
-      elevation: 2,
+      elevation: 1,
       color: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.amber.shade300, width: 1.5),
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: Colors.blue.shade100, width: 1.5),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -852,15 +864,15 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: Colors.amber.shade100,
-                    borderRadius: BorderRadius.circular(6),
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.stars_rounded, color: Colors.amber, size: 20),
+                  child: const Icon(Icons.stars_rounded, color: Colors.blueAccent, size: 20),
                 ),
                 const SizedBox(width: 10),
                 const Text(
                   'For MDRT',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.amber),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
                 ),
               ],
             ),
@@ -899,7 +911,7 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
     );
   }
 
-  // Reusable text input field
+  // Reusable text input field aligned with app design system
   Widget _buildInputField({
     required TextEditingController controller,
     required String label,
@@ -911,7 +923,8 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
       onChanged: onChanged,
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, size: 20, color: Colors.blue.shade700),
+        labelStyle: TextStyle(color: Colors.grey.shade700, fontSize: 13, fontWeight: FontWeight.w500),
+        prefixIcon: Icon(icon, size: 18, color: Colors.blue.shade700),
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         border: OutlineInputBorder(
