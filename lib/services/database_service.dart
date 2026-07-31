@@ -6,6 +6,8 @@ import '../models/customer.dart';
 import '../models/company.dart';
 import '../models/work_task.dart';
 import '../models/marketing_lead.dart';
+import '../models/performance_record.dart';
+
 
 final databaseServiceProvider = Provider<DatabaseService>((ref) {
   throw UnimplementedError('databaseServiceProvider must be overridden in main');
@@ -20,7 +22,7 @@ class DatabaseService {
   static Future<DatabaseService> init() async {
     final dir = await getApplicationDocumentsDirectory();
     final isarInstance = await Isar.open(
-      [CustomerSchema, CompanySchema, WorkTaskSchema, MarketingLeadSchema],
+      [CustomerSchema, CompanySchema, WorkTaskSchema, MarketingLeadSchema, PerformanceRecordSchema],
       directory: dir.path,
       inspector: true, // Enables Isar Inspector in debug mode
     );
@@ -455,4 +457,23 @@ class DatabaseService {
       });
     }
   }
+
+  // --- PERFORMANCE RECORD OPERATIONS ---
+
+  Future<PerformanceRecord?> getPerformanceRecord(int year, int month) async {
+    return await isar.performanceRecords
+        .filter()
+        .yearEqualTo(year)
+        .and()
+        .monthEqualTo(month)
+        .findFirst();
+  }
+
+  Future<void> savePerformanceRecord(PerformanceRecord record) async {
+    record.updatedAt = DateTime.now();
+    await isar.writeTxn(() async {
+      await isar.performanceRecords.put(record);
+    });
+  }
 }
+

@@ -4,7 +4,9 @@ import 'screens/customer_list_screen.dart';
 import 'screens/work_management_screen.dart';
 import 'screens/upcoming_events_screen.dart';
 import 'screens/marketing_screen.dart';
+import 'screens/performance_screen.dart';
 import 'services/database_service.dart';
+
 import 'screens/auth_gate.dart';
 import 'screens/sync_screen.dart';
 import 'providers/customer_provider.dart';
@@ -64,38 +66,7 @@ class MainNavigationShell extends ConsumerWidget {
     final List<Widget> screens = [
       const CustomerListScreen(),
       const UpcomingEventsScreen(),
-      Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.construction_rounded, size: 72, color: Colors.blue[300]),
-            const SizedBox(height: 16),
-            const Text(
-              'Performance Dashboard',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.black87),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.amber[100],
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.amber[600]!),
-              ),
-              child: Text(
-                'Still in Development',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.amber[900]),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Analytics and performance reporting features are coming soon.',
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+      const PerformanceScreen(),
       const WorkManagementScreen(),
       const MarketingScreen(),
     ];
