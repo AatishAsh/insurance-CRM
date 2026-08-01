@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/performance_record.dart';
 import '../providers/performance_provider.dart';
@@ -30,6 +31,9 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
   late List<TextEditingController> _box3YyControllers;
   late List<TextEditingController> _box3ZzControllers;
   late List<TextEditingController> _box3PercentageControllers;
+
+  // Box 3 Focus Nodes for Excel / Spreadsheet style Keyboard Navigation (5 Cols x 4 Rows)
+  late List<List<FocusNode>> _box3FocusNodes;
 
   // Box 4 Controllers (For MDRT)
   late TextEditingController _box4BalanceController;
@@ -65,6 +69,26 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
     _box3YyControllers = List.generate(4, (_) => TextEditingController());
     _box3ZzControllers = List.generate(4, (_) => TextEditingController());
     _box3PercentageControllers = List.generate(4, (_) => TextEditingController());
+
+    // Box 3 Focus Nodes Init (5 Cols x 4 Rows Grid)
+    _box3FocusNodes = List.generate(
+      5,
+      (colIdx) => List.generate(4, (rowIdx) {
+        final node = FocusNode();
+        node.addListener(() {
+          if (node.hasFocus) {
+            final controller = _getBox3Controller(colIdx, rowIdx);
+            if (controller.text.isNotEmpty) {
+              controller.selection = TextSelection(
+                baseOffset: 0,
+                extentOffset: controller.text.length,
+              );
+            }
+          }
+        });
+        return node;
+      }),
+    );
 
     // Box 4 Controllers Init (For MDRT)
     _box4BalanceController = TextEditingController();
@@ -104,12 +128,71 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
       c.dispose();
     }
 
+    // Box 3 Focus Nodes Dispose
+    for (var col in _box3FocusNodes) {
+      for (var node in col) {
+        node.dispose();
+      }
+    }
+
     // Box 4 Controllers Dispose
     _box4BalanceController.dispose();
     _box4TargetController.dispose();
     _box4AchievedController.dispose();
 
     super.dispose();
+  }
+
+  TextEditingController _getBox3Controller(int colIdx, int rowIdx) {
+    switch (colIdx) {
+      case 0:
+        return _box3JjWorkwayControllers[rowIdx];
+      case 1:
+        return _box3TargetControllers[rowIdx];
+      case 2:
+        return _box3YyControllers[rowIdx];
+      case 3:
+        return _box3ZzControllers[rowIdx];
+      case 4:
+        return _box3PercentageControllers[rowIdx];
+      default:
+        return _box3JjWorkwayControllers[rowIdx];
+    }
+  }
+
+  // Excel / Spreadsheet Navigation Helpers
+  void _focusCell(int colIdx, int rowIdx) {
+    if (rowIdx >= 4) {
+      rowIdx = 0;
+      colIdx = (colIdx + 1) % 5;
+    } else if (rowIdx < 0) {
+      rowIdx = 3;
+      colIdx = (colIdx - 1 + 5) % 5;
+    }
+
+    if (colIdx >= 5) {
+      colIdx = 0;
+    } else if (colIdx < 0) {
+      colIdx = 4;
+    }
+
+    _box3FocusNodes[colIdx][rowIdx].requestFocus();
+  }
+
+  void _focusNextRow(int colIdx, int rowIdx) {
+    _focusCell(colIdx, rowIdx + 1);
+  }
+
+  void _focusPrevRow(int colIdx, int rowIdx) {
+    _focusCell(colIdx, rowIdx - 1);
+  }
+
+  void _focusNextCol(int colIdx, int rowIdx) {
+    _focusCell(colIdx + 1, rowIdx);
+  }
+
+  void _focusPrevCol(int colIdx, int rowIdx) {
+    _focusCell(colIdx - 1, rowIdx);
   }
 
   void _syncBox3Controllers(PerformanceRecord record) {
@@ -284,10 +367,15 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
             child: Container(
               color: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 16,
+                runSpacing: 12,
                 children: [
+                  // Tab Heading (Left Side)
                   Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
                         padding: const EdgeInsets.all(8),
@@ -295,150 +383,172 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                           color: Colors.blue.shade50,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(Icons.analytics_rounded, color: Colors.blueAccent, size: 26),
+                        child: const Icon(Icons.analytics_rounded, color: Colors.blueAccent, size: 24),
                       ),
                       const SizedBox(width: 12),
                       const Text(
                         'Performance Dashboard',
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black87),
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
 
-                  // Year and Month Selector Row
-                  Card(
-                    elevation: 0,
-                    color: Colors.grey.shade50,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      side: BorderSide(color: Colors.grey.shade200),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Wrap(
-                        alignment: WrapAlignment.spaceBetween,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 20,
-                        runSpacing: 12,
-                        children: [
-                          // Year Selector
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.calendar_today_rounded, size: 18, color: Colors.blueAccent),
-                              const SizedBox(width: 8),
-                              const Text('Year: ', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.black87)),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.shade50,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.blue.shade200),
-                                ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<int>(
-                                    value: selectedYear,
-                                    isDense: true,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent, fontSize: 15),
-                                    items: _availableYears.map((yr) {
-                                      return DropdownMenuItem<int>(
-                                        value: yr,
-                                        child: Text('$yr'),
-                                      );
-                                    }).toList(),
-                                    onChanged: (newYear) {
-                                      if (newYear != null) {
-                                        ref.read(selectedPerformanceYearProvider.notifier).state = newYear;
-                                      }
-                                    },
-                                  ),
-                                ),
+                  // Year and Month Controls (Right Side, Same Line)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Year Control Box
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.blue.shade200),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.calendar_month_rounded, size: 16, color: Colors.blueAccent),
+                            const SizedBox(width: 6),
+                            const Text(
+                              'YEAR',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                                color: Colors.blueGrey,
+                                letterSpacing: 0.5,
                               ),
-                            ],
-                          ),
-
-                          // Month Selector with Arrows
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.date_range_rounded, size: 18, color: Colors.blueAccent),
-                              const SizedBox(width: 8),
-                              const Text('Month: ', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.black87)),
-                              Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(20),
-                                  onTap: () => _previousMonth(selectedYear, selectedMonth),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(6.0),
-                                    child: Icon(Icons.arrow_back_ios_rounded, size: 16, color: Colors.blue.shade700),
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.shade50,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.blue.shade200),
-                                ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<int>(
-                                    value: selectedMonth,
-                                    isDense: true,
-                                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent, fontSize: 15),
-                                    items: List.generate(12, (index) => index + 1).map((m) {
-                                      return DropdownMenuItem<int>(
-                                        value: m,
-                                        child: Text(_monthNames[m - 1]),
-                                      );
-                                    }).toList(),
-                                    onChanged: (newMonth) {
-                                      if (newMonth != null) {
-                                        ref.read(selectedPerformanceMonthProvider.notifier).state = newMonth;
-                                      }
-                                    },
-                                  ),
-                                ),
-                              ),
-                              Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(20),
-                                  onTap: () => _nextMonth(selectedYear, selectedMonth),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(6.0),
-                                    child: Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.blue.shade700),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          // Summary badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade50,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.blue.shade200),
                             ),
-                            child: Text(
-                              '${_monthNames[selectedMonth - 1]} $selectedYear',
-                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade800, fontSize: 13),
+                            const SizedBox(width: 6),
+                            DropdownButtonHideUnderline(
+                              child: DropdownButton<int>(
+                                value: selectedYear,
+                                isDense: true,
+                                icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.blueAccent, size: 18),
+                                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade900, fontSize: 14),
+                                items: _availableYears.map((yr) {
+                                  return DropdownMenuItem<int>(
+                                    value: yr,
+                                    child: Text('$yr'),
+                                  );
+                                }).toList(),
+                                onChanged: (newYear) {
+                                  if (newYear != null) {
+                                    ref.read(selectedPerformanceYearProvider.notifier).state = newYear;
+                                  }
+                                },
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
+
+                      const SizedBox(width: 10),
+
+                      // Month Navigation & Control Bar
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(width: 4),
+                            const Icon(Icons.date_range_rounded, size: 16, color: Colors.blueAccent),
+                            const SizedBox(width: 4),
+                            const Text(
+                              'MONTH',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                                color: Colors.blueGrey,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+
+                            // Left Navigation Button (<)
+                            Material(
+                              color: Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(6),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(6),
+                                onTap: () => _previousMonth(selectedYear, selectedMonth),
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: Colors.blue.shade200),
+                                  ),
+                                  child: const Icon(Icons.chevron_left_rounded, size: 16, color: Colors.blueAccent),
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(width: 6),
+
+                            // Month Dropdown Selector
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: Colors.blue.shade200),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<int>(
+                                  value: selectedMonth,
+                                  isDense: true,
+                                  icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.blueAccent, size: 18),
+                                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade900, fontSize: 14),
+                                  items: List.generate(12, (index) => index + 1).map((m) {
+                                    return DropdownMenuItem<int>(
+                                      value: m,
+                                      child: Text(_monthNames[m - 1]),
+                                    );
+                                  }).toList(),
+                                  onChanged: (newMonth) {
+                                    if (newMonth != null) {
+                                      ref.read(selectedPerformanceMonthProvider.notifier).state = newMonth;
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(width: 6),
+
+                            // Right Navigation Button (>)
+                            Material(
+                              color: Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(6),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(6),
+                                onTap: () => _nextMonth(selectedYear, selectedMonth),
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: Colors.blue.shade200),
+                                  ),
+                                  child: const Icon(Icons.chevron_right_rounded, size: 16, color: Colors.blueAccent),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
           ),
 
-          // Main Performance Cards Grid/Flex Layout
+          // Main Performance Containers Layout
           SliverPadding(
             padding: const EdgeInsets.all(16.0),
             sliver: SliverToBoxAdapter(
@@ -447,34 +557,44 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                 children: [
                   LayoutBuilder(
                     builder: (context, constraints) {
-                      final double boxWidth = isDesktop ? (constraints.maxWidth - 16) / 2 : constraints.maxWidth;
-                      return Wrap(
-                        spacing: 16,
-                        runSpacing: 16,
+                      final double halfWidth = isDesktop ? (constraints.maxWidth - 16) / 2 : constraints.maxWidth;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // --- Primary Metrics ---
-                          SizedBox(
-                            width: boxWidth,
-                            child: _buildBoxOneCard(context, notifier),
-                          ),
+                          // Row 1: Primary Metrics & Days & Earnings
+                          if (isDesktop)
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(
+                                  width: halfWidth,
+                                  child: _buildBoxOneCard(context, notifier),
+                                ),
+                                const SizedBox(width: 16),
+                                SizedBox(
+                                  width: halfWidth,
+                                  child: Column(
+                                    children: [
+                                      _buildBoxTwoCard(context, notifier),
+                                      const SizedBox(height: 16),
+                                      _buildBoxFourCard(context, notifier),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            )
+                          else ...[
+                            _buildBoxOneCard(context, notifier),
+                            const SizedBox(height: 16),
+                            _buildBoxTwoCard(context, notifier),
+                            const SizedBox(height: 16),
+                            _buildBoxFourCard(context, notifier),
+                          ],
 
-                          // --- Days & Earnings ---
-                          SizedBox(
-                            width: boxWidth,
-                            child: _buildBoxTwoCard(context, notifier),
-                          ),
+                          const SizedBox(height: 16),
 
-                          // --- JJ Workway & Targets ---
-                          SizedBox(
-                            width: boxWidth,
-                            child: _buildBoxThreeCard(context, notifier),
-                          ),
-
-                          // --- For MDRT ---
-                          SizedBox(
-                            width: boxWidth,
-                            child: _buildBoxFourCard(context, notifier),
-                          ),
+                          // Row 2: JJ Workway & Targets (Spreadsheet keyboard-navigable matrix)
+                          _buildBoxThreeCard(context, notifier),
                         ],
                       );
                     },
@@ -691,7 +811,7 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
     );
   }
 
-  // Section 3: JJ Workway & Targets Card (5 Column Headers x 4 Input Rows)
+  // Section 3: JJ Workway & Targets Card (Excel/Spreadsheet keyboard-navigable matrix with Arrow keys & Enter)
   Widget _buildBoxThreeCard(BuildContext context, PerformanceNotifier notifier) {
     final columns = [
       {
@@ -757,27 +877,27 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
             ),
             const SizedBox(height: 14),
 
-            // Horizontal Table View: 5 Column Headers across top, 4 input rows below
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: columns.map((col) {
-                  final String title = col['title'] as String;
-                  final IconData icon = col['icon'] as IconData;
-                  final List<TextEditingController> controllers = col['controllers'] as List<TextEditingController>;
-                  final String prefixKey = col['prefixKey'] as String;
+            // Spreadsheet Keyboard-Navigable Matrix (5 Columns x 4 Rows)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: columns.asMap().entries.map((entry) {
+                final int colIdx = entry.key;
+                final col = entry.value;
+                final String title = col['title'] as String;
+                final IconData icon = col['icon'] as IconData;
+                final List<TextEditingController> controllers = col['controllers'] as List<TextEditingController>;
+                final String prefixKey = col['prefixKey'] as String;
 
-                  return Container(
-                    width: 125,
-                    margin: const EdgeInsets.only(right: 8.0),
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Column Header Title Badge
+                        // Column Header Badge
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
                           decoration: BoxDecoration(
                             color: Colors.blue.shade50,
                             borderRadius: BorderRadius.circular(8),
@@ -793,9 +913,10 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.blueAccent,
-                                  fontSize: 12,
+                                  fontSize: 11,
                                 ),
                                 textAlign: TextAlign.center,
+                                maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ],
@@ -803,41 +924,91 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                         ),
                         const SizedBox(height: 8),
 
-                        // 4 Input Rows under this Column Header
+                        // 4 Input Rows under this Column Header with Excel/Spreadsheet Keyboard Controls
                         ...List.generate(4, (rowIdx) {
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 6.0),
-                            child: TextField(
-                              controller: controllers[rowIdx],
-                              onChanged: (val) {
-                                notifier.updateBox3Field('$prefixKey${rowIdx + 1}', val);
+                            child: Focus(
+                              onKeyEvent: (node, event) {
+                                if (event is KeyDownEvent) {
+                                  final key = event.logicalKey;
+                                  if (key == LogicalKeyboardKey.arrowDown) {
+                                    _focusNextRow(colIdx, rowIdx);
+                                    return KeyEventResult.handled;
+                                  } else if (key == LogicalKeyboardKey.arrowUp) {
+                                    _focusPrevRow(colIdx, rowIdx);
+                                    return KeyEventResult.handled;
+                                  } else if (key == LogicalKeyboardKey.arrowRight) {
+                                    bool isAtEnd = false;
+                                    final sel = controllers[rowIdx].selection;
+                                    if (!sel.isValid || sel.isCollapsed) {
+                                      if (sel.baseOffset == controllers[rowIdx].text.length) {
+                                        isAtEnd = true;
+                                      }
+                                    } else {
+                                      isAtEnd = true;
+                                    }
+                                    if (isAtEnd) {
+                                      _focusNextCol(colIdx, rowIdx);
+                                      return KeyEventResult.handled;
+                                    }
+                                  } else if (key == LogicalKeyboardKey.arrowLeft) {
+                                    bool isAtStart = false;
+                                    final sel = controllers[rowIdx].selection;
+                                    if (!sel.isValid || sel.isCollapsed) {
+                                      if (sel.baseOffset == 0) {
+                                        isAtStart = true;
+                                      }
+                                    } else {
+                                      isAtStart = true;
+                                    }
+                                    if (isAtStart) {
+                                      _focusPrevCol(colIdx, rowIdx);
+                                      return KeyEventResult.handled;
+                                    }
+                                  }
+                                }
+                                return KeyEventResult.ignored;
                               },
-                              decoration: InputDecoration(
-                                labelText: 'Row ${rowIdx + 1}',
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
+                              child: TextField(
+                                focusNode: _box3FocusNodes[colIdx][rowIdx],
+                                controller: controllers[rowIdx],
+                                textInputAction: TextInputAction.next,
+                                onSubmitted: (_) {
+                                  _focusNextRow(colIdx, rowIdx);
+                                },
+                                onChanged: (val) {
+                                  notifier.updateBox3Field('$prefixKey${rowIdx + 1}', val);
+                                },
+                                style: const TextStyle(fontSize: 12),
+                                decoration: InputDecoration(
+                                  labelText: 'R${rowIdx + 1}',
+                                  labelStyle: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                    borderSide: BorderSide(color: Colors.grey.shade300),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                    borderSide: const BorderSide(color: Colors.blueAccent, width: 1.5),
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.grey.shade50,
                                 ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  borderSide: BorderSide(color: Colors.grey.shade300),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  borderSide: const BorderSide(color: Colors.blueAccent, width: 1.5),
-                                ),
-                                filled: true,
-                                fillColor: Colors.grey.shade50,
                               ),
                             ),
                           );
                         }),
                       ],
                     ),
-                  );
-                }).toList(),
-              ),
+                  ),
+                );
+              }).toList(),
             ),
           ],
         ),
