@@ -10,6 +10,7 @@ final securityServiceProvider = Provider<SecurityService>((ref) {
 class SecurityService {
   final FlutterSecureStorage _storage;
   static const String _pinHashKey = 'app_pin_hash';
+  static const String _idleTimeoutKey = 'auto_lock_timeout_minutes';
 
   SecurityService(this._storage);
 
@@ -42,5 +43,17 @@ class SecurityService {
   /// Clear PIN (e.g. for reset/testing, though normally not exposed directly without verification)
   Future<void> clearPin() async {
     await _storage.delete(key: _pinHashKey);
+  }
+
+  /// Get configured idle timeout in minutes (default is 5 minutes)
+  Future<int> getAutoLockTimeoutMinutes() async {
+    final val = await _storage.read(key: _idleTimeoutKey);
+    if (val == null) return 5;
+    return int.tryParse(val) ?? 5;
+  }
+
+  /// Set configured idle timeout in minutes (0 means Never)
+  Future<void> setAutoLockTimeoutMinutes(int minutes) async {
+    await _storage.write(key: _idleTimeoutKey, value: minutes.toString());
   }
 }

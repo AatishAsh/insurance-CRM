@@ -85,3 +85,26 @@ final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
 });
 
 final isPickingFileProvider = StateProvider<bool>((ref) => false);
+
+class AutoLockTimeoutNotifier extends StateNotifier<int> {
+  final SecurityService _securityService;
+
+  AutoLockTimeoutNotifier(this._securityService) : super(5) {
+    _loadTimeout();
+  }
+
+  Future<void> _loadTimeout() async {
+    final timeout = await _securityService.getAutoLockTimeoutMinutes();
+    state = timeout;
+  }
+
+  Future<void> setTimeoutMinutes(int minutes) async {
+    await _securityService.setAutoLockTimeoutMinutes(minutes);
+    state = minutes;
+  }
+}
+
+final autoLockTimeoutProvider = StateNotifierProvider<AutoLockTimeoutNotifier, int>((ref) {
+  final securityService = ref.read(securityServiceProvider);
+  return AutoLockTimeoutNotifier(securityService);
+});

@@ -451,6 +451,62 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
                           ],
                         ),
                       ),
+                    const Divider(height: 28),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Auto-Lock Idle Timeout',
+                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Automatically lock the app after a specified duration of inactivity.',
+                                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        DropdownButtonHideUnderline(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.blue.shade200),
+                            ),
+                            child: DropdownButton<int>(
+                              value: ref.watch(autoLockTimeoutProvider),
+                              icon: const Icon(Icons.timer_outlined, color: Colors.blueAccent, size: 18),
+                              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade900, fontSize: 13),
+                              items: const [
+                                DropdownMenuItem(value: 1, child: Text('1 Minute')),
+                                DropdownMenuItem(value: 5, child: Text('5 Minutes')),
+                                DropdownMenuItem(value: 15, child: Text('15 Minutes')),
+                                DropdownMenuItem(value: 30, child: Text('30 Minutes')),
+                                DropdownMenuItem(value: 0, child: Text('Never')),
+                              ],
+                              onChanged: (val) {
+                                if (val != null) {
+                                  ref.read(autoLockTimeoutProvider.notifier).setTimeoutMinutes(val);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(val == 0 ? 'Auto-lock disabled' : 'Auto-lock set to $val minutes'),
+                                      duration: const Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
