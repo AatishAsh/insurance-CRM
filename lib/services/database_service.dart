@@ -66,6 +66,46 @@ class DatabaseService {
     });
   }
 
+  Future<void> renameCompany(Company company, String oldName, String newName) async {
+    company.name = newName;
+    company.updatedAt = DateTime.now();
+
+    await isar.writeTxn(() async {
+      await isar.companys.put(company);
+
+      if (oldName.trim().isNotEmpty && oldName != newName) {
+        final customers = await isar.customers.filter().isDeletedEqualTo(false).findAll();
+        for (final c in customers) {
+          bool updated = false;
+          if (c.selfCompany == oldName) {
+            c.selfCompany = newName;
+            updated = true;
+          }
+          if (c.fatherCompany == oldName) {
+            c.fatherCompany = newName;
+            updated = true;
+          }
+          if (c.motherCompany == oldName) {
+            c.motherCompany = newName;
+            updated = true;
+          }
+          if (c.spouseCompany == oldName) {
+            c.spouseCompany = newName;
+            updated = true;
+          }
+          if (c.childrenCompany == oldName) {
+            c.childrenCompany = newName;
+            updated = true;
+          }
+          if (updated) {
+            c.updatedAt = DateTime.now();
+            await isar.customers.put(c);
+          }
+        }
+      }
+    });
+  }
+
   // --- CUSTOMER OPERATIONS ---
 
   Future<List<Customer>> getCustomers({String? searchQuery}) async {

@@ -100,6 +100,7 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
   // Search, Filtering and Sorting states
   String _searchQuery = '';
   String _selectedStatusFilter = 'All';
+  String _selectedDateFilter = 'all'; // 'all', 'month', 'year'
   int? _sortColumnIndex;
   bool _sortAscending = true;
   final TextEditingController _searchController = TextEditingController();
@@ -388,6 +389,65 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
     );
   }
 
+  bool _matchesDateFilter(MarketingLead lead, String dateFilter) {
+    if (dateFilter == 'all') return true;
+
+    final now = DateTime.now();
+
+    // Check if any visit date matches current month / current year
+    final hasMatchingVisit = lead.visits.any((v) {
+      if (v.visitDate == null) return false;
+      if (dateFilter == 'month') {
+        return v.visitDate!.year == now.year && v.visitDate!.month == now.month;
+      } else if (dateFilter == 'year') {
+        return v.visitDate!.year == now.year;
+      }
+      return false;
+    });
+
+    if (hasMatchingVisit) return true;
+
+    // Fallback to lead.updatedAt
+    if (dateFilter == 'month') {
+      return lead.updatedAt.year == now.year && lead.updatedAt.month == now.month;
+    } else if (dateFilter == 'year') {
+      return lead.updatedAt.year == now.year;
+    }
+
+    return false;
+  }
+
+  Widget _buildPeriodFilterChip(String label, String value) {
+    final bool isSelected = _selectedDateFilter == value;
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedDateFilter = value;
+        });
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.blueAccent : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: isSelected
+              ? [BoxShadow(color: Colors.blueAccent.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))]
+              : [],
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.blueGrey.shade800,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+            fontSize: 12,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildFilterChips() {
     final List<String> filters = ['All', 'Confirmed', 'Hold', 'Postponed', 'Documents Pending', 'Dropped'];
     return Wrap(
@@ -458,18 +518,21 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
       ),
       body: leadsAsync.when(
         data: (leads) {
-          // Calculate statistics based on actual leads in db
-          final totalLeadsCount = leads.length;
-          final confirmedCount = leads.where((l) => getNormalizedStatus(l.status) == 'Confirmed').length;
-          final droppedCount = leads.where((l) => getNormalizedStatus(l.status) == 'Dropped').length;
+          // Apply time period filter first
+          final timeFilteredLeads = leads.where((lead) => _matchesDateFilter(lead, _selectedDateFilter)).toList();
+
+          // Calculate statistics based on time-filtered leads in db
+          final totalLeadsCount = timeFilteredLeads.length;
+          final confirmedCount = timeFilteredLeads.where((l) => getNormalizedStatus(l.status) == 'Confirmed').length;
+          final droppedCount = timeFilteredLeads.where((l) => getNormalizedStatus(l.status) == 'Dropped').length;
           
-          final holdCount = leads.where((l) => getNormalizedStatus(l.status) == 'Hold').length;
-          final postponedCount = leads.where((l) => getNormalizedStatus(l.status) == 'Postponed').length;
-          final pendDocsCount = leads.where((l) => getNormalizedStatus(l.status) == 'Documents Pending').length;
+          final holdCount = timeFilteredLeads.where((l) => getNormalizedStatus(l.status) == 'Hold').length;
+          final postponedCount = timeFilteredLeads.where((l) => getNormalizedStatus(l.status) == 'Postponed').length;
+          final pendDocsCount = timeFilteredLeads.where((l) => getNormalizedStatus(l.status) == 'Documents Pending').length;
           final pendingCount = holdCount + postponedCount + pendDocsCount;
 
-          // Apply filters and searches locally
-          var filteredLeads = leads.where((lead) {
+          // Apply status filters and searches locally
+          var filteredLeads = timeFilteredLeads.where((lead) {
             final query = _searchQuery.toLowerCase().trim();
             final matchesQuery = query.isEmpty ||
                 lead.name.toLowerCase().contains(query) ||
@@ -628,45 +691,116 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: SearchBar(
-                                controller: _searchController,
-                                hintText: 'Search by name, mobile, status or visit notes...',
-                                leading: const Icon(Icons.search, color: Colors.blue),
-                                trailing: [
-                                  if (_searchController.text.isNotEmpty)
-                                    IconButton(
-                                      icon: const Icon(Icons.clear, color: Colors.grey),
-                                      onPressed: () {
-                                        setState(() {
-                                          _searchController.clear();
-                                          _searchQuery = '';
-                                        });
-                                      },
-                                    ),
-                                ],
-                                elevation: WidgetStateProperty.all(0),
-                                backgroundColor: WidgetStateProperty.all(Colors.grey[50]),
-                                padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 12.0)),
-                                shape: WidgetStateProperty.all(
-                                  RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    side: BorderSide(color: Colors.grey[200]!),
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            final isCompact = constraints.maxWidth < 650;
+                            final searchWidget = SearchBar(
+                              controller: _searchController,
+                              hintText: 'Search by name, mobile, status or visit notes...',
+                              leading: const Icon(Icons.search, color: Colors.blue),
+                              trailing: [
+                                if (_searchController.text.isNotEmpty)
+                                  IconButton(
+                                    icon: const Icon(Icons.clear, color: Colors.grey),
+                                    onPressed: () {
+                                      setState(() {
+                                        _searchController.clear();
+                                        _searchQuery = '';
+                                      });
+                                    },
                                   ),
+                              ],
+                              elevation: WidgetStateProperty.all(0),
+                              backgroundColor: WidgetStateProperty.all(Colors.grey[50]),
+                              padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 12.0)),
+                              shape: WidgetStateProperty.all(
+                                RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(color: Colors.grey[200]!),
                                 ),
-                                onChanged: (value) {
-                                  setState(() {
-                                    _searchQuery = value;
-                                  });
-                                },
                               ),
-                            ),
-                          ],
+                              onChanged: (value) {
+                                setState(() {
+                                  _searchQuery = value;
+                                });
+                              },
+                            );
+
+                            final periodToggleWidget = Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade100,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: Colors.grey.shade300),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _buildPeriodFilterChip('All Time', 'all'),
+                                  _buildPeriodFilterChip('This Month', 'month'),
+                                  _buildPeriodFilterChip('This Year', 'year'),
+                                ],
+                              ),
+                            );
+
+                            if (isCompact) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  searchWidget,
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.date_range_rounded, size: 18, color: Colors.blueAccent),
+                                      const SizedBox(width: 6),
+                                      const Text('Period:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: Colors.blueGrey)),
+                                      const SizedBox(width: 8),
+                                      Expanded(child: SingleChildScrollView(scrollDirection: Axis.horizontal, child: periodToggleWidget)),
+                                    ],
+                                  ),
+                                ],
+                              );
+                            }
+
+                            return Row(
+                              children: [
+                                Expanded(child: searchWidget),
+                                const SizedBox(width: 12),
+                                periodToggleWidget,
+                              ],
+                            );
+                          },
                         ),
                         const SizedBox(height: 12),
-                        _buildFilterChips(),
+                        Row(
+                          children: [
+                            Expanded(child: _buildFilterChips()),
+                            if (_selectedDateFilter != 'all') ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade50,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: Colors.blue.shade200),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.event_available_rounded, size: 14, color: Colors.blueAccent),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _selectedDateFilter == 'month'
+                                          ? DateFormat('MMMM yyyy').format(DateTime.now())
+                                          : DateFormat('yyyy').format(DateTime.now()),
+                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.blueAccent),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ],
                     ),
                   ),

@@ -445,10 +445,14 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     );
   }
 
-  // Helper for Dropdowns
+  // Helper for Dropdowns (safely handles custom or legacy company values)
   Widget _buildDropdownField(String key, String label, List<String> options) {
     final value = _dropdowns[key] ?? '';
-    final items = options.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList();
+    final effectiveOptions = List<String>.from(options);
+    if (value.isNotEmpty && !effectiveOptions.contains(value)) {
+      effectiveOptions.insert(0, value);
+    }
+    final items = effectiveOptions.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList();
     
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
@@ -467,6 +471,21 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
         ),
       ),
     );
+  }
+
+  // Helper for Responsive Layout Rows (side-by-side on desktop, stacked on mobile)
+  Widget _buildResponsiveRow(bool isDesktop, List<Widget> fields) {
+    if (isDesktop) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: fields.map((f) => Expanded(child: f)).toList(),
+      );
+    } else {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: fields,
+      );
+    }
   }
 
   // Helper for Expansion Accordion Card
@@ -523,125 +542,76 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),
-                  child: Row(
-                    children: [
-                      Expanded(child: _buildField('name', 'Full Name *', required: true)),
-                      Expanded(child: _buildField('customerId', 'Customer ID (e.g. CUST-001)')),
-                    ],
-                  ),
+                  child: _buildResponsiveRow(isDesktop, [
+                    _buildField('name', 'Full Name *', required: true),
+                    _buildField('customerId', 'Customer ID (e.g. CUST-001)'),
+                  ]),
                 ),
               ),
               const SizedBox(height: 12),
 
               // Accordion 1: Personal Details
               _buildAccordionSection('Personal Details', Icons.person_outline, [
-                if (isDesktop)
-                  Row(
-                    children: [
-                      Expanded(child: _buildField('fatherName', "Father's Name")),
-                      Expanded(child: _buildDateField('dateOfBirth', 'Date of Birth')),
-                    ],
-                  )
-                else ...[
+                _buildResponsiveRow(isDesktop, [
                   _buildField('fatherName', "Father's Name"),
                   _buildDateField('dateOfBirth', 'Date of Birth'),
-                ],
-                if (isDesktop)
-                  Row(
-                    children: [
-                      Expanded(child: _buildDropdownField('maritalStatus', 'Marital Status', ['Single', 'Married', 'Divorced', 'Widowed'])),
-                      Expanded(child: _buildField('spouseName', 'Spouse Name')),
-                    ],
-                  )
-                else ...[
+                ]),
+                _buildResponsiveRow(isDesktop, [
                   _buildDropdownField('maritalStatus', 'Marital Status', ['Single', 'Married', 'Divorced', 'Widowed']),
                   _buildField('spouseName', 'Spouse Name'),
-                ],
-                if (isDesktop)
-                  Row(
-                    children: [
-                      Expanded(child: _buildField('nationality', 'Nationality')),
-                      Expanded(child: _buildField('aadhaarNumber', 'Aadhaar Number', keyboardType: TextInputType.number)),
-                    ],
-                  )
-                else ...[
+                ]),
+                _buildResponsiveRow(isDesktop, [
                   _buildField('nationality', 'Nationality'),
                   _buildField('aadhaarNumber', 'Aadhaar Number', keyboardType: TextInputType.number),
-                ],
-                Row(
-                  children: [
-                    Expanded(child: _buildField('qualification', 'Qualification')),
-                    Expanded(child: _buildField('height', 'Height')),
-                    Expanded(child: _buildField('weight', 'Weight')),
-                  ],
-                ),
+                ]),
+                _buildResponsiveRow(isDesktop, [
+                  _buildField('qualification', 'Qualification'),
+                  _buildField('height', 'Height'),
+                  _buildField('weight', 'Weight'),
+                ]),
               ]),
 
               // Accordion 2: Family Details
               _buildAccordionSection('Family Details', Icons.family_restroom_outlined, [
-                Row(
-                  children: [
-                    Expanded(child: _buildField('numberOfChildren', 'Number of Children', keyboardType: TextInputType.number)),
-                    Expanded(child: _buildDateField('familyDOB', 'Family DOB')),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(child: _buildField('fatherAge', "Father's Age")),
-                    Expanded(child: _buildField('motherAge', "Mother's Age")),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(child: _buildField('spouseAge', "Spouse's Age")),
-                    Expanded(child: _buildField('brotherAge', "Brother's Age")),
-                    Expanded(child: _buildField('sisterAge', "Sister's Age")),
-                  ],
-                ),
+                _buildResponsiveRow(isDesktop, [
+                  _buildField('numberOfChildren', 'Number of Children', keyboardType: TextInputType.number),
+                  _buildDateField('familyDOB', 'Family DOB'),
+                ]),
+                _buildResponsiveRow(isDesktop, [
+                  _buildField('fatherAge', "Father's Age"),
+                  _buildField('motherAge', "Mother's Age"),
+                ]),
+                _buildResponsiveRow(isDesktop, [
+                  _buildField('spouseAge', "Spouse's Age"),
+                  _buildField('brotherAge', "Brother's Age"),
+                  _buildField('sisterAge', "Sister's Age"),
+                ]),
               ]),
 
               // Accordion 3: Professional Details
               _buildAccordionSection('Professional Information', Icons.business_center_outlined, [
                 _buildField('employerBusinessName', 'Employer / Business Name'),
-                Row(
-                  children: [
-                    Expanded(child: _buildField('designation', 'Designation')),
-                    Expanded(child: _buildField('natureOfBusiness', 'Nature of Business / Occupation')),
-                  ],
-                ),
+                _buildResponsiveRow(isDesktop, [
+                  _buildField('designation', 'Designation'),
+                  _buildField('natureOfBusiness', 'Nature of Business / Occupation'),
+                ]),
                 _buildField('annualIncome', 'Annual Income', keyboardType: TextInputType.number),
               ]),
 
               // Accordion 4: Contact Information
               _buildAccordionSection('Contact Details', Icons.call_outlined, [
-                if (isDesktop)
-                  Row(
-                    children: [
-                      Expanded(child: _buildField('mobileNumber1', 'Mobile Number 1', keyboardType: TextInputType.phone)),
-                      Expanded(child: _buildField('mobileNumber2', 'Mobile Number 2', keyboardType: TextInputType.phone)),
-                    ],
-                  )
-                else ...[
+                _buildResponsiveRow(isDesktop, [
                   _buildField('mobileNumber1', 'Mobile Number 1', keyboardType: TextInputType.phone),
                   _buildField('mobileNumber2', 'Mobile Number 2', keyboardType: TextInputType.phone),
-                ],
-                if (isDesktop)
-                  Row(
-                    children: [
-                      Expanded(child: _buildField('mobileNumber3', 'Mobile Number 3', keyboardType: TextInputType.phone)),
-                      Expanded(child: _buildField('mobileNumber4', 'Mobile Number 4', keyboardType: TextInputType.phone)),
-                    ],
-                  )
-                else ...[
+                ]),
+                _buildResponsiveRow(isDesktop, [
                   _buildField('mobileNumber3', 'Mobile Number 3', keyboardType: TextInputType.phone),
                   _buildField('mobileNumber4', 'Mobile Number 4', keyboardType: TextInputType.phone),
-                ],
-                Row(
-                  children: [
-                    Expanded(child: _buildField('officeContactNumber', 'Office Contact', keyboardType: TextInputType.phone)),
-                    Expanded(child: _buildField('emailId', 'Email ID', keyboardType: TextInputType.emailAddress)),
-                  ],
-                ),
+                ]),
+                _buildResponsiveRow(isDesktop, [
+                  _buildField('officeContactNumber', 'Office Contact', keyboardType: TextInputType.phone),
+                  _buildField('emailId', 'Email ID', keyboardType: TextInputType.emailAddress),
+                ]),
               ]),
 
               // Accordion 5: Address Information
@@ -653,68 +623,50 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
 
               // Accordion 6: Nominee Information
               _buildAccordionSection('Nominee Details', Icons.badge_outlined, [
-                Row(
-                  children: [
-                    Expanded(child: _buildField('nomineeName', 'Nominee Name')),
-                    Expanded(child: _buildField('nomineeRelationship', 'Relationship')),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(child: _buildDateField('nomineeDOB', 'Nominee DOB')),
-                    Expanded(child: _buildField('nomineeFatherName', "Nominee's Father's Name")),
-                  ],
-                ),
+                _buildResponsiveRow(isDesktop, [
+                  _buildField('nomineeName', 'Nominee Name'),
+                  _buildField('nomineeRelationship', 'Relationship'),
+                ]),
+                _buildResponsiveRow(isDesktop, [
+                  _buildDateField('nomineeDOB', 'Nominee DOB'),
+                  _buildField('nomineeFatherName', "Nominee's Father's Name"),
+                ]),
                 _buildField('nomineePan', 'Nominee PAN'),
-                Row(
-                  children: [
-                    Expanded(child: _buildField('nomineeMobile1', 'Nominee Mobile 1', keyboardType: TextInputType.phone)),
-                    Expanded(child: _buildField('nomineeMobile2', 'Nominee Mobile 2', keyboardType: TextInputType.phone)),
-                  ],
-                ),
+                _buildResponsiveRow(isDesktop, [
+                  _buildField('nomineeMobile1', 'Nominee Mobile 1', keyboardType: TextInputType.phone),
+                  _buildField('nomineeMobile2', 'Nominee Mobile 2', keyboardType: TextInputType.phone),
+                ]),
                 _buildField('nomineeEmail', 'Nominee Email', keyboardType: TextInputType.emailAddress),
               ]),
 
               // Accordion 7: Insurance Policy Details
               _buildAccordionSection('Insurance Details', Icons.security_outlined, [
                 _buildDropdownField('selfCompany', 'Self Assigned Company', _companies),
-                Row(
-                  children: [
-                    Expanded(child: _buildField('selfPolicyNumber', 'Self Policy Number')),
-                    Expanded(child: _buildField('selfYearOfIssue', 'Year of Issue')),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(child: _buildField('selfSumAssured1', 'Sum Assured 1')),
-                    Expanded(child: _buildField('selfSumAssured2', 'Sum Assured 2')),
-                  ],
-                ),
+                _buildResponsiveRow(isDesktop, [
+                  _buildField('selfPolicyNumber', 'Self Policy Number'),
+                  _buildField('selfYearOfIssue', 'Year of Issue'),
+                ]),
+                _buildResponsiveRow(isDesktop, [
+                  _buildField('selfSumAssured1', 'Sum Assured 1'),
+                  _buildField('selfSumAssured2', 'Sum Assured 2'),
+                ]),
                 const Divider(height: 24),
-                Row(
-                  children: [
-                    Expanded(child: _buildField('fatherPolicyNumber', 'Father Policy Number')),
-                    Expanded(child: _buildField('fatherCompany', 'Father Company')),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(child: _buildField('motherPolicyNumber', 'Mother Policy Number')),
-                    Expanded(child: _buildField('motherCompany', 'Mother Company')),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(child: _buildField('spousePolicyNumber', 'Spouse Policy Number')),
-                    Expanded(child: _buildField('spouseCompany', 'Spouse Company')),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(child: _buildField('childrenPolicyNumber', 'Children Policy Number')),
-                    Expanded(child: _buildField('childrenCompany', 'Children Company')),
-                  ],
-                ),
+                _buildResponsiveRow(isDesktop, [
+                  _buildField('fatherPolicyNumber', 'Father Policy Number'),
+                  _buildField('fatherCompany', 'Father Company'),
+                ]),
+                _buildResponsiveRow(isDesktop, [
+                  _buildField('motherPolicyNumber', 'Mother Policy Number'),
+                  _buildField('motherCompany', 'Mother Company'),
+                ]),
+                _buildResponsiveRow(isDesktop, [
+                  _buildField('spousePolicyNumber', 'Spouse Policy Number'),
+                  _buildField('spouseCompany', 'Spouse Company'),
+                ]),
+                _buildResponsiveRow(isDesktop, [
+                  _buildField('childrenPolicyNumber', 'Children Policy Number'),
+                  _buildField('childrenCompany', 'Children Company'),
+                ]),
               ]),
 
               // Accordion 8: Health Details
@@ -736,61 +688,46 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
               // Accordion 10: Mutual Finance Specifics
               _buildAccordionSection('PAN & Mutual Finance Details', Icons.account_balance_outlined, [
                 _buildField('panNumber', 'PAN Number'),
-                Row(
-                  children: [
-                    Expanded(child: _buildField('riskCover', 'Risk Cover')),
-                    Expanded(child: _buildField('pensionPlan', 'Pension Plan')),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(child: _buildField('investmentPlan', 'Investment Plan')),
-                    Expanded(child: _buildField('mutualFunds', 'Mutual Funds')),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(child: _buildField('mediClaim', 'Medi Claim')),
-                    Expanded(child: _buildField('moneyBackPolicy', 'Money Back Policy')),
-                  ],
-                ),
+                _buildResponsiveRow(isDesktop, [
+                  _buildField('riskCover', 'Risk Cover'),
+                  _buildField('pensionPlan', 'Pension Plan'),
+                ]),
+                _buildResponsiveRow(isDesktop, [
+                  _buildField('investmentPlan', 'Investment Plan'),
+                  _buildField('mutualFunds', 'Mutual Funds'),
+                ]),
+                _buildResponsiveRow(isDesktop, [
+                  _buildField('mediClaim', 'Medi Claim'),
+                  _buildField('moneyBackPolicy', 'Money Back Policy'),
+                ]),
                 _buildField('childrenEducationPlan', "Children's Education Plan"),
               ]),
 
               // Accordion 11: Reminders
               _buildAccordionSection('Reminders', Icons.alarm_outlined, [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        children: [
-                          _buildDateField('reminderDate1', 'Reminder Date 1'),
-                          _buildField('reminderNote1', 'Reminder 1 Note', maxLines: 2),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          _buildDateField('reminderDate2', 'Reminder Date 2'),
-                          _buildField('reminderNote2', 'Reminder 2 Note', maxLines: 2),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                _buildResponsiveRow(isDesktop, [
+                  Column(
+                    children: [
+                      _buildDateField('reminderDate1', 'Reminder Date 1'),
+                      _buildField('reminderNote1', 'Reminder 1 Note', maxLines: 2),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      _buildDateField('reminderDate2', 'Reminder Date 2'),
+                      _buildField('reminderNote2', 'Reminder 2 Note', maxLines: 2),
+                    ],
+                  ),
+                ]),
               ]),
 
               // Accordion 12: Reference Details
               _buildAccordionSection('References', Icons.people_outline, [
                 _buildField('referenceFriendName', "Friend's Name"),
-                Row(
-                  children: [
-                    Expanded(child: _buildField('referenceMobile', 'Reference Mobile', keyboardType: TextInputType.phone)),
-                    Expanded(child: _buildField('referenceAge', 'Reference Age')),
-                  ],
-                ),
+                _buildResponsiveRow(isDesktop, [
+                  _buildField('referenceMobile', 'Reference Mobile', keyboardType: TextInputType.phone),
+                  _buildField('referenceAge', 'Reference Age'),
+                ]),
               ]),
 
               // Accordion 13: Document Attachments

@@ -314,6 +314,7 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
   }
 
   void _showEditCompanyDialog(Company company) {
+    final oldName = company.name;
     final controller = TextEditingController(text: company.name);
     final refController = TextEditingController(text: company.referenceNumber);
 
@@ -334,9 +335,9 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
             onPressed: () async {
               if (controller.text.trim().isNotEmpty) {
                 final db = ref.read(databaseServiceProvider);
-                company.name = controller.text.trim();
+                final newName = controller.text.trim();
                 company.referenceNumber = refController.text.trim();
-                await db.saveCompany(company);
+                await db.renameCompany(company, oldName, newName);
                 ref.invalidate(companiesProvider);
                 if (context.mounted) Navigator.pop(context);
               }
