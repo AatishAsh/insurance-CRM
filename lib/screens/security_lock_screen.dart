@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
+import '../theme/app_colors.dart';
+import '../widgets/brand_background.dart';
 
 class SecurityLockScreen extends ConsumerStatefulWidget {
   const SecurityLockScreen({super.key});
@@ -101,165 +103,185 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E2C), // Sleek Dark Premium Background
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 400),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Logo Icon
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.blueAccent.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.blueAccent.withOpacity(0.3), width: 2),
-                    ),
-                    child: const Icon(
-                      Icons.lock_person_rounded,
-                      size: 48,
-                      color: Colors.blueAccent,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // App Title
-                  const Text(
-                    'SHINECRAFT CRM',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2.0,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    isSetup ? 'Set up a 4-digit PIN to secure your data offline.' : 'Offline Client Vault',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.grey[400],
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Message State
-                  Text(
-                    _message,
-                    style: TextStyle(
-                      color: _hasError ? Colors.redAccent : Colors.white70,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // PIN Dots Display
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(4, (index) {
-                      final filled = index < _digits.length;
-                      return Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 10),
-                        width: 16,
-                        height: 16,
-                        decoration: BoxDecoration(
-                          color: filled
-                              ? (_hasError ? Colors.redAccent : Colors.blueAccent)
-                              : Colors.transparent,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: _hasError
-                                ? Colors.redAccent
-                                : (filled ? Colors.blueAccent : Colors.grey[600]!),
-                            width: 2,
-                          ),
-                          boxShadow: filled && !_hasError
-                              ? [
-                                  BoxShadow(
-                                    color: Colors.blueAccent.withOpacity(0.5),
-                                    blurRadius: 8,
-                                    spreadRadius: 1,
-                                  )
-                                ]
-                              : null,
+      backgroundColor: AppColors.appBackground,
+      body: BrandBackground(
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 400),
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppColors.cardSurface,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: AppColors.cardBorder),
+                  boxShadow: [AppColors.cardShadow],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Logo Icon Container with Brand Gradient
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppColors.skyBlue.withOpacity(0.12),
+                            AppColors.limeGreen.withOpacity(0.12),
+                          ],
                         ),
-                      );
-                    }),
-                  ),
-                  const SizedBox(height: 24),
-                  // Keypad
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 3,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 1.35,
-                    ),
-                    itemCount: 12,
-                    itemBuilder: (context, index) {
-                      if (index == 9) {
-                        // Clear Button
-                        return _buildKeypadButton(
-                          child: const Text(
-                            'C',
-                            style: TextStyle(color: Colors.grey, fontSize: 20, fontWeight: FontWeight.bold),
-                          ),
-                          onTap: _onClear,
-                        );
-                      }
-                      if (index == 10) {
-                        // Zero Key
-                        return _buildKeypadButton(
-                          child: const Text(
-                            '0',
-                            style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                          ),
-                          onTap: () => _onKeyPress(0),
-                        );
-                      }
-                      if (index == 11) {
-                        // Backspace Button
-                        return _buildKeypadButton(
-                          child: const Icon(Icons.backspace_outlined, color: Colors.grey, size: 22),
-                          onTap: _onBackspace,
-                        );
-                      }
-                      // Number Keys 1-9
-                      final num = index + 1;
-                      return _buildKeypadButton(
-                        child: Text(
-                          '$num',
-                          style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                        ),
-                        onTap: () => _onKeyPress(num),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  // Footer Branding
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.code_rounded, size: 14, color: Colors.grey[500]),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Crafted by Shine Craft Technologies',
-                        style: TextStyle(
-                          color: Colors.grey[400],
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 0.5,
-                        ),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.skyBlue.withOpacity(0.3), width: 1.5),
                       ),
-                    ],
-                  ),
-                ],
+                      child: const Icon(
+                        Icons.lock_person_rounded,
+                        size: 44,
+                        color: AppColors.skyBlue,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // App Title
+                    RichText(
+                      text: const TextSpan(
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                        ),
+                        children: [
+                          TextSpan(text: 'SHINECRAFT ', style: TextStyle(color: AppColors.headingText)),
+                          TextSpan(text: 'CRM', style: TextStyle(color: AppColors.skyBlue)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      isSetup ? 'Set up a 4-digit PIN to secure your data offline.' : 'Offline Client Vault',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppColors.mutedText,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // Message State
+                    Text(
+                      _message,
+                      style: TextStyle(
+                        color: _hasError ? AppColors.roseAccent : AppColors.headingText,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // PIN Dots Display
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(4, (index) {
+                        final filled = index < _digits.length;
+                        return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 10),
+                          width: 16,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: filled
+                                ? (_hasError ? AppColors.roseAccent : AppColors.limeGreen)
+                                : Colors.transparent,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: _hasError
+                                  ? AppColors.roseAccent
+                                  : (filled ? AppColors.limeGreen : AppColors.cardBorder),
+                              width: 2,
+                            ),
+                            boxShadow: filled && !_hasError
+                                ? [
+                                    BoxShadow(
+                                      color: AppColors.limeGreen.withOpacity(0.4),
+                                      blurRadius: 8,
+                                      spreadRadius: 1,
+                                    )
+                                  ]
+                                : null,
+                          ),
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 24),
+                    // Keypad
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        childAspectRatio: 1.35,
+                      ),
+                      itemCount: 12,
+                      itemBuilder: (context, index) {
+                        if (index == 9) {
+                          // Clear Button
+                          return _buildKeypadButton(
+                            child: const Text(
+                              'C',
+                              style: TextStyle(color: AppColors.mutedText, fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                            onTap: _onClear,
+                          );
+                        }
+                        if (index == 10) {
+                          // Zero Key
+                          return _buildKeypadButton(
+                            child: const Text(
+                              '0',
+                              style: TextStyle(color: AppColors.headingText, fontSize: 22, fontWeight: FontWeight.bold),
+                            ),
+                            onTap: () => _onKeyPress(0),
+                          );
+                        }
+                        if (index == 11) {
+                          // Backspace Button
+                          return _buildKeypadButton(
+                            child: const Icon(Icons.backspace_outlined, color: AppColors.mutedText, size: 20),
+                            onTap: _onBackspace,
+                          );
+                        }
+                        // Number Keys 1-9
+                        final num = index + 1;
+                        return _buildKeypadButton(
+                          child: Text(
+                            '$num',
+                            style: const TextStyle(color: AppColors.headingText, fontSize: 22, fontWeight: FontWeight.bold),
+                          ),
+                          onTap: () => _onKeyPress(num),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    // Footer Branding
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.shield_outlined, size: 14, color: AppColors.skyBlue),
+                        const SizedBox(width: 6),
+                        const Text(
+                          'Crafted by Shine Craft Technologies',
+                          style: TextStyle(
+                            color: AppColors.mutedText,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -273,14 +295,14 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        splashColor: Colors.blueAccent.withOpacity(0.2),
-        highlightColor: Colors.blueAccent.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(14),
+        splashColor: AppColors.skyBlue.withOpacity(0.15),
+        highlightColor: AppColors.limeGreen.withOpacity(0.1),
         child: Ink(
           decoration: BoxDecoration(
-            color: const Color(0xFF2E2E3E), // Darker tiles
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF3E3E52), width: 1),
+            color: AppColors.appBackgroundAlt,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.cardBorder, width: 1),
           ),
           child: Center(child: child),
         ),

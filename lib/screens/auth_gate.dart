@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
+import '../theme/app_colors.dart';
+import '../widgets/brand_background.dart';
 import 'security_lock_screen.dart';
 
 class AuthGate extends ConsumerStatefulWidget {
@@ -74,9 +76,11 @@ class _AuthGateState extends ConsumerState<AuthGate> with WidgetsBindingObserver
     switch (authState.status) {
       case AuthStatus.uninitialized:
         return const Scaffold(
-          backgroundColor: Color(0xFF1E1E2C),
-          body: Center(
-            child: CircularProgressIndicator(color: Colors.blueAccent),
+          backgroundColor: AppColors.appBackground,
+          body: BrandBackground(
+            child: Center(
+              child: CircularProgressIndicator(color: AppColors.skyBlue),
+            ),
           ),
         );
       case AuthStatus.setupRequired:

@@ -9,6 +9,7 @@ import '../models/work_task.dart';
 import '../providers/work_provider.dart';
 import '../models/marketing_lead.dart';
 import '../providers/marketing_provider.dart';
+import '../theme/app_colors.dart';
 
 class CalendarEvent {
   final String title;
@@ -174,11 +175,13 @@ class _UpcomingEventsScreenState extends ConsumerState<UpcomingEventsScreen> {
     final marketingLeadsAsync = ref.watch(marketingListProvider);
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Upcoming Events Dashboard'),
+        backgroundColor: AppColors.cardSurface,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh, color: AppColors.skyBlue),
             onPressed: () {
               ref.invalidate(customerListProvider);
               ref.invalidate(upcomingEventsProvider);

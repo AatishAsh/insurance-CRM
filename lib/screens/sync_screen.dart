@@ -11,6 +11,8 @@ import '../providers/events_provider.dart';
 import '../providers/work_provider.dart';
 import '../services/backup_service.dart';
 import '../services/security_service.dart';
+import '../theme/app_colors.dart';
+import '../widgets/brand_background.dart';
 
 class SyncScreen extends ConsumerStatefulWidget {
   const SyncScreen({super.key});
@@ -144,11 +146,14 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
     final syncService = ref.watch(syncServiceProvider);
     
     return Scaffold(
+      backgroundColor: AppColors.appBackground,
       appBar: AppBar(
-        title: const Text('Settings & Synchronization'),
+        title: const Text('Settings & Synchronization', style: TextStyle(color: AppColors.headingText, fontWeight: FontWeight.bold)),
+        backgroundColor: AppColors.cardSurface,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+      body: BrandBackground(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -690,6 +695,7 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
             const SizedBox(height: 24),
           ],
         ),
+      ),
       ),
     );
   }

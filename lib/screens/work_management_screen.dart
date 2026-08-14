@@ -5,6 +5,7 @@ import '../models/work_task.dart';
 import '../models/company.dart';
 import '../providers/work_provider.dart';
 import '../services/database_service.dart';
+import '../theme/app_colors.dart';
 
 class WorkManagementScreen extends ConsumerStatefulWidget {
   const WorkManagementScreen({super.key});
@@ -20,14 +21,15 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
     final selectedCompanyId = ref.watch(selectedCompanyIdProvider);
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: Row(
         children: [
           // Sidebar for Company Selection (loads dynamic companies from Isar)
           Container(
             width: 200,
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              border: Border(right: BorderSide(color: Colors.grey[200]!)),
+            decoration: const BoxDecoration(
+              color: AppColors.cardSurface,
+              border: Border(right: BorderSide(color: AppColors.cardBorder)),
             ),
             child: companiesAsync.when(
               data: (companies) {
@@ -39,25 +41,25 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                     return Container(
                       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: isSelected ? Colors.blue.withOpacity(0.08) : Colors.transparent,
-                        borderRadius: BorderRadius.circular(8),
+                        color: isSelected ? AppColors.badgeBlueBg : Colors.transparent,
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: ListTile(
                         dense: true,
                         title: Text(
                           company.name,
                           style: TextStyle(
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            color: isSelected ? Colors.blueAccent : Colors.black87,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                            color: isSelected ? AppColors.skyBlue : AppColors.headingText,
                           ),
                         ),
                         subtitle: Text(
                           company.referenceNumber ?? '',
-                          style: const TextStyle(fontSize: 10, color: Colors.grey),
+                          style: const TextStyle(fontSize: 10, color: AppColors.mutedText),
                         ),
                         selected: isSelected,
                         trailing: IconButton(
-                          icon: const Icon(Icons.edit, size: 14, color: Colors.grey),
+                          icon: const Icon(Icons.edit_outlined, size: 14, color: AppColors.mutedText),
                           onPressed: () => _showEditCompanyDialog(company),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),

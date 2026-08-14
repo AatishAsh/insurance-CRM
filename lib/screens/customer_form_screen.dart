@@ -5,9 +5,12 @@ import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/customer.dart';
+import '../models/insurance_company.dart';
 import '../services/database_service.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/rename_file_dialog.dart';
+import '../theme/app_colors.dart';
+import '../widgets/brand_background.dart';
 
 class CustomerFormScreen extends ConsumerStatefulWidget {
   final Customer? customer;
@@ -33,8 +36,27 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
   // Documents
   List<CustomerDocument> _documents = [];
 
-  // Configured Insurance/Finance Companies (loaded from DB)
-  List<String> _companies = [];
+  // Configured Insurance Companies (loaded from DB, up to 15 max)
+  List<String> _insuranceCompanies = [];
+
+  // Children DOBs list
+  List<DateTime?> _childrenDOBs = [];
+
+  // Multiple Plans list
+  List<CustomerPlanItem> _plans = [];
+
+  // Multiple References list
+  List<CustomerReferenceItem> _references = [];
+
+  String _calculateAgeString(DateTime? dob) {
+    if (dob == null) return '';
+    final now = DateTime.now();
+    int age = now.year - dob.year;
+    if (now.month < dob.month || (now.month == dob.month && now.day < dob.day)) {
+      age--;
+    }
+    return age < 0 ? '0' : age.toString();
+  }
 
   @override
   void initState() {
@@ -45,10 +67,296 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
 
   void _loadCompanies() async {
     final db = ref.read(databaseServiceProvider);
-    final companyList = await db.getCompanies();
+    final insuranceList = await db.getInsuranceCompanies();
     setState(() {
-      _companies = companyList.map((c) => c.name).toList();
+      _insuranceCompanies = insuranceList.map((c) => c.name).toList();
     });
+  }
+
+  void _showAddInsuranceCompanyDialog() async {
+    final db = ref.read(databaseServiceProvider);
+    if (_insuranceCompanies.length >= 15) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.orange),
+              SizedBox(width: 8),
+              Text('Limit Reached'),
+            ],
+          ),
+          content: const Text('Maximum limit of 15 insurance companies reached.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    final controller = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Insurance Company'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Add a reusable insurance company name (Max 15 total).',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: controller,
+                decoration: const InputDecoration(
+                  labelText: 'Company Name *',
+                  hintText: 'e.g. LIC, HDFC Life, Star Health',
+                  border: OutlineInputBorder(),
+                ),
+                autofocus: true,
+                validator: (val) {
+                  if (val == null || val.trim().isEmpty) return 'Company name is required';
+                  if (_insuranceCompanies.any((existing) => existing.toLowerCase() == val.trim().toLowerCase())) {
+                    return 'Company already exists';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                Navigator.pop(context, controller.text.trim());
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+
+    if (newName != null && newName.isNotEmpty) {
+      try {
+        await db.saveInsuranceCompany(newName);
+        _loadCompanies();
+        setState(() {
+          _dropdowns['selfCompany'] = newName;
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Insurance company "$newName" added!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error adding company: $e'),
+              backgroundColor: Colors.redAccent,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  void _showManageInsuranceCompaniesDialog() async {
+    final db = ref.read(databaseServiceProvider);
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return FutureBuilder<List<InsuranceCompany>>(
+            future: db.getInsuranceCompanies(),
+            builder: (context, snapshot) {
+              final companies = snapshot.data ?? [];
+              return AlertDialog(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                title: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.business, color: Colors.blueAccent),
+                        SizedBox(width: 8),
+                        Text('Manage Companies'),
+                      ],
+                    ),
+                    Text(
+                      '${companies.length}/15',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
+                content: SizedBox(
+                  width: 400,
+                  child: companies.isEmpty
+                      ? const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Text(
+                            'No insurance companies added yet. Click "+ Add" to create your first company.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        )
+                      : ListView.separated(
+                          shrinkWrap: true,
+                          itemCount: companies.length,
+                          separatorBuilder: (_, __) => const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final comp = companies[index];
+                            return ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                              title: Text(
+                                comp.name,
+                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.edit_outlined, color: Colors.blue, size: 20),
+                                    tooltip: 'Edit / Rename',
+                                    onPressed: () async {
+                                      final editController = TextEditingController(text: comp.name);
+                                      final formKey = GlobalKey<FormState>();
+                                      final oldName = comp.name;
+
+                                      final renamed = await showDialog<String>(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: const Text('Edit Insurance Company'),
+                                          content: Form(
+                                            key: formKey,
+                                            child: TextFormField(
+                                              controller: editController,
+                                              decoration: const InputDecoration(
+                                                labelText: 'Company Name *',
+                                                border: OutlineInputBorder(),
+                                              ),
+                                              autofocus: true,
+                                              validator: (val) {
+                                                if (val == null || val.trim().isEmpty) return 'Name is required';
+                                                return null;
+                                              },
+                                            ),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(context),
+                                              child: const Text('Cancel'),
+                                            ),
+                                            ElevatedButton(
+                                              onPressed: () {
+                                                if (formKey.currentState!.validate()) {
+                                                  Navigator.pop(context, editController.text.trim());
+                                                }
+                                              },
+                                              child: const Text('Save'),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+
+                                      if (renamed != null && renamed.isNotEmpty && renamed != oldName) {
+                                        try {
+                                          await db.renameInsuranceCompany(comp, oldName, renamed);
+                                          _loadCompanies();
+                                          if (_dropdowns['selfCompany'] == oldName) {
+                                            _dropdowns['selfCompany'] = renamed;
+                                          }
+                                          if (_dropdowns['fatherCompany'] == oldName) {
+                                            _dropdowns['fatherCompany'] = renamed;
+                                          }
+                                          if (_dropdowns['motherCompany'] == oldName) {
+                                            _dropdowns['motherCompany'] = renamed;
+                                          }
+                                          if (_dropdowns['spouseCompany'] == oldName) {
+                                            _dropdowns['spouseCompany'] = renamed;
+                                          }
+                                          if (_dropdowns['childrenCompany'] == oldName) {
+                                            _dropdowns['childrenCompany'] = renamed;
+                                          }
+                                          setDialogState(() {});
+                                        } catch (e) {
+                                          if (mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text('Error: $e'), backgroundColor: Colors.redAccent),
+                                            );
+                                          }
+                                        }
+                                      }
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                                    tooltip: 'Delete Company',
+                                    onPressed: () async {
+                                      final confirm = await showDialog<bool>(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: const Text('Delete Insurance Company'),
+                                          content: Text('Are you sure you want to delete "${comp.name}"?'),
+                                          actions: [
+                                            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                                            ElevatedButton(
+                                              onPressed: () => Navigator.pop(context, true),
+                                              style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                                              child: const Text('Delete'),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+
+                                      if (confirm == true) {
+                                        await db.deleteInsuranceCompany(comp.id);
+                                        _loadCompanies();
+                                        if (_dropdowns['selfCompany'] == comp.name) {
+                                          _dropdowns['selfCompany'] = '';
+                                        }
+                                        setDialogState(() {});
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Close'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      ),
+    );
   }
 
   void _initFields() {
@@ -61,8 +369,8 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
       'spouseAge', 'brotherAge', 'sisterAge', 'employerBusinessName', 'designation',
       'natureOfBusiness', 'annualIncome', 'officeContactNumber', 'mobileNumber1',
       'mobileNumber2', 'mobileNumber3', 'mobileNumber4', 'emailId', 'panNumber',
-      'nomineeName', 'nomineeRelationship', 'nomineeFatherName', 'nomineePan',
-      'nomineeMobile1', 'nomineeMobile2', 'nomineeEmail', 'selfPolicyNumber',
+      'nomineeName', 'nomineeFatherName', 'nomineePan',
+      'nomineeMobile1', 'nomineeMobile2', 'nomineeEmail', 'appointeeName', 'appointeeOtherRelationship', 'selfPolicyNumber',
       'selfSumAssured1', 'selfSumAssured2', 'selfYearOfIssue', 'fatherPolicyNumber',
       'fatherCompany', 'motherPolicyNumber', 'motherCompany', 'spousePolicyNumber',
       'spouseCompany', 'childrenPolicyNumber', 'childrenCompany', 'healthProblems',
@@ -105,12 +413,13 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
       _controllers['emailId']!.text = c.emailId ?? '';
       _controllers['panNumber']!.text = c.panNumber ?? '';
       _controllers['nomineeName']!.text = c.nomineeName ?? '';
-      _controllers['nomineeRelationship']!.text = c.nomineeRelationship ?? '';
       _controllers['nomineeFatherName']!.text = c.nomineeFatherName ?? '';
       _controllers['nomineePan']!.text = c.nomineePan ?? '';
       _controllers['nomineeMobile1']!.text = c.nomineeMobile1 ?? '';
       _controllers['nomineeMobile2']!.text = c.nomineeMobile2 ?? '';
       _controllers['nomineeEmail']!.text = c.nomineeEmail ?? '';
+      _controllers['appointeeName']!.text = c.appointeeName ?? '';
+      _controllers['appointeeOtherRelationship']!.text = c.appointeeOtherRelationship ?? '';
       _controllers['selfPolicyNumber']!.text = c.selfPolicyNumber ?? '';
       _controllers['selfSumAssured1']!.text = c.selfSumAssured1 ?? '';
       _controllers['selfSumAssured2']!.text = c.selfSumAssured2 ?? '';
@@ -147,21 +456,80 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
 
       // Date fields
       _dates['dateOfBirth'] = c.dateOfBirth;
-      _dates['familyDOB'] = c.familyDOB;
+      _dates['fatherDOB'] = c.fatherDOB;
+      _dates['motherDOB'] = c.motherDOB;
+      _dates['spouseDOB'] = c.spouseDOB;
       _dates['weddingAnniversary'] = c.weddingAnniversary;
       _dates['nomineeDOB'] = c.nomineeDOB;
+      _dates['appointeeDOB'] = c.appointeeDOB;
       _dates['reminderDate1'] = c.reminderDate1;
       _dates['reminderDate2'] = c.reminderDate2;
 
+      if (c.childrenDOBs != null) {
+        _childrenDOBs = List.from(c.childrenDOBs!);
+      }
+
       // Dropdown fields
       _dropdowns['maritalStatus'] = c.maritalStatus ?? '';
+      _dropdowns['nomineeRelationship'] = c.nomineeRelationship ?? '';
+      _dropdowns['appointeeRelationship'] = c.appointeeRelationship ?? '';
       _dropdowns['selfCompany'] = c.selfCompany ?? '';
       _dropdowns['premiumMode'] = c.premiumMode ?? '';
       _dropdowns['lifestyleHabits'] = c.lifestyleHabits ?? '';
 
       // Documents
       _documents = List.from(c.documents);
+
+      // Plans
+      if (c.plans.isNotEmpty) {
+        _plans = c.plans
+            .map((p) => CustomerPlanItem()
+              ..productName = p.productName
+              ..premium = p.premium
+              ..mode = p.mode
+              ..planSumAssured = p.planSumAssured
+              ..rider = p.rider)
+            .toList();
+      } else if (c.productName != null || c.planSumAssured != null) {
+        _plans = [
+          CustomerPlanItem()
+            ..productName = c.productName
+            ..premium = null
+            ..mode = c.premiumMode
+            ..planSumAssured = c.planSumAssured
+            ..rider = c.rider
+        ];
+      } else {
+        _plans = [CustomerPlanItem()];
+      }
+
+      // References
+      if (c.references.isNotEmpty) {
+        _references = c.references
+            .map((r) => CustomerReferenceItem()
+              ..name = r.name
+              ..mobile = r.mobile
+              ..age = r.age)
+            .toList();
+      } else if (c.referenceFriendName != null || c.referenceMobile != null) {
+        _references = [
+          CustomerReferenceItem()
+            ..name = c.referenceFriendName
+            ..mobile = c.referenceMobile
+            ..age = c.referenceAge
+        ];
+      } else {
+        _references = [CustomerReferenceItem()];
+      }
+    } else {
+      _plans = [CustomerPlanItem()];
+      _references = [CustomerReferenceItem()];
     }
+  }
+
+  bool _isNomineeMinor(String rel) {
+    final norm = rel.trim().toLowerCase();
+    return norm == 'minor daughter' || norm == 'minor son';
   }
 
   @override
@@ -321,12 +689,15 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     customer.emailId = _controllers['emailId']!.text;
     customer.panNumber = _controllers['panNumber']!.text;
     customer.nomineeName = _controllers['nomineeName']!.text;
-    customer.nomineeRelationship = _controllers['nomineeRelationship']!.text;
+    customer.nomineeRelationship = _dropdowns['nomineeRelationship']?.isEmpty ?? true ? null : _dropdowns['nomineeRelationship'];
     customer.nomineeFatherName = _controllers['nomineeFatherName']!.text;
     customer.nomineePan = _controllers['nomineePan']!.text;
     customer.nomineeMobile1 = _controllers['nomineeMobile1']!.text;
     customer.nomineeMobile2 = _controllers['nomineeMobile2']!.text;
     customer.nomineeEmail = _controllers['nomineeEmail']!.text;
+    customer.appointeeName = _controllers['appointeeName']!.text.isEmpty ? null : _controllers['appointeeName']!.text;
+    customer.appointeeRelationship = _dropdowns['appointeeRelationship']?.isEmpty ?? true ? null : _dropdowns['appointeeRelationship'];
+    customer.appointeeOtherRelationship = _controllers['appointeeOtherRelationship']!.text.isEmpty ? null : _controllers['appointeeOtherRelationship']!.text;
     customer.selfPolicyNumber = _controllers['selfPolicyNumber']!.text;
     customer.selfSumAssured1 = _controllers['selfSumAssured1']!.text;
     customer.selfSumAssured2 = _controllers['selfSumAssured2']!.text;
@@ -343,10 +714,13 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     customer.pregnancyDetails = _controllers['pregnancyDetails']!.text;
     customer.healthRemarks = _controllers['healthRemarks']!.text;
     customer.communicationAddress = _controllers['communicationAddress']!.text;
-    customer.permanentAddress = _controllers['permanentAddress']!.text;
-    customer.productName = _controllers['productName']!.text;
-    customer.planSumAssured = _controllers['planSumAssured']!.text;
-    customer.rider = _controllers['rider']!.text;
+    customer.plans = _plans;
+    if (_plans.isNotEmpty) {
+      customer.productName = _plans.first.productName;
+      customer.premiumMode = _plans.first.mode;
+      customer.planSumAssured = _plans.first.planSumAssured;
+      customer.rider = _plans.first.rider;
+    }
     customer.riskCover = _controllers['riskCover']!.text;
     customer.pensionPlan = _controllers['pensionPlan']!.text;
     customer.investmentPlan = _controllers['investmentPlan']!.text;
@@ -354,18 +728,26 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     customer.mediClaim = _controllers['mediClaim']!.text;
     customer.moneyBackPolicy = _controllers['moneyBackPolicy']!.text;
     customer.childrenEducationPlan = _controllers['childrenEducationPlan']!.text;
-    customer.referenceFriendName = _controllers['referenceFriendName']!.text;
-    customer.referenceMobile = _controllers['referenceMobile']!.text;
-    customer.referenceAge = _controllers['referenceAge']!.text;
+    customer.references = _references;
+    if (_references.isNotEmpty) {
+      customer.referenceFriendName = _references.first.name;
+      customer.referenceMobile = _references.first.mobile;
+      customer.referenceAge = _references.first.age;
+    }
     customer.reminderNote1 = _controllers['reminderNote1']!.text;
     customer.reminderNote2 = _controllers['reminderNote2']!.text;
     customer.notes = _controllers['notes']!.text;
 
     // Date assignments
     customer.dateOfBirth = _dates['dateOfBirth'];
-    customer.familyDOB = _dates['familyDOB'];
+    customer.fatherDOB = _dates['fatherDOB'];
+    customer.motherDOB = _dates['motherDOB'];
+    customer.spouseDOB = _dates['spouseDOB'];
+    customer.childrenDOBs = _childrenDOBs.where((d) => d != null).cast<DateTime>().toList();
+    customer.familyDOB = null; // Removed in favor of individual DOBs
     customer.weddingAnniversary = _dates['weddingAnniversary'];
     customer.nomineeDOB = _dates['nomineeDOB'];
+    customer.appointeeDOB = _dates['appointeeDOB'];
     customer.reminderDate1 = _dates['reminderDate1'];
     customer.reminderDate2 = _dates['reminderDate2'];
 
@@ -385,13 +767,23 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
   }
 
   // Helper for text fields
-  Widget _buildField(String key, String label, {TextInputType keyboardType = TextInputType.text, int maxLines = 1, bool required = false}) {
+  Widget _buildField(
+    String key,
+    String label, {
+    TextInputType keyboardType = TextInputType.text,
+    int maxLines = 1,
+    bool required = false,
+    Function(String)? onChanged,
+  }) {
+    final isMultiLine = maxLines > 1;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
       child: TextFormField(
         controller: _controllers[key],
-        keyboardType: keyboardType,
+        keyboardType: isMultiLine ? TextInputType.multiline : keyboardType,
         maxLines: maxLines,
+        textInputAction: isMultiLine ? TextInputAction.newline : null,
+        onChanged: onChanged,
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
@@ -409,7 +801,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
   }
 
   // Helper for Date pickers
-  Widget _buildDateField(String key, String label) {
+  Widget _buildDateField(String key, String label, {Function(DateTime)? onDatePicked}) {
     final value = _dates[key];
     final text = value == null ? '' : DateFormat('dd MMM yyyy').format(value);
     
@@ -426,6 +818,9 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
           if (picked != null) {
             setState(() {
               _dates[key] = picked;
+              if (onDatePicked != null) {
+                onDatePicked(picked);
+              }
             });
           }
         },
@@ -515,20 +910,23 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     final isDesktop = width > 800;
 
     return Scaffold(
+      backgroundColor: AppColors.appBackground,
       appBar: AppBar(
-        title: Text(isEdit ? 'Edit Customer Profile' : 'Add New Customer'),
+        title: Text(isEdit ? 'Edit Customer Profile' : 'Add New Customer', style: const TextStyle(color: AppColors.headingText, fontWeight: FontWeight.bold)),
+        backgroundColor: AppColors.cardSurface,
         actions: [
           IconButton(
-            icon: const Icon(Icons.check),
+            icon: const Icon(Icons.check, color: AppColors.skyBlue),
             tooltip: 'Save',
             onPressed: _saveForm,
           ),
         ],
       ),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+      body: BrandBackground(
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -553,7 +951,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
               // Accordion 1: Personal Details
               _buildAccordionSection('Personal Details', Icons.person_outline, [
                 _buildResponsiveRow(isDesktop, [
-                  _buildField('fatherName', "Father's Name"),
+                  _buildField('fatherName', "Proposer’s Name"),
                   _buildDateField('dateOfBirth', 'Date of Birth'),
                 ]),
                 _buildResponsiveRow(isDesktop, [
@@ -574,18 +972,103 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
               // Accordion 2: Family Details
               _buildAccordionSection('Family Details', Icons.family_restroom_outlined, [
                 _buildResponsiveRow(isDesktop, [
-                  _buildField('numberOfChildren', 'Number of Children', keyboardType: TextInputType.number),
-                  _buildDateField('familyDOB', 'Family DOB'),
+                  _buildDateField('fatherDOB', "Father's DOB", onDatePicked: (picked) {
+                    _controllers['fatherAge']!.text = _calculateAgeString(picked);
+                  }),
+                  _buildField('fatherAge', "Father's Age", keyboardType: TextInputType.number),
                 ]),
                 _buildResponsiveRow(isDesktop, [
-                  _buildField('fatherAge', "Father's Age"),
-                  _buildField('motherAge', "Mother's Age"),
+                  _buildDateField('motherDOB', "Mother's DOB", onDatePicked: (picked) {
+                    _controllers['motherAge']!.text = _calculateAgeString(picked);
+                  }),
+                  _buildField('motherAge', "Mother's Age", keyboardType: TextInputType.number),
                 ]),
                 _buildResponsiveRow(isDesktop, [
-                  _buildField('spouseAge', "Spouse's Age"),
-                  _buildField('brotherAge', "Brother's Age"),
-                  _buildField('sisterAge', "Sister's Age"),
+                  _buildDateField('spouseDOB', "Spouse's DOB", onDatePicked: (picked) {
+                    _controllers['spouseAge']!.text = _calculateAgeString(picked);
+                  }),
+                  _buildField('spouseAge', "Spouse's Age", keyboardType: TextInputType.number),
                 ]),
+                _buildResponsiveRow(isDesktop, [
+                  _buildField('brotherAge', "Brother's Age", keyboardType: TextInputType.number),
+                  _buildField('sisterAge', "Sister's Age", keyboardType: TextInputType.number),
+                ]),
+                _buildField(
+                  'numberOfChildren',
+                  'Number of Children',
+                  keyboardType: TextInputType.number,
+                  onChanged: (val) {
+                    final count = int.tryParse(val) ?? 0;
+                    setState(() {
+                      while (_childrenDOBs.length < count) {
+                        _childrenDOBs.add(null);
+                      }
+                      if (_childrenDOBs.length > count) {
+                        _childrenDOBs = _childrenDOBs.sublist(0, count);
+                      }
+                    });
+                  },
+                ),
+                if ((int.tryParse(_controllers['numberOfChildren']?.text ?? '0') ?? 0) > 0) ...[
+                  const SizedBox(height: 8),
+                  ...List.generate(int.tryParse(_controllers['numberOfChildren']?.text ?? '0') ?? 0, (index) {
+                    final DateTime? childDob = index < _childrenDOBs.length ? _childrenDOBs[index] : null;
+                    final String childAge = _calculateAgeString(childDob);
+                    final dateText = childDob == null ? '' : DateFormat('dd MMM yyyy').format(childDob);
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: _buildResponsiveRow(isDesktop, [
+                        InkWell(
+                          onTap: () async {
+                            final picked = await showDatePicker(
+                              context: context,
+                              initialDate: childDob ?? DateTime.now(),
+                              firstDate: DateTime(1900),
+                              lastDate: DateTime(2100),
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                while (_childrenDOBs.length <= index) {
+                                  _childrenDOBs.add(null);
+                                }
+                                _childrenDOBs[index] = picked;
+                              });
+                            }
+                          },
+                          child: InputDecorator(
+                            decoration: InputDecoration(
+                              labelText: 'Child ${index + 1} DOB',
+                              border: const OutlineInputBorder(),
+                              isDense: true,
+                              suffixIcon: const Icon(Icons.calendar_today, size: 20),
+                            ),
+                            child: Text(
+                              dateText.isEmpty ? 'Select Child ${index + 1} DOB' : dateText,
+                              style: TextStyle(color: dateText.isEmpty ? Colors.grey[600] : Colors.black87),
+                            ),
+                          ),
+                        ),
+                        InputDecorator(
+                          decoration: InputDecoration(
+                            labelText: 'Child ${index + 1} Age',
+                            border: const OutlineInputBorder(),
+                            isDense: true,
+                            filled: true,
+                            fillColor: Colors.grey.shade100,
+                          ),
+                          child: Text(
+                            childAge.isEmpty ? '' : childAge,
+                            style: TextStyle(
+                              fontWeight: childAge.isNotEmpty ? FontWeight.w500 : FontWeight.normal,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ),
+                      ]),
+                    );
+                  }),
+                ],
               ]),
 
               // Accordion 3: Professional Details
@@ -625,7 +1108,9 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
               _buildAccordionSection('Nominee Details', Icons.badge_outlined, [
                 _buildResponsiveRow(isDesktop, [
                   _buildField('nomineeName', 'Nominee Name'),
-                  _buildField('nomineeRelationship', 'Relationship'),
+                  _buildDropdownField('nomineeRelationship', 'Relationship', [
+                    'Spouse', 'Father', 'Mother', 'Son', 'Daughter', 'Minor Daughter', 'Minor Son'
+                  ]),
                 ]),
                 _buildResponsiveRow(isDesktop, [
                   _buildDateField('nomineeDOB', 'Nominee DOB'),
@@ -637,11 +1122,62 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                   _buildField('nomineeMobile2', 'Nominee Mobile 2', keyboardType: TextInputType.phone),
                 ]),
                 _buildField('nomineeEmail', 'Nominee Email', keyboardType: TextInputType.emailAddress),
+                if (_isNomineeMinor(_dropdowns['nomineeRelationship'] ?? '')) ...[
+                  const SizedBox(height: 12),
+                  const Divider(),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 4.0),
+                    child: Text(
+                      'Appointee Details (Nominee is Minor)',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.blueAccent),
+                    ),
+                  ),
+                  _buildResponsiveRow(isDesktop, [
+                    _buildField('appointeeName', 'Appointee Name'),
+                    _buildDateField('appointeeDOB', 'Appointee DOB'),
+                  ]),
+                  _buildDropdownField('appointeeRelationship', 'Appointee Relationship', [
+                    'Father', 'Mother', 'Other'
+                  ]),
+                  if ((_dropdowns['appointeeRelationship'] ?? '').toLowerCase() == 'other')
+                    _buildField('appointeeOtherRelationship', 'Type Appointee Relationship'),
+                ],
               ]),
 
               // Accordion 7: Insurance Policy Details
               _buildAccordionSection('Insurance Details', Icons.security_outlined, [
-                _buildDropdownField('selfCompany', 'Self Assigned Company', _companies),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: _buildDropdownField('selfCompany', 'Self Assigned Company', _insuranceCompanies),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 4.0, top: 4.0),
+                      child: OutlinedButton.icon(
+                        onPressed: _showAddInsuranceCompanyDialog,
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Add'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0, top: 4.0),
+                      child: OutlinedButton.icon(
+                        onPressed: _showManageInsuranceCompaniesDialog,
+                        icon: const Icon(Icons.settings_outlined, size: 18),
+                        label: const Text('Manage'),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
                 _buildResponsiveRow(isDesktop, [
                   _buildField('selfPolicyNumber', 'Self Policy Number'),
                   _buildField('selfYearOfIssue', 'Year of Issue'),
@@ -653,19 +1189,19 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                 const Divider(height: 24),
                 _buildResponsiveRow(isDesktop, [
                   _buildField('fatherPolicyNumber', 'Father Policy Number'),
-                  _buildField('fatherCompany', 'Father Company'),
+                  _buildDropdownField('fatherCompany', 'Father Company', _insuranceCompanies),
                 ]),
                 _buildResponsiveRow(isDesktop, [
                   _buildField('motherPolicyNumber', 'Mother Policy Number'),
-                  _buildField('motherCompany', 'Mother Company'),
+                  _buildDropdownField('motherCompany', 'Mother Company', _insuranceCompanies),
                 ]),
                 _buildResponsiveRow(isDesktop, [
                   _buildField('spousePolicyNumber', 'Spouse Policy Number'),
-                  _buildField('spouseCompany', 'Spouse Company'),
+                  _buildDropdownField('spouseCompany', 'Spouse Company', _insuranceCompanies),
                 ]),
                 _buildResponsiveRow(isDesktop, [
                   _buildField('childrenPolicyNumber', 'Children Policy Number'),
-                  _buildField('childrenCompany', 'Children Company'),
+                  _buildDropdownField('childrenCompany', 'Children Company', _insuranceCompanies),
                 ]),
               ]),
 
@@ -679,15 +1215,121 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
 
               // Accordion 9: Plan Information
               _buildAccordionSection('Plan Details', Icons.article_outlined, [
-                _buildField('productName', 'Product Name'),
-                _buildDropdownField('premiumMode', 'Premium Mode', ['Yearly', 'Half-Yearly', 'Quarterly', 'Monthly']),
-                _buildField('planSumAssured', 'Plan Sum Assured'),
-                _buildField('rider', 'Riders Configured'),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _plans.length,
+                  itemBuilder: (context, index) {
+                    final plan = _plans[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      elevation: 1,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: Colors.blueAccent.withOpacity(0.3)),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Plan #${index + 1}',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.blueAccent),
+                                ),
+                                if (_plans.length > 1)
+                                  IconButton(
+                                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                                    tooltip: 'Remove Plan #${index + 1}',
+                                    onPressed: () {
+                                      setState(() {
+                                        _plans.removeAt(index);
+                                      });
+                                    },
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              initialValue: plan.productName,
+                              decoration: const InputDecoration(
+                                labelText: 'Product Name',
+                                border: OutlineInputBorder(),
+                              ),
+                              onChanged: (val) => plan.productName = val,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildResponsiveRow(isDesktop, [
+                              TextFormField(
+                                initialValue: plan.premium,
+                                decoration: const InputDecoration(
+                                  labelText: 'Premium',
+                                  hintText: 'e.g. ₹ 15,000',
+                                  border: OutlineInputBorder(),
+                                ),
+                                onChanged: (val) => plan.premium = val,
+                              ),
+                              DropdownButtonFormField<String>(
+                                value: (plan.mode != null && ['Yearly', 'Half-Yearly', 'Quarterly', 'Monthly', 'Single', 'Other'].contains(plan.mode))
+                                    ? plan.mode
+                                    : null,
+                                decoration: const InputDecoration(
+                                  labelText: 'Mode',
+                                  border: OutlineInputBorder(),
+                                ),
+                                items: ['Yearly', 'Half-Yearly', 'Quarterly', 'Monthly', 'Single', 'Other']
+                                    .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                                    .toList(),
+                                onChanged: (val) => setState(() => plan.mode = val),
+                              ),
+                            ]),
+                            const SizedBox(height: 12),
+                            _buildResponsiveRow(isDesktop, [
+                              TextFormField(
+                                initialValue: plan.planSumAssured,
+                                decoration: const InputDecoration(
+                                  labelText: 'Plan Sum Assured',
+                                  border: OutlineInputBorder(),
+                                ),
+                                onChanged: (val) => plan.planSumAssured = val,
+                              ),
+                              TextFormField(
+                                initialValue: plan.rider,
+                                decoration: const InputDecoration(
+                                  labelText: 'Riders Configured',
+                                  border: OutlineInputBorder(),
+                                ),
+                                onChanged: (val) => plan.rider = val,
+                              ),
+                            ]),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _plans.add(CustomerPlanItem());
+                    });
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Plan'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
               ]),
 
-              // Accordion 10: Mutual Finance Specifics
-              _buildAccordionSection('PAN & Mutual Finance Details', Icons.account_balance_outlined, [
-                _buildField('panNumber', 'PAN Number'),
+              // Accordion 10: Plan & Mutual Funds
+              _buildAccordionSection('Plan & Mutual Funds', Icons.account_balance_outlined, [
+                _buildField('panNumber', 'Plan Number'),
                 _buildResponsiveRow(isDesktop, [
                   _buildField('riskCover', 'Risk Cover'),
                   _buildField('pensionPlan', 'Pension Plan'),
@@ -723,11 +1365,93 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
 
               // Accordion 12: Reference Details
               _buildAccordionSection('References', Icons.people_outline, [
-                _buildField('referenceFriendName', "Friend's Name"),
-                _buildResponsiveRow(isDesktop, [
-                  _buildField('referenceMobile', 'Reference Mobile', keyboardType: TextInputType.phone),
-                  _buildField('referenceAge', 'Reference Age'),
-                ]),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _references.length,
+                  itemBuilder: (context, index) {
+                    final refItem = _references[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      elevation: 1,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: Colors.blueAccent.withOpacity(0.3)),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Reference #${index + 1}',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.blueAccent),
+                                ),
+                                if (_references.length > 1)
+                                  IconButton(
+                                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                                    tooltip: 'Remove Reference #${index + 1}',
+                                    onPressed: () {
+                                      setState(() {
+                                        _references.removeAt(index);
+                                      });
+                                    },
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              initialValue: refItem.name,
+                              decoration: const InputDecoration(
+                                labelText: 'Reference / Friend Name',
+                                border: OutlineInputBorder(),
+                              ),
+                              onChanged: (val) => refItem.name = val,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildResponsiveRow(isDesktop, [
+                              TextFormField(
+                                initialValue: refItem.mobile,
+                                decoration: const InputDecoration(
+                                  labelText: 'Mobile Number',
+                                  border: OutlineInputBorder(),
+                                ),
+                                keyboardType: TextInputType.phone,
+                                onChanged: (val) => refItem.mobile = val,
+                              ),
+                              TextFormField(
+                                initialValue: refItem.age,
+                                decoration: const InputDecoration(
+                                  labelText: 'Age',
+                                  border: OutlineInputBorder(),
+                                ),
+                                keyboardType: TextInputType.number,
+                                onChanged: (val) => refItem.age = val,
+                              ),
+                            ]),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _references.add(CustomerReferenceItem());
+                    });
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Reference'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
               ]),
 
               // Accordion 13: Document Attachments
@@ -829,6 +1553,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

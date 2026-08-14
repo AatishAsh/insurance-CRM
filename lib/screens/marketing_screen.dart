@@ -9,6 +9,7 @@ import '../services/database_service.dart';
 import '../providers/marketing_provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/rename_file_dialog.dart';
+import '../theme/app_colors.dart';
 
 // Consistent status options
 const List<String> statusOptions = [
@@ -17,6 +18,7 @@ const List<String> statusOptions = [
   'Postponed',
   'Hold',
   'Documents Pending',
+  'Follow-up',
 ];
 
 // Parses visitTime (e.g. "02:30 PM", "10:30AM" or "14:30") to TimeOfDay
@@ -495,20 +497,22 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
     final bool isWide = MediaQuery.of(context).size.width > 900;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppColors.appBackground,
       appBar: AppBar(
-        title: const Text('Marketing Dashboard', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Marketing Dashboard', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.headingText)),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: AppColors.cardSurface,
+        foregroundColor: AppColors.headingText,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: ElevatedButton.icon(
               onPressed: () => _openAddEditDialog(),
               icon: const Icon(Icons.add, size: 18),
-              label: const Text('New Lead'),
+              label: const Text('New Lead', style: TextStyle(fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.skyBlue,
+                foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),

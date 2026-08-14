@@ -184,6 +184,18 @@ class BackupService {
       'isDeleted': c.isDeleted,
       'assignedCompanyId': c.assignedCompanyId,
       'documents': c.documents.map((d) => {'documentName': d.documentName, 'fileName': d.fileName}).toList(),
+      'plans': c.plans.map((p) => {
+        'productName': p.productName,
+        'premium': p.premium,
+        'mode': p.mode,
+        'planSumAssured': p.planSumAssured,
+        'rider': p.rider,
+      }).toList(),
+      'references': c.references.map((r) => {
+        'name': r.name,
+        'mobile': r.mobile,
+        'age': r.age,
+      }).toList(),
     };
   }
 
@@ -271,12 +283,31 @@ class BackupService {
     c.updatedAt = DateTime.parse(json['updatedAt'] as String);
     c.isDeleted = json['isDeleted'] as bool? ?? false;
     c.assignedCompanyId = json['assignedCompanyId'] as int?;
-
-    final List<dynamic> docsJson = json['documents'] ?? [];
-    c.documents = docsJson.map((d) => CustomerDocument()
-      ..documentName = d['documentName'] as String?
-      ..fileName = d['fileName'] as String?).toList();
-
+    if (json['documents'] != null) {
+      c.documents = (json['documents'] as List)
+          .map((d) => CustomerDocument()
+            ..documentName = d['documentName'] as String?
+            ..fileName = d['fileName'] as String?)
+          .toList();
+    }
+    if (json['plans'] != null) {
+      c.plans = (json['plans'] as List)
+          .map((p) => CustomerPlanItem()
+            ..productName = p['productName'] as String?
+            ..premium = p['premium'] as String?
+            ..mode = p['mode'] as String?
+            ..planSumAssured = p['planSumAssured'] as String?
+            ..rider = p['rider'] as String?)
+          .toList();
+    }
+    if (json['references'] != null) {
+      c.references = (json['references'] as List)
+          .map((r) => CustomerReferenceItem()
+            ..name = r['name'] as String?
+            ..mobile = r['mobile'] as String?
+            ..age = r['age'] as String?)
+          .toList();
+    }
     return c;
   }
 

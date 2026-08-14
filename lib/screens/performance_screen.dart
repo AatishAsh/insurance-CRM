@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/performance_record.dart';
 import '../providers/performance_provider.dart';
+import '../theme/app_colors.dart';
+import '../widgets/brand_background.dart';
 
 class PerformanceScreen extends ConsumerStatefulWidget {
   const PerformanceScreen({super.key});
@@ -359,39 +361,40 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
     final bool isDesktop = MediaQuery.of(context).size.width > 700;
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      body: CustomScrollView(
-        slivers: [
-          // Top Header Bar
-          SliverToBoxAdapter(
-            child: Container(
-              color: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Wrap(
-                alignment: WrapAlignment.spaceBetween,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 16,
-                runSpacing: 12,
-                children: [
-                  // Tab Heading (Left Side)
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade50,
-                          borderRadius: BorderRadius.circular(10),
+      backgroundColor: AppColors.appBackground,
+      body: BrandBackground(
+        child: CustomScrollView(
+          slivers: [
+            // Top Header Bar
+            SliverToBoxAdapter(
+              child: Container(
+                color: AppColors.cardSurface,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 16,
+                  runSpacing: 12,
+                  children: [
+                    // Tab Heading (Left Side)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppColors.badgeBlueBg,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.analytics_rounded, color: AppColors.skyBlue, size: 24),
                         ),
-                        child: const Icon(Icons.analytics_rounded, color: Colors.blueAccent, size: 24),
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'Performance Dashboard',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Performance Dashboard',
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.headingText),
+                        ),
+                      ],
+                    ),
 
                   // Year and Month Controls (Right Side, Same Line)
                   Row(
@@ -636,6 +639,7 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 

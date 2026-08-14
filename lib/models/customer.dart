@@ -8,6 +8,22 @@ class CustomerDocument {
   String? fileName; // Local filename in app storage
 }
 
+@embedded
+class CustomerPlanItem {
+  String? productName;
+  String? premium;
+  String? mode;
+  String? planSumAssured;
+  String? rider;
+}
+
+@embedded
+class CustomerReferenceItem {
+  String? name;
+  String? mobile;
+  String? age;
+}
+
 @collection
 class Customer {
   Id id = Isar.autoIncrement;
@@ -35,6 +51,9 @@ class Customer {
   // Family
   int? numberOfChildren;
   List<DateTime>? childrenDOBs;
+  DateTime? fatherDOB;
+  DateTime? motherDOB;
+  DateTime? spouseDOB;
   String? fatherAge;
   String? motherAge;
   String? spouseAge;
@@ -62,7 +81,7 @@ class Customer {
   // Additional
   DateTime? weddingAnniversary;
 
-  // Nominee
+  // Nominee & Appointee
   String? nomineeName;
   String? nomineeRelationship;
   DateTime? nomineeDOB;
@@ -71,6 +90,12 @@ class Customer {
   String? nomineeMobile1;
   String? nomineeMobile2;
   String? nomineeEmail;
+
+  // Appointee (when Nominee is minor)
+  String? appointeeName;
+  DateTime? appointeeDOB;
+  String? appointeeRelationship;
+  String? appointeeOtherRelationship;
 
   // Insurance Details
   String? selfPolicyNumber;
@@ -100,6 +125,7 @@ class Customer {
   String? permanentAddress;
 
   // Plan Details
+  List<CustomerPlanItem> plans = [];
   String? productName;
   String? premiumMode; // Yearly, Half-Yearly, etc.
   String? planSumAssured;
@@ -121,6 +147,7 @@ class Customer {
   String? reminderNote2;
 
   // Reference
+  List<CustomerReferenceItem> references = [];
   String? referenceFriendName;
   String? referenceMobile;
   String? referenceAge;

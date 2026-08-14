@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import '../models/customer.dart';
 import '../models/company.dart';
+import '../models/insurance_company.dart';
 import '../models/work_task.dart';
 import '../models/marketing_lead.dart';
 import '../models/performance_record.dart';
@@ -22,7 +23,7 @@ class DatabaseService {
   static Future<DatabaseService> init() async {
     final dir = await getApplicationDocumentsDirectory();
     final isarInstance = await Isar.open(
-      [CustomerSchema, CompanySchema, WorkTaskSchema, MarketingLeadSchema, PerformanceRecordSchema],
+      [CustomerSchema, CompanySchema, InsuranceCompanySchema, WorkTaskSchema, MarketingLeadSchema, PerformanceRecordSchema],
       directory: dir.path,
       inspector: true, // Enables Isar Inspector in debug mode
     );
@@ -30,6 +31,100 @@ class DatabaseService {
     final service = DatabaseService(isarInstance);
     await service._seedCompaniesIfNeeded();
     return service;
+  }
+
+  // --- INSURANCE COMPANY OPERATIONS ---
+
+  Future<List<InsuranceCompany>> getInsuranceCompanies() async {
+    return await isar.insuranceCompanys.filter().isDeletedEqualTo(false).sortByName().findAll();
+  }
+
+  Future<void> saveInsuranceCompany(String name) async {
+    final cleanName = name.trim();
+    if (cleanName.isEmpty) return;
+
+    final activeCount = await isar.insuranceCompanys.filter().isDeletedEqualTo(false).count();
+    if (activeCount >= 15) {
+      throw Exception('Maximum limit of 15 insurance companies reached.');
+    }
+
+    final existing = await isar.insuranceCompanys.filter().nameEqualTo(cleanName, caseSensitive: false).findFirst();
+    if (existing != null) {
+      if (existing.isDeleted) {
+        existing.isDeleted = false;
+        existing.updatedAt = DateTime.now();
+        await isar.writeTxn(() async {
+          await isar.insuranceCompanys.put(existing);
+        });
+      }
+      return;
+    }
+
+    final company = InsuranceCompany()
+      ..uuid = _uuid.v4()
+      ..name = cleanName
+      ..updatedAt = DateTime.now()
+      ..isDeleted = false;
+
+    await isar.writeTxn(() async {
+      await isar.insuranceCompanys.put(company);
+    });
+  }
+
+  Future<void> deleteInsuranceCompany(int id) async {
+    final company = await isar.insuranceCompanys.get(id);
+    if (company != null) {
+      company.isDeleted = true;
+      company.updatedAt = DateTime.now();
+      await isar.writeTxn(() async {
+        await isar.insuranceCompanys.put(company);
+      });
+    }
+  }
+
+  Future<void> renameInsuranceCompany(InsuranceCompany company, String oldName, String newName) async {
+    final cleanNewName = newName.trim();
+    if (cleanNewName.isEmpty || oldName == cleanNewName) return;
+
+    final existing = await isar.insuranceCompanys.filter().nameEqualTo(cleanNewName, caseSensitive: false).findFirst();
+    if (existing != null && existing.id != company.id && !existing.isDeleted) {
+      throw Exception('An insurance company with this name already exists.');
+    }
+
+    await isar.writeTxn(() async {
+      company.name = cleanNewName;
+      company.updatedAt = DateTime.now();
+      await isar.insuranceCompanys.put(company);
+
+      // Cascade updated name across customer insurance fields
+      final customers = await isar.customers.filter().isDeletedEqualTo(false).findAll();
+      for (final c in customers) {
+        bool updated = false;
+        if (c.selfCompany == oldName) {
+          c.selfCompany = cleanNewName;
+          updated = true;
+        }
+        if (c.fatherCompany == oldName) {
+          c.fatherCompany = cleanNewName;
+          updated = true;
+        }
+        if (c.motherCompany == oldName) {
+          c.motherCompany = cleanNewName;
+          updated = true;
+        }
+        if (c.spouseCompany == oldName) {
+          c.spouseCompany = cleanNewName;
+          updated = true;
+        }
+        if (c.childrenCompany == oldName) {
+          c.childrenCompany = cleanNewName;
+          updated = true;
+        }
+        if (updated) {
+          await isar.customers.put(c);
+        }
+      }
+    });
   }
 
   // --- COMPANY OPERATIONS ---

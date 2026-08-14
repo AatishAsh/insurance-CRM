@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import '../providers/customer_provider.dart';
 import '../models/customer.dart';
+import '../theme/app_colors.dart';
+import '../widgets/color_badge.dart';
 import 'customer_form_screen.dart';
 import 'customer_detail_screen.dart';
 
@@ -57,23 +59,27 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
         return Dialog(
           backgroundColor: Colors.transparent,
           child: Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              color: AppColors.cardSurface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.cardBorder),
+              boxShadow: const [AppColors.cardShadow],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 AppBar(
-                  title: Text(doc.documentName ?? doc.fileName ?? 'Document Preview', style: const TextStyle(fontSize: 16)),
+                  title: Text(
+                    doc.documentName ?? doc.fileName ?? 'Document Preview',
+                    style: const TextStyle(fontSize: 16, color: AppColors.headingText, fontWeight: FontWeight.bold),
+                  ),
                   leading: IconButton(
-                    icon: const Icon(Icons.close),
+                    icon: const Icon(Icons.close, color: AppColors.headingText),
                     onPressed: () => Navigator.pop(context),
                   ),
                   backgroundColor: Colors.transparent,
                   elevation: 0,
-                  foregroundColor: Colors.black87,
                 ),
                 const SizedBox(height: 8),
                 if (isImage)
@@ -98,24 +104,24 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.insert_drive_file, size: 64, color: Colors.blueAccent),
+                        const Icon(Icons.insert_drive_file, size: 64, color: AppColors.skyBlue),
                         const SizedBox(height: 12),
                         Text(
                           doc.fileName ?? 'Document File',
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.headingText),
                           textAlign: TextAlign.center,
                         ),
                         if (doc.documentName != null) ...[
                           const SizedBox(height: 8),
-                          Text(
-                            'Type/Label: ${doc.documentName}',
-                            style: const TextStyle(color: Colors.black87, fontSize: 13),
+                          ColorBadge(
+                            text: 'Type/Label: ${doc.documentName}',
+                            style: BadgeStyle.blue,
                           ),
                         ],
                         const SizedBox(height: 8),
                         const Text(
                           'Document file saved on device',
-                          style: TextStyle(color: Colors.grey, fontSize: 12),
+                          style: TextStyle(color: AppColors.mutedText, fontSize: 12),
                         ),
                       ],
                     ),
@@ -166,16 +172,21 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
     final bool isSearching = searchQuery.trim().isNotEmpty;
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Customer Directory'),
+        backgroundColor: AppColors.cardSurface,
+        elevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(70),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 12.0),
             child: SearchBar(
               hintText: 'Search by Name, ID, Document or File Name...',
-              leading: const Icon(Icons.search),
-              elevation: WidgetStateProperty.all(1),
+              leading: const Icon(Icons.search, color: AppColors.skyBlue),
+              elevation: WidgetStateProperty.all(0),
+              side: WidgetStateProperty.all(const BorderSide(color: AppColors.cardBorder)),
+              backgroundColor: WidgetStateProperty.all(AppColors.cardSurface),
               padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 16.0)),
               onChanged: (value) {
                 ref.read(searchQueryProvider.notifier).state = value;
@@ -194,11 +205,11 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.people_outline, size: 64, color: Colors.grey[400]),
+                  const Icon(Icons.people_outline, size: 64, color: AppColors.mutedText),
                   const SizedBox(height: 16),
                   Text(
                     searchQuery.isEmpty ? 'No customers found. Add your first customer!' : 'No results matching "$searchQuery"',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                    style: const TextStyle(color: AppColors.bodyText, fontSize: 16, fontWeight: FontWeight.w500),
                   ),
                 ],
               ),
@@ -215,25 +226,28 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
               if (isSearching) ...[
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: Colors.grey[50],
+                  color: AppColors.appBackgroundAlt,
                   child: Row(
                     children: [
                       FilterChip(
                         selected: selectedTab == 'All',
-                        label: Text('All (${customers.length + docResults.length})'),
+                        selectedColor: AppColors.badgeBlueBg,
+                        label: Text('All (${customers.length + docResults.length})', style: TextStyle(color: selectedTab == 'All' ? AppColors.skyBlue : AppColors.bodyText, fontWeight: FontWeight.bold)),
                         onSelected: (_) => ref.read(customerSearchTabProvider.notifier).state = 'All',
                       ),
                       const SizedBox(width: 8),
                       FilterChip(
                         selected: selectedTab == 'Profiles',
-                        label: Text('Profiles (${customers.length})'),
+                        selectedColor: AppColors.badgeBlueBg,
+                        label: Text('Profiles (${customers.length})', style: TextStyle(color: selectedTab == 'Profiles' ? AppColors.skyBlue : AppColors.bodyText, fontWeight: FontWeight.bold)),
                         onSelected: (_) => ref.read(customerSearchTabProvider.notifier).state = 'Profiles',
                       ),
                       const SizedBox(width: 8),
                       FilterChip(
                         selected: selectedTab == 'Documents',
-                        label: Text('Documents (${docResults.length})'),
-                        avatar: const Icon(Icons.attach_file, size: 16),
+                        selectedColor: AppColors.badgeBlueBg,
+                        label: Text('Documents (${docResults.length})', style: TextStyle(color: selectedTab == 'Documents' ? AppColors.skyBlue : AppColors.bodyText, fontWeight: FontWeight.bold)),
+                        avatar: const Icon(Icons.attach_file, size: 16, color: AppColors.skyBlue),
                         onSelected: (_) => ref.read(customerSearchTabProvider.notifier).state = 'Documents',
                       ),
                     ],
@@ -254,11 +268,11 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
                             padding: const EdgeInsets.only(bottom: 8.0, left: 4),
                             child: Row(
                               children: [
-                                const Icon(Icons.description_outlined, size: 18, color: Colors.blueAccent),
+                                const Icon(Icons.description_outlined, size: 18, color: AppColors.skyBlue),
                                 const SizedBox(width: 6),
                                 Text(
                                   'Matching Document Results (${docResults.length}):',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.blueAccent),
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.skyBlue),
                                 ),
                               ],
                             ),
@@ -275,11 +289,11 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
                             padding: const EdgeInsets.only(bottom: 8.0, left: 4),
                             child: Row(
                               children: [
-                                const Icon(Icons.person_outline, size: 18, color: Colors.black87),
+                                const Icon(Icons.person_outline, size: 18, color: AppColors.headingText),
                                 const SizedBox(width: 6),
                                 Text(
                                   'Customer Profiles (${customers.length}):',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black87),
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.headingText),
                                 ),
                               ],
                             ),
@@ -294,10 +308,12 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error loading customers: $err')),
+        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.skyBlue)),
+        error: (err, stack) => Center(child: Text('Error loading customers: $err', style: const TextStyle(color: AppColors.roseAccent))),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: AppColors.skyBlue,
+        foregroundColor: Colors.white,
         onPressed: () async {
           await Navigator.push(
             context,
@@ -308,7 +324,7 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
           ref.invalidate(customerListProvider);
         },
         icon: const Icon(Icons.person_add),
-        label: const Text('Add Customer'),
+        label: const Text('Add Customer', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
     );
   }

@@ -10,6 +10,9 @@ import 'services/database_service.dart';
 import 'screens/auth_gate.dart';
 import 'screens/sync_screen.dart';
 import 'providers/customer_provider.dart';
+import 'theme/app_colors.dart';
+import 'theme/app_theme.dart';
+import 'widgets/brand_background.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,7 +33,7 @@ class CurvedOverscrollBehavior extends MaterialScrollBehavior {
   Widget buildOverscrollIndicator(BuildContext context, Widget child, ScrollableDetails details) {
     return GlowingOverscrollIndicator(
       axisDirection: details.direction,
-      color: Colors.blueAccent,
+      color: AppColors.skyBlue,
       child: child,
     );
   }
@@ -44,9 +47,7 @@ class InsuranceApp extends StatelessWidget {
     return MaterialApp(
       title: 'Customer Management',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-      ),
+      theme: AppTheme.lightTheme,
       scrollBehavior: CurvedOverscrollBehavior(),
       home: const AuthGate(
         child: MainNavigationShell(),
@@ -73,94 +74,139 @@ class MainNavigationShell extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Insurance CRM'),
+        scrolledUnderElevation: 0,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.shield_outlined,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            RichText(
+              text: const TextSpan(
+                style: TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.3,
+                ),
+                children: [
+                  TextSpan(
+                    text: 'Insurance ',
+                    style: TextStyle(color: AppColors.headingText),
+                  ),
+                  TextSpan(
+                    text: 'CRM',
+                    style: TextStyle(color: AppColors.skyBlue),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.sync),
+            tooltip: 'Cloud Sync',
+            icon: const Icon(Icons.sync, color: AppColors.skyBlue),
             onPressed: () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const SyncScreen()));
             },
           ),
           IconButton(
-            icon: const Icon(Icons.settings),
+            tooltip: 'Settings',
+            icon: const Icon(Icons.settings_outlined, color: AppColors.bodyText),
             onPressed: () {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const SyncScreen()));
             },
           ),
+          const SizedBox(width: 8),
         ],
       ),
-      body: Row(
-        children: [
-          if (isDesktop)
-            NavigationRail(
-              selectedIndex: selectedIndex,
-              onDestinationSelected: (int index) {
-                ref.read(navigationTabIndexProvider.notifier).state = index;
-              },
-              labelType: NavigationRailLabelType.all,
-              destinations: const [
-                NavigationRailDestination(
-                  icon: Icon(Icons.people_outline),
-                  selectedIcon: Icon(Icons.people),
-                  label: Text('Customers'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.event_outlined),
-                  selectedIcon: Icon(Icons.event),
-                  label: Text('Events'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.analytics_outlined),
-                  selectedIcon: Icon(Icons.analytics),
-                  label: Text('Performance'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.assignment_outlined),
-                  selectedIcon: Icon(Icons.assignment),
-                  label: Text('Work'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.campaign_outlined),
-                  selectedIcon: Icon(Icons.campaign),
-                  label: Text('Marketing'),
-                ),
-              ],
+      body: BrandBackground(
+        child: Row(
+          children: [
+            if (isDesktop)
+              NavigationRail(
+                selectedIndex: selectedIndex,
+                onDestinationSelected: (int index) {
+                  ref.read(navigationTabIndexProvider.notifier).state = index;
+                },
+                labelType: NavigationRailLabelType.all,
+                useIndicator: true,
+                indicatorColor: AppColors.badgeBlueBg,
+                destinations: const [
+                  NavigationRailDestination(
+                    icon: Icon(Icons.people_outline),
+                    selectedIcon: Icon(Icons.people, color: AppColors.skyBlue),
+                    label: Text('Customers'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.event_outlined),
+                    selectedIcon: Icon(Icons.event, color: AppColors.skyBlue),
+                    label: Text('Events'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.analytics_outlined),
+                    selectedIcon: Icon(Icons.analytics, color: AppColors.skyBlue),
+                    label: Text('Performance'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.assignment_outlined),
+                    selectedIcon: Icon(Icons.assignment, color: AppColors.skyBlue),
+                    label: Text('Work'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.campaign_outlined),
+                    selectedIcon: Icon(Icons.campaign, color: AppColors.skyBlue),
+                    label: Text('Marketing'),
+                  ),
+                ],
+              ),
+            Expanded(
+              child: screens[selectedIndex],
             ),
-          Expanded(
-            child: screens[selectedIndex],
-          ),
-        ],
+          ],
+        ),
       ),
       bottomNavigationBar: !isDesktop
           ? NavigationBar(
               selectedIndex: selectedIndex,
+              elevation: 4,
+              indicatorColor: AppColors.badgeBlueBg,
               onDestinationSelected: (int index) {
                 ref.read(navigationTabIndexProvider.notifier).state = index;
               },
               destinations: const [
                 NavigationDestination(
                   icon: Icon(Icons.people_outline),
-                  selectedIcon: Icon(Icons.people),
+                  selectedIcon: Icon(Icons.people, color: AppColors.skyBlue),
                   label: 'Customers',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.event_outlined),
-                  selectedIcon: Icon(Icons.event),
+                  selectedIcon: Icon(Icons.event, color: AppColors.skyBlue),
                   label: 'Events',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.analytics_outlined),
-                  selectedIcon: Icon(Icons.analytics),
+                  selectedIcon: Icon(Icons.analytics, color: AppColors.skyBlue),
                   label: 'Performance',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.assignment_outlined),
-                  selectedIcon: Icon(Icons.assignment),
+                  selectedIcon: Icon(Icons.assignment, color: AppColors.skyBlue),
                   label: 'Work',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.campaign_outlined),
-                  selectedIcon: Icon(Icons.campaign),
+                  selectedIcon: Icon(Icons.campaign, color: AppColors.skyBlue),
                   label: 'Marketing',
                 ),
               ],
@@ -169,3 +215,4 @@ class MainNavigationShell extends ConsumerWidget {
     );
   }
 }
+

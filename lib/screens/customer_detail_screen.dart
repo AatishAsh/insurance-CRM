@@ -8,6 +8,9 @@ import '../services/database_service.dart';
 import 'customer_form_screen.dart';
 import '../providers/customer_provider.dart';
 import '../providers/events_provider.dart';
+import '../theme/app_colors.dart';
+import '../widgets/color_badge.dart';
+import '../widgets/brand_background.dart';
 
 class CustomerDetailScreen extends ConsumerStatefulWidget {
   final int customerId;
@@ -52,13 +55,13 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
             width: 150,
             child: Text(
               label,
-              style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.w600, fontSize: 14),
+              style: const TextStyle(color: AppColors.mutedText, fontWeight: FontWeight.w600, fontSize: 14),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: Colors.black87),
+              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: AppColors.headingText),
             ),
           ),
         ],
@@ -71,21 +74,51 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
     return _buildDetailRow(label, DateFormat('dd MMM yyyy').format(date));
   }
 
+  String? _calculateAgeText(DateTime? dob) {
+    if (dob == null) return null;
+    final now = DateTime.now();
+    int age = now.year - dob.year;
+    if (now.month < dob.month || (now.month == dob.month && now.day < dob.day)) {
+      age--;
+    }
+    return age < 0 ? '0 years' : '$age years';
+  }
+
+  Widget _buildDobAndAgeRow(String label, DateTime? dob, String? manualAge) {
+    if (dob == null && (manualAge == null || manualAge.trim().isEmpty)) {
+      return const SizedBox.shrink();
+    }
+    final dobStr = dob != null ? DateFormat('dd MMM yyyy').format(dob) : null;
+    final calcAge = _calculateAgeText(dob);
+    final displayAge = calcAge ?? (manualAge != null && manualAge.trim().isNotEmpty ? '$manualAge years' : null);
+
+    String valueStr = '';
+    if (dobStr != null && displayAge != null) {
+      valueStr = '$dobStr ($displayAge)';
+    } else if (dobStr != null) {
+      valueStr = dobStr;
+    } else if (displayAge != null) {
+      valueStr = displayAge;
+    }
+
+    return _buildDetailRow(label, valueStr);
+  }
+
   Widget _buildAccordionSection(String title, IconData icon, List<Widget> rows) {
     // Filter out empty/null rows to avoid rendering empty boxes
     final validRows = rows.where((r) => r is! SizedBox).toList();
     if (validRows.isEmpty) return const SizedBox.shrink();
 
     return Card(
-      elevation: 0.5,
+      elevation: 0,
       margin: const EdgeInsets.only(bottom: 8.0),
       shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.grey[200]!),
-        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: AppColors.cardBorder),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: ExpansionTile(
-        leading: Icon(icon, color: Colors.blueAccent),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        leading: Icon(icon, color: AppColors.skyBlue),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.headingText)),
         initiallyExpanded: false, // ALL COLLAPSED AS REQUESTED
         childrenPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         children: validRows,
@@ -194,11 +227,13 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
     final bool isWide = MediaQuery.of(context).size.width > 900;
 
     return Scaffold(
+      backgroundColor: AppColors.appBackground,
       appBar: AppBar(
         title: const Text('Customer Profile'),
+        backgroundColor: AppColors.cardSurface,
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: const Icon(Icons.edit, color: AppColors.skyBlue),
             onPressed: () async {
               await Navigator.push(
                 context,
@@ -208,7 +243,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+            icon: const Icon(Icons.delete_outline, color: AppColors.roseAccent),
             onPressed: () {
               showDialog(
                 context: context,
@@ -226,7 +261,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                           Navigator.pop(context); // Go back to list
                         }
                       },
-                      child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                      child: const Text('Delete', style: TextStyle(color: AppColors.roseAccent, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
@@ -235,8 +270,9 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+      body: BrandBackground(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -264,27 +300,17 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(c.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                          Text(c.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.headingText)),
                           const SizedBox(height: 4),
-                          Text(c.customerId ?? 'No Business ID', style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+                          Text(c.customerId ?? 'No Business ID', style: const TextStyle(fontSize: 14, color: AppColors.mutedText)),
                           const SizedBox(height: 6),
                           Row(
                             children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: Colors.green.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Text(
-                                  'ACTIVE',
-                                  style: TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold),
-                                ),
-                              ),
+                              const ColorBadge(text: 'ACTIVE', style: BadgeStyle.green),
                               const SizedBox(width: 8),
                               Text(
                                 'Updated: ${DateFormat('dd MMM yy, hh:mm a').format(c.updatedAt)}',
-                                style: const TextStyle(fontSize: 11, color: Colors.grey),
+                                style: const TextStyle(fontSize: 11, color: AppColors.mutedText),
                               ),
                             ],
                           ),
@@ -324,13 +350,16 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
 
             // Accordion sections
             _buildAccordionSection('Family Details', Icons.family_restroom_outlined, [
+              _buildDobAndAgeRow("Father's DOB & Age", c.fatherDOB, c.fatherAge),
+              _buildDobAndAgeRow("Mother's DOB & Age", c.motherDOB, c.motherAge),
+              _buildDobAndAgeRow("Spouse's DOB & Age", c.spouseDOB, c.spouseAge),
+              _buildDetailRow("Brother's Age", c.brotherAge != null && c.brotherAge!.isNotEmpty ? '${c.brotherAge} years' : null),
+              _buildDetailRow("Sister's Age", c.sisterAge != null && c.sisterAge!.isNotEmpty ? '${c.sisterAge} years' : null),
               _buildDetailRow("Number of Children", c.numberOfChildren?.toString()),
-              _buildDateRow("Family DOB", c.familyDOB),
-              _buildDetailRow("Father's Age", c.fatherAge),
-              _buildDetailRow("Mother's Age", c.motherAge),
-              _buildDetailRow("Spouse's Age", c.spouseAge),
-              _buildDetailRow("Brother's Age", c.brotherAge),
-              _buildDetailRow("Sister's Age", c.sisterAge),
+              if (c.childrenDOBs != null && c.childrenDOBs!.isNotEmpty)
+                ...List.generate(c.childrenDOBs!.length, (i) {
+                  return _buildDobAndAgeRow("Child ${i + 1} DOB & Age", c.childrenDOBs![i], null);
+                }),
             ]),
 
             _buildAccordionSection('Professional Information', Icons.business_center_outlined, [
@@ -349,6 +378,16 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
               _buildDetailRow("Nominee Mobile 1", c.nomineeMobile1),
               _buildDetailRow("Nominee Mobile 2", c.nomineeMobile2),
               _buildDetailRow("Nominee Email", c.nomineeEmail),
+              if (c.appointeeName != null && c.appointeeName!.isNotEmpty) ...[
+                _buildDetailRow("Appointee Name", c.appointeeName),
+                _buildDateRow("Appointee DOB", c.appointeeDOB),
+                _buildDetailRow(
+                  "Appointee Relationship",
+                  (c.appointeeRelationship ?? '').toLowerCase() == 'other' && c.appointeeOtherRelationship != null && c.appointeeOtherRelationship!.isNotEmpty
+                      ? c.appointeeOtherRelationship
+                      : c.appointeeRelationship,
+                ),
+              ],
             ]),
 
             _buildAccordionSection('Insurance Details', Icons.security_outlined, [
@@ -371,14 +410,32 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
             ]),
 
             _buildAccordionSection('Plan Details', Icons.article_outlined, [
-              _buildDetailRow("Product Name", c.productName),
-              _buildDetailRow("Premium Mode", c.premiumMode),
-              _buildDetailRow("Plan Sum Assured", c.planSumAssured),
-              _buildDetailRow("Rider", c.rider),
+              if (c.plans.isNotEmpty)
+                for (int i = 0; i < c.plans.length; i++) ...[
+                  if (i > 0) const Divider(height: 24),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4.0),
+                    child: Text(
+                      'Plan #${i + 1}',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.blueAccent),
+                    ),
+                  ),
+                  _buildDetailRow("Product Name", c.plans[i].productName),
+                  _buildDetailRow("Premium", c.plans[i].premium),
+                  _buildDetailRow("Mode", c.plans[i].mode),
+                  _buildDetailRow("Plan Sum Assured", c.plans[i].planSumAssured),
+                  _buildDetailRow("Riders Configured", c.plans[i].rider),
+                ]
+              else ...[
+                _buildDetailRow("Product Name", c.productName),
+                _buildDetailRow("Premium Mode", c.premiumMode),
+                _buildDetailRow("Plan Sum Assured", c.planSumAssured),
+                _buildDetailRow("Riders Configured", c.rider),
+              ],
             ]),
 
-            _buildAccordionSection('PAN & Mutual Finance Details', Icons.account_balance_outlined, [
-              _buildDetailRow("PAN Number", c.panNumber),
+            _buildAccordionSection('Plan & Mutual Funds', Icons.account_balance_outlined, [
+              _buildDetailRow("Plan Number", c.panNumber),
               _buildDetailRow("Risk Cover", c.riskCover),
               _buildDetailRow("Pension Plan", c.pensionPlan),
               _buildDetailRow("Investment Plan", c.investmentPlan),
@@ -390,9 +447,25 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
 
 
             _buildAccordionSection('References', Icons.people_outline, [
-              _buildDetailRow("Friend's Name", c.referenceFriendName),
-              _buildDetailRow("Reference Mobile", c.referenceMobile),
-              _buildDetailRow("Reference Age", c.referenceAge),
+              if (c.references.isNotEmpty)
+                for (int i = 0; i < c.references.length; i++) ...[
+                  if (i > 0) const Divider(height: 24),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4.0),
+                    child: Text(
+                      'Reference #${i + 1}',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.blueAccent),
+                    ),
+                  ),
+                  _buildDetailRow("Reference Name", c.references[i].name),
+                  _buildDetailRow("Reference Mobile", c.references[i].mobile),
+                  _buildDetailRow("Reference Age", c.references[i].age),
+                ]
+              else ...[
+                _buildDetailRow("Friend's Name", c.referenceFriendName),
+                _buildDetailRow("Reference Mobile", c.referenceMobile),
+                _buildDetailRow("Reference Age", c.referenceAge),
+              ],
             ]),
 
             // Document Attachments
@@ -429,6 +502,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
           ],
         ),
       ),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           await Navigator.push(
@@ -437,9 +511,9 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
           );
           _loadCustomerData();
         },
-        label: const Text('Edit Profile'),
+        label: const Text('Edit Profile', style: TextStyle(fontWeight: FontWeight.bold)),
         icon: const Icon(Icons.edit),
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: AppColors.skyBlue,
         foregroundColor: Colors.white,
       ),
     );
@@ -727,7 +801,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                     ),
                     _buildGridDetailItem(
                       Icons.person_pin_outlined,
-                      "Father's Name",
+                      "Proposer’s Name",
                       c.fatherName ?? 'Not Specified',
                     ),
                     _buildGridDetailItem(
