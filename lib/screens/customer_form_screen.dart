@@ -364,7 +364,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
 
     // Fields list to initialize
     final textFields = [
-      'name', 'customerId', 'fatherName', 'spouseName', 'nationality', 'aadhaarNumber',
+      'name', 'customerId', 'familyId', 'fatherName', 'spouseName', 'nationality', 'aadhaarNumber',
       'qualification', 'height', 'weight', 'numberOfChildren', 'fatherAge', 'motherAge',
       'spouseAge', 'brotherAge', 'sisterAge', 'employerBusinessName', 'designation',
       'natureOfBusiness', 'annualIncome', 'officeContactNumber', 'mobileNumber1',
@@ -373,7 +373,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
       'nomineeMobile1', 'nomineeMobile2', 'nomineeEmail', 'appointeeName', 'appointeeOtherRelationship', 'selfPolicyNumber',
       'selfSumAssured1', 'selfSumAssured2', 'selfYearOfIssue', 'fatherPolicyNumber',
       'fatherCompany', 'motherPolicyNumber', 'motherCompany', 'spousePolicyNumber',
-      'spouseCompany', 'childrenPolicyNumber', 'childrenCompany', 'healthProblems',
+      'spouseCompany', 'childrenPolicyNumber', 'childrenCompany', 'existingPolicyNumber', 'healthProblems',
       'pregnancyDetails', 'healthRemarks', 'communicationAddress', 'permanentAddress',
       'productName', 'planSumAssured', 'rider', 'riskCover', 'pensionPlan',
       'investmentPlan', 'mutualFunds', 'mediClaim', 'moneyBackPolicy',
@@ -388,6 +388,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     if (c != null) {
       _controllers['name']!.text = c.name;
       _controllers['customerId']!.text = c.customerId ?? '';
+      _controllers['familyId']!.text = c.familyId ?? '';
       _controllers['fatherName']!.text = c.fatherName ?? '';
       _controllers['spouseName']!.text = c.spouseName ?? '';
       _controllers['nationality']!.text = c.nationality ?? '';
@@ -432,6 +433,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
       _controllers['spouseCompany']!.text = c.spouseCompany ?? '';
       _controllers['childrenPolicyNumber']!.text = c.childrenPolicyNumber ?? '';
       _controllers['childrenCompany']!.text = c.childrenCompany ?? '';
+      _controllers['existingPolicyNumber']!.text = c.existingPolicyNumber ?? '';
       _controllers['healthProblems']!.text = c.healthProblems ?? '';
       _controllers['pregnancyDetails']!.text = c.pregnancyDetails ?? '';
       _controllers['healthRemarks']!.text = c.healthRemarks ?? '';
@@ -462,6 +464,8 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
       _dates['weddingAnniversary'] = c.weddingAnniversary;
       _dates['nomineeDOB'] = c.nomineeDOB;
       _dates['appointeeDOB'] = c.appointeeDOB;
+      _dates['existingDocDate'] = c.existingDocDate;
+      _dates['personalAccidentDate'] = c.personalAccidentDate;
       _dates['reminderDate1'] = c.reminderDate1;
       _dates['reminderDate2'] = c.reminderDate2;
 
@@ -474,6 +478,9 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
       _dropdowns['nomineeRelationship'] = c.nomineeRelationship ?? '';
       _dropdowns['appointeeRelationship'] = c.appointeeRelationship ?? '';
       _dropdowns['selfCompany'] = c.selfCompany ?? '';
+      _dropdowns['hasExistingPolicy'] = c.hasExistingPolicy ?? 'No';
+      _dropdowns['existingSelfCompany'] = c.existingSelfCompany ?? '';
+      _dropdowns['hasPersonalAccident'] = c.hasPersonalAccident ?? 'No';
       _dropdowns['premiumMode'] = c.premiumMode ?? '';
       _dropdowns['lifestyleHabits'] = c.lifestyleHabits ?? '';
 
@@ -663,7 +670,8 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     final customer = widget.customer ?? Customer()..uuid = '';
 
     customer.name = _controllers['name']!.text;
-    customer.customerId = _controllers['customerId']!.text.isEmpty ? null : _controllers['customerId']!.text;
+    customer.customerId = _controllers['customerId']!.text.trim().isEmpty ? null : _controllers['customerId']!.text.trim();
+    customer.familyId = _controllers['familyId']!.text.trim().isEmpty ? null : _controllers['familyId']!.text.trim();
     customer.fatherName = _controllers['fatherName']!.text;
     customer.spouseName = _controllers['spouseName']!.text;
     customer.nationality = _controllers['nationality']!.text;
@@ -710,9 +718,25 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     customer.spouseCompany = _controllers['spouseCompany']!.text;
     customer.childrenPolicyNumber = _controllers['childrenPolicyNumber']!.text;
     customer.childrenCompany = _controllers['childrenCompany']!.text;
+    customer.hasExistingPolicy = _dropdowns['hasExistingPolicy'] ?? 'No';
+    if (_dropdowns['hasExistingPolicy'] == 'Yes') {
+      customer.existingSelfCompany = _dropdowns['existingSelfCompany']?.isEmpty ?? true ? null : _dropdowns['existingSelfCompany'];
+      customer.existingPolicyNumber = _controllers['existingPolicyNumber']!.text.isEmpty ? null : _controllers['existingPolicyNumber']!.text;
+      customer.existingDocDate = _dates['existingDocDate'];
+    } else {
+      customer.existingSelfCompany = null;
+      customer.existingPolicyNumber = null;
+      customer.existingDocDate = null;
+    }
     customer.healthProblems = _controllers['healthProblems']!.text;
     customer.pregnancyDetails = _controllers['pregnancyDetails']!.text;
     customer.healthRemarks = _controllers['healthRemarks']!.text;
+    customer.hasPersonalAccident = _dropdowns['hasPersonalAccident'] ?? 'No';
+    if (_dropdowns['hasPersonalAccident'] == 'Yes') {
+      customer.personalAccidentDate = _dates['personalAccidentDate'];
+    } else {
+      customer.personalAccidentDate = null;
+    }
     customer.communicationAddress = _controllers['communicationAddress']!.text;
     customer.plans = _plans;
     if (_plans.isNotEmpty) {
@@ -943,6 +967,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                   child: _buildResponsiveRow(isDesktop, [
                     _buildField('name', 'Full Name *', required: true),
                     _buildField('customerId', 'Customer ID (e.g. CUST-001)'),
+                    _buildField('familyId', 'Family ID (e.g. FAM-101)'),
                   ]),
                 ),
               ),
@@ -1203,14 +1228,37 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                   _buildField('childrenPolicyNumber', 'Children Policy Number'),
                   _buildDropdownField('childrenCompany', 'Children Company', _insuranceCompanies),
                 ]),
+                const Divider(height: 24),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4.0),
+                  child: Text(
+                    'Existing Insurance Policy Details',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.blueAccent),
+                  ),
+                ),
+                _buildDropdownField('hasExistingPolicy', 'Existing Insurance Policy?', ['No', 'Yes']),
+                if (_dropdowns['hasExistingPolicy'] == 'Yes') ...[
+                  const SizedBox(height: 8),
+                  _buildDropdownField('existingSelfCompany', 'Existing Self-Assigned Company', _insuranceCompanies),
+                  _buildResponsiveRow(isDesktop, [
+                    _buildField('existingPolicyNumber', 'Existing Policy Number'),
+                    _buildDateField('existingDocDate', 'DOC (Date of Commencement)'),
+                  ]),
+                ],
               ]),
 
               // Accordion 8: Health Details
               _buildAccordionSection('Health Details', Icons.health_and_safety_outlined, [
                 _buildField('healthProblems', 'Health Problems', maxLines: 3),
                 _buildDropdownField('lifestyleHabits', 'Lifestyle Habits', ['None', 'Smoking', 'Drinking', 'Both']),
-                _buildField('pregnancyDetails', 'Pregnancy Details (If applicable)'),
-                _buildField('healthRemarks', 'Other Remarks', maxLines: 2),
+                _buildField('pregnancyDetails', 'Pregnancy Details (If applicable)', maxLines: 3),
+                _buildField('healthRemarks', 'Other Remarks', maxLines: 3),
+                const Divider(height: 24),
+                _buildDropdownField('hasPersonalAccident', 'Personal Accident Cover?', ['No', 'Yes']),
+                if (_dropdowns['hasPersonalAccident'] == 'Yes') ...[
+                  const SizedBox(height: 8),
+                  _buildDateField('personalAccidentDate', 'Date of the Incident'),
+                ],
               ]),
 
               // Accordion 9: Plan Information

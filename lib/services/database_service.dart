@@ -214,6 +214,7 @@ class DatabaseService {
       return keywords.every((keyword) {
         final nameMatch = cust.name.toLowerCase().contains(keyword);
         final idMatch = cust.customerId?.toLowerCase().contains(keyword) ?? false;
+        final familyMatch = cust.familyId?.toLowerCase().contains(keyword) ?? false;
         final fatherMatch = cust.fatherName?.toLowerCase().contains(keyword) ?? false;
         final mobileMatch = (cust.mobileNumber1?.toLowerCase().contains(keyword) ?? false) ||
             (cust.mobileNumber2?.toLowerCase().contains(keyword) ?? false);
@@ -221,7 +222,7 @@ class DatabaseService {
         final docMatch = cust.documents.any((doc) =>
             (doc.documentName?.toLowerCase().contains(keyword) ?? false) ||
             (doc.fileName?.toLowerCase().contains(keyword) ?? false));
-        return nameMatch || idMatch || fatherMatch || mobileMatch || policyMatch || docMatch;
+        return nameMatch || idMatch || familyMatch || fatherMatch || mobileMatch || policyMatch || docMatch;
       });
     }).toList();
   }
@@ -367,10 +368,11 @@ class DatabaseService {
       final company1Id = companies.isNotEmpty ? companies[0].id : null;
       final company2Id = companies.length > 1 ? companies[1].id : null;
 
-      // 2. Seed Customers
+      // 2. Seed Customers with rich, comprehensive field population
       final c1 = Customer()
         ..uuid = _uuid.v4()
         ..customerId = 'CUST-001'
+        ..familyId = 'FAM-101'
         ..name = 'Amit Sharma'
         ..fatherName = 'Rajesh Sharma'
         ..dateOfBirth = DateTime(1988, today.month, today.day).add(const Duration(days: 3)) // Birthday in 3 days!
@@ -378,21 +380,130 @@ class DatabaseService {
         ..spouseName = 'Kiran Sharma'
         ..nationality = 'Indian'
         ..aadhaarNumber = '1234-5678-9012'
-        ..qualification = 'MBA'
+        ..qualification = 'MBA in Finance'
         ..height = '175 cm'
-        ..weight = '70 kg'
+        ..weight = '72 kg'
+        // Family
+        ..numberOfChildren = 2
+        ..childrenDOBs = [DateTime(2015, 6, 12), DateTime(2019, 9, 20)]
+        ..fatherDOB = DateTime(1958, 4, 15)
+        ..motherDOB = DateTime(1962, 8, 10)
+        ..spouseDOB = DateTime(1990, 11, 25)
+        ..fatherAge = '68'
+        ..motherAge = '64'
+        ..spouseAge = '35'
+        ..brotherAge = '40'
+        ..sisterAge = '32'
+        // Professional
+        ..employerBusinessName = 'TCS Global Ltd'
+        ..designation = 'Senior Finance Manager'
+        ..natureOfBusiness = 'Information Technology'
+        ..annualIncome = '18,50,000'
+        // Contact
+        ..officeContactNumber = '011-23456789'
         ..mobileNumber1 = '9876543210'
+        ..mobileNumber2 = '9876543211'
+        ..mobileNumber3 = '9876543212'
         ..emailId = 'amit.sharma@email.com'
-        ..communicationAddress = '123, Green Park, New Delhi'
-        ..permanentAddress = '123, Green Park, New Delhi'
+        // Identity
+        ..panNumber = 'ABCPS1234F'
+        ..weddingAnniversary = DateTime(2014, today.month, today.day).add(const Duration(days: 7))
+        // Nominee
+        ..nomineeName = 'Kiran Sharma'
+        ..nomineeRelationship = 'Wife'
+        ..nomineeDOB = DateTime(1990, 11, 25)
+        ..nomineeFatherName = 'Suresh Gupta'
+        ..nomineePan = 'EFGPS5678K'
+        ..nomineeMobile1 = '9876543211'
+        ..nomineeEmail = 'kiran.sharma@email.com'
+        // Existing Insurance Policies
         ..selfCompany = companies.isNotEmpty ? companies[0].name : 'LIC of India'
         ..selfPolicyNumber = 'POL-889900'
+        ..selfAadhaarNumber = '1234-5678-9012'
         ..selfSumAssured1 = '₹ 15,00,000'
+        ..selfSumAssured2 = '₹ 10,00,000'
         ..selfYearOfIssue = '2021'
-        ..healthProblems = 'Mild hypertension'
-        ..lifestyleHabits = 'None'
-        ..reminderDate1 = today.add(const Duration(days: 1)) // Reminder tomorrow!
-        ..notes = 'Client interested in buying new child plan.'
+        ..fatherPolicyNumber = 'POL-112233'
+        ..fatherCompany = 'LIC of India'
+        ..motherPolicyNumber = 'POL-445566'
+        ..motherCompany = 'Star Health'
+        ..spousePolicyNumber = 'POL-778899'
+        ..spouseCompany = 'HDFC Life'
+        ..childrenPolicyNumber = 'POL-990011'
+        ..childrenCompany = 'Max Life'
+        ..hasExistingPolicy = 'Yes'
+        ..existingSelfCompany = 'LIC of India'
+        ..existingPolicyNumber = 'POL-889900'
+        ..existingDocDate = DateTime(2021, 3, 15)
+        // Health & Cover
+        ..healthProblems = 'Mild hypertension (controlled with medication)'
+        ..lifestyleHabits = 'Non-smoker, Occasional social drinking'
+        ..pregnancyDetails = 'N/A'
+        ..healthRemarks = 'Regular annual health checkup completed in Jan 2026.'
+        ..hasPersonalAccident = 'Yes'
+        ..personalAccidentDate = today
+        // Addresses
+        ..communicationAddress = '123, Green Park Main Road, Hauz Khas, New Delhi - 110016'
+        ..permanentAddress = 'Plot 45, Civil Lines, Jaipur, Rajasthan - 302006'
+        // Plan Items
+        ..plans = [
+          CustomerPlanItem()
+            ..productName = 'LIC Jeevan Umang (Plan 945)'
+            ..premium = '₹ 48,500'
+            ..mode = 'Yearly'
+            ..planSumAssured = '₹ 15,00,000'
+            ..rider = 'Accidental Death & Disability Benefit',
+          CustomerPlanItem()
+            ..productName = 'HDFC Life Sanchay Plus'
+            ..premium = '₹ 35,000'
+            ..mode = 'Half-Yearly'
+            ..planSumAssured = '₹ 10,00,000'
+            ..rider = 'Critical Illness Rider',
+        ]
+        ..productName = 'LIC Jeevan Umang'
+        ..premiumMode = 'Yearly'
+        ..planSumAssured = '₹ 15,00,000'
+        ..rider = 'Accidental Benefit'
+        // Investments
+        ..riskCover = 'High Cover'
+        ..pensionPlan = 'NPS Scheme Tier-1'
+        ..investmentPlan = 'SIP Equity Mutual Fund'
+        ..mutualFunds = 'SBI Bluechip Fund & Mirae Asset Large Cap'
+        ..mediClaim = 'Star Health Comprehensive (₹ 10 Lakh)'
+        ..moneyBackPolicy = 'LIC Money Back 20 Yrs'
+        ..childrenEducationPlan = 'HDFC Young Star Super'
+        // Reminders
+        ..reminderDate1 = today.add(const Duration(days: 1))
+        ..reminderNote1 = 'Collect premium cheque for Jeevan Umang policy renewal'
+        ..reminderDate2 = today.add(const Duration(days: 5))
+        ..reminderNote2 = 'Discuss new child higher education endowment plan options'
+        // References
+        ..references = [
+          CustomerReferenceItem()
+            ..name = 'Alok Verma'
+            ..mobile = '9811223344'
+            ..age = '38',
+          CustomerReferenceItem()
+            ..name = 'Sunil Mehta'
+            ..mobile = '9822334455'
+            ..age = '42',
+        ]
+        ..referenceFriendName = 'Alok Verma'
+        ..referenceMobile = '9811223344'
+        ..referenceAge = '38'
+        // Documents
+        ..documents = [
+          CustomerDocument()
+            ..documentName = 'Aadhaar Card'
+            ..fileName = 'aadhaar_amit_sharma.pdf',
+          CustomerDocument()
+            ..documentName = 'PAN Card'
+            ..fileName = 'pan_amit_sharma.pdf',
+          CustomerDocument()
+            ..documentName = 'Previous Policy Bond'
+            ..fileName = 'lic_policy_bond.pdf',
+        ]
+        ..notes = 'Highly valuable HNIs client. Interested in expanding retirement pension corpus and child endowment policies.'
         ..updatedAt = DateTime.now()
         ..isDeleted = false
         ..assignedCompanyId = company1Id;
@@ -400,6 +511,7 @@ class DatabaseService {
       final c2 = Customer()
         ..uuid = _uuid.v4()
         ..customerId = 'CUST-002'
+        ..familyId = 'FAM-101'
         ..name = 'Priya Patel'
         ..fatherName = 'Arvind Patel'
         ..dateOfBirth = DateTime(1993, today.month, today.day).add(const Duration(days: 15)) // Birthday in 15 days
@@ -407,14 +519,56 @@ class DatabaseService {
         ..spouseName = 'Vikram Patel'
         ..nationality = 'Indian'
         ..aadhaarNumber = '9876-5432-1098'
-        ..qualification = 'B.Tech'
+        ..qualification = 'B.Tech Computer Science'
+        ..height = '162 cm'
+        ..weight = '58 kg'
+        ..numberOfChildren = 1
+        ..childrenDOBs = [DateTime(2021, 3, 10)]
+        ..fatherDOB = DateTime(1960, 5, 20)
+        ..motherDOB = DateTime(1964, 9, 14)
+        ..spouseDOB = DateTime(1991, 12, 5)
+        ..employerBusinessName = 'Infosys Technologies'
+        ..designation = 'Lead Software Architect'
+        ..natureOfBusiness = 'Software Engineering'
+        ..annualIncome = '22,00,000'
         ..mobileNumber1 = '8765432109'
+        ..mobileNumber2 = '8765432110'
         ..emailId = 'priya.patel@email.com'
-        ..communicationAddress = '456, satellite road, Ahmedabad'
+        ..panNumber = 'XYZPP9876K'
         ..weddingAnniversary = DateTime(2018, today.month, today.day).add(const Duration(days: 10)) // Anniversary in 10 days
+        ..nomineeName = 'Vikram Patel'
+        ..nomineeRelationship = 'Husband'
+        ..nomineeDOB = DateTime(1991, 12, 5)
+        ..nomineeMobile1 = '8765432110'
         ..selfCompany = companies.length > 1 ? companies[1].name : 'HDFC Life'
         ..selfPolicyNumber = 'POL-776655'
         ..selfSumAssured1 = '₹ 20,00,000'
+        ..selfYearOfIssue = '2022'
+        ..hasExistingPolicy = 'Yes'
+        ..existingSelfCompany = 'HDFC Life'
+        ..existingPolicyNumber = 'POL-776655'
+        ..existingDocDate = DateTime(2022, 5, 10)
+        ..healthProblems = 'None'
+        ..lifestyleHabits = 'Non-smoker'
+        ..hasPersonalAccident = 'Yes'
+        ..personalAccidentDate = DateTime(2025, 4, 18)
+        ..communicationAddress = '456, Satellite Road, Near ISRO Colony, Ahmedabad, Gujarat - 380015'
+        ..permanentAddress = '456, Satellite Road, Ahmedabad, Gujarat - 380015'
+        ..plans = [
+          CustomerPlanItem()
+            ..productName = 'HDFC Click 2 Protect Super'
+            ..premium = '₹ 28,000'
+            ..mode = 'Yearly'
+            ..planSumAssured = '₹ 20,00,000'
+            ..rider = 'Waiver of Premium',
+        ]
+        ..riskCover = 'Moderate'
+        ..pensionPlan = 'Corporate NPS'
+        ..mutualFunds = 'Nippon India Small Cap & Parag Parikh Flexi Cap'
+        ..mediClaim = 'Niva Bupa Health Companion (₹ 15 Lakh)'
+        ..reminderDate1 = today.add(const Duration(days: 2))
+        ..reminderNote1 = 'Send birthday & anniversary greetings proposal brochure'
+        ..notes = 'Prefers digital communication via email and WhatsApp.'
         ..updatedAt = DateTime.now()
         ..isDeleted = false
         ..assignedCompanyId = company2Id;
@@ -422,46 +576,169 @@ class DatabaseService {
       final c3 = Customer()
         ..uuid = _uuid.v4()
         ..customerId = 'CUST-003'
+        ..familyId = 'FAM-102'
         ..name = 'Rohan Desai'
         ..fatherName = 'Sanjay Desai'
         ..dateOfBirth = DateTime(1995, today.month, today.day).subtract(const Duration(days: 5)) // Birthday was 5 days ago
         ..maritalStatus = 'Single'
         ..nationality = 'Indian'
+        ..aadhaarNumber = '5566-7788-9900'
+        ..qualification = 'M.Sc Data Science'
+        ..height = '180 cm'
+        ..weight = '76 kg'
+        ..employerBusinessName = 'Desai Tech Solutions Consultancy'
+        ..designation = 'Founder & Managing Director'
+        ..natureOfBusiness = 'IT Services & Consulting'
+        ..annualIncome = '32,00,000'
         ..mobileNumber1 = '7654321098'
+        ..mobileNumber2 = '7654321099'
         ..emailId = 'rohan.desai@email.com'
-        ..communicationAddress = '789, MG Road, Pune'
+        ..panNumber = 'RDXPD4321L'
+        ..nomineeName = 'Sanjay Desai'
+        ..nomineeRelationship = 'Father'
+        ..nomineeDOB = DateTime(1965, 3, 14)
+        ..selfCompany = 'ICICI Prudential'
+        ..selfPolicyNumber = 'POL-554433'
+        ..selfSumAssured1 = '₹ 50,00,000'
+        ..selfYearOfIssue = '2023'
+        ..hasExistingPolicy = 'Yes'
+        ..healthProblems = 'None'
+        ..lifestyleHabits = 'Gym & Fitness'
+        ..hasPersonalAccident = 'Yes'
+        ..personalAccidentDate = today
+        ..communicationAddress = '789, MG Road, Camp Area, Pune, Maharashtra - 411001'
+        ..permanentAddress = '789, MG Road, Camp Area, Pune, Maharashtra - 411001'
+        ..plans = [
+          CustomerPlanItem()
+            ..productName = 'ICICI Pru iProtect Smart'
+            ..premium = '₹ 42,000'
+            ..mode = 'Yearly'
+            ..planSumAssured = '₹ 50,00,000'
+            ..rider = 'Accidental Death Benefit Rider',
+        ]
+        ..riskCover = 'High Growth'
+        ..investmentPlan = 'Direct Equity & Crypto Portfolio'
+        ..mutualFunds = 'Mirae Asset Emerging Bluechip'
+        ..mediClaim = 'Care Supreme Health Cover (₹ 25 Lakh)'
+        ..reminderDate1 = today
+        ..reminderNote1 = 'Review high net worth term plan upgrade option'
+        ..notes = 'Tech entrepreneur with interest in tax saving ULIPs and ELSS funds.'
         ..updatedAt = DateTime.now()
         ..isDeleted = false;
 
       final c4 = Customer()
         ..uuid = _uuid.v4()
         ..customerId = 'CUST-004'
+        ..familyId = 'FAM-102'
         ..name = 'Sneha Reddy'
         ..fatherName = 'Prabhakar Reddy'
         ..dateOfBirth = DateTime(1990, 8, 22)
         ..maritalStatus = 'Married'
         ..spouseName = 'Madhusudhan Reddy'
         ..nationality = 'Indian'
+        ..aadhaarNumber = '4433-2211-0099'
+        ..qualification = 'MBBS, MD Pediatrics'
+        ..height = '165 cm'
+        ..weight = '60 kg'
+        ..numberOfChildren = 2
+        ..childrenDOBs = [DateTime(2017, 4, 8), DateTime(2020, 10, 14)]
+        ..employerBusinessName = 'Apollo Hospitals Jubilee Hills'
+        ..designation = 'Consultant Pediatrician'
+        ..natureOfBusiness = 'Healthcare & Medicine'
+        ..annualIncome = '28,00,000'
         ..mobileNumber1 = '6543210987'
-        ..communicationAddress = '55, Jubilee Hills, Hyderabad'
+        ..mobileNumber2 = '6543210988'
+        ..emailId = 'dr.sneha.reddy@email.com'
+        ..panNumber = 'SRXPR9876M'
         ..weddingAnniversary = DateTime(2015, today.month, today.day).add(const Duration(days: 1)) // Anniversary tomorrow!
+        ..nomineeName = 'Madhusudhan Reddy'
+        ..nomineeRelationship = 'Husband'
+        ..nomineeDOB = DateTime(1987, 2, 11)
+        ..selfCompany = 'Tata AIA Life'
+        ..selfPolicyNumber = 'POL-332211'
+        ..selfSumAssured1 = '₹ 30,00,000'
+        ..selfYearOfIssue = '2020'
+        ..hasExistingPolicy = 'Yes'
+        ..healthProblems = 'None'
+        ..lifestyleHabits = 'Non-smoker'
+        ..hasPersonalAccident = 'No'
+        ..communicationAddress = '55, Jubilee Hills Road No. 36, Hyderabad, Telangana - 500033'
+        ..permanentAddress = '55, Jubilee Hills Road No. 36, Hyderabad, Telangana - 500033'
+        ..plans = [
+          CustomerPlanItem()
+            ..productName = 'Tata AIA Sampoorna Raksha Supreme'
+            ..premium = '₹ 52,000'
+            ..mode = 'Yearly'
+            ..planSumAssured = '₹ 30,00,000'
+            ..rider = 'Criticare Plus Rider',
+        ]
+        ..mediClaim = 'Star Health Doctor\'s Special Policy (₹ 50 Lakh)'
+        ..childrenEducationPlan = 'SBI Life Smart Champ Insurance'
+        ..reminderDate1 = today.add(const Duration(days: 1))
+        ..reminderNote1 = 'Send wedding anniversary greetings & gift voucher'
+        ..notes = 'Doctor by profession. Very punctual with annual premium renewals.'
         ..updatedAt = DateTime.now()
         ..isDeleted = false;
 
       final c5 = Customer()
         ..uuid = _uuid.v4()
         ..customerId = 'CUST-005'
+        ..familyId = 'FAM-103'
         ..name = 'Vikram Singh'
         ..fatherName = 'Karan Singh'
         ..dateOfBirth = DateTime(1980, 11, 5)
         ..maritalStatus = 'Married'
+        ..spouseName = 'Sunita Singh'
+        ..nationality = 'Indian'
+        ..aadhaarNumber = '7788-9900-1122'
+        ..qualification = 'B.Com, CA'
+        ..height = '178 cm'
+        ..weight = '82 kg'
+        ..numberOfChildren = 1
+        ..childrenDOBs = [DateTime(2010, 8, 19)]
+        ..employerBusinessName = 'Singh & Associates Chartered Accountants'
+        ..designation = 'Senior Partner'
+        ..natureOfBusiness = 'Auditing & Accounting'
+        ..annualIncome = '45,00,000'
         ..mobileNumber1 = '5432109876'
+        ..mobileNumber2 = '5432109877'
+        ..emailId = 'ca.vikram.singh@email.com'
         ..panNumber = 'ABCDE1234F'
+        ..weddingAnniversary = DateTime(2008, 12, 12)
+        ..nomineeName = 'Sunita Singh'
+        ..nomineeRelationship = 'Wife'
+        ..nomineeDOB = DateTime(1983, 7, 24)
+        ..selfCompany = 'SBI Life'
+        ..selfPolicyNumber = 'POL-998877'
+        ..selfSumAssured1 = '₹ 1,00,00,000'
+        ..selfYearOfIssue = '2019'
+        ..hasExistingPolicy = 'Yes'
+        ..healthProblems = 'Mild Diabetes (controlled)'
+        ..lifestyleHabits = 'Occasional smoking'
+        ..hasPersonalAccident = 'Yes'
+        ..personalAccidentDate = today
+        ..communicationAddress = '102, Commercial Street, Connaught Place, New Delhi - 110001'
+        ..permanentAddress = '102, Commercial Street, Connaught Place, New Delhi - 110001'
+        ..plans = [
+          CustomerPlanItem()
+            ..productName = 'SBI Life eShield Next'
+            ..premium = '₹ 85,000'
+            ..mode = 'Yearly'
+            ..planSumAssured = '₹ 1,00,00,000'
+            ..rider = 'Accidental Total & Permanent Disability',
+          CustomerPlanItem()
+            ..productName = 'LIC Annuity Pension Plan'
+            ..premium = '₹ 1,20,000'
+            ..mode = 'Yearly'
+            ..planSumAssured = '₹ 25,00,000'
+            ..rider = 'None',
+        ]
         ..riskCover = 'High'
-        ..pensionPlan = 'VRS Annuity'
-        ..mutualFunds = 'SBI Bluechip Growth'
+        ..pensionPlan = 'VRS Annuity & LIC Jeevan Shanti'
+        ..mutualFunds = 'SBI Bluechip Growth & HDFC Flexi Cap'
+        ..mediClaim = 'HDFC ERGO Optima Secure (₹ 1 Crore Topup)'
         ..reminderDate2 = today.add(const Duration(days: 2)) // Reminder in 2 days!
-        ..notes = 'High net worth client, focuses on mutual funds.'
+        ..notes = 'High net worth client, focuses on mutual funds and large tax-saving annuity plans.'
         ..updatedAt = DateTime.now()
         ..isDeleted = false;
 

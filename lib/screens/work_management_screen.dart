@@ -20,60 +20,133 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
     final companiesAsync = ref.watch(companiesProvider);
     final selectedCompanyId = ref.watch(selectedCompanyIdProvider);
 
+    final List<Color> avatarColors = [
+      AppColors.skyBlue,
+      AppColors.limeGreen,
+      AppColors.violetAccent,
+      AppColors.cyanAccent,
+      AppColors.amberAccent,
+    ];
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Row(
         children: [
-          // Sidebar for Company Selection (loads dynamic companies from Isar)
+          // Sidebar for Company Selection
           Container(
-            width: 200,
+            width: 220,
             decoration: const BoxDecoration(
               color: AppColors.cardSurface,
-              border: Border(right: BorderSide(color: AppColors.cardBorder)),
+              border: Border(right: BorderSide(color: AppColors.cardBorder, width: 1)),
+              boxShadow: [AppColors.softShadow],
             ),
-            child: companiesAsync.when(
-              data: (companies) {
-                return ListView.builder(
-                  itemCount: companies.length,
-                  itemBuilder: (context, index) {
-                    final company = companies[index];
-                    final isSelected = selectedCompanyId == company.id;
-                    return Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isSelected ? AppColors.badgeBlueBg : Colors.transparent,
-                        borderRadius: BorderRadius.circular(10),
+            child: Column(
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppColors.badgeCyanBg,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.business_rounded, color: AppColors.cyanAccent, size: 18),
                       ),
-                      child: ListTile(
-                        dense: true,
-                        title: Text(
-                          company.name,
-                          style: TextStyle(
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                            color: isSelected ? AppColors.skyBlue : AppColors.headingText,
-                          ),
+                      const SizedBox(width: 10),
+                      const Text(
+                        'COMPANIES',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: AppColors.headingText,
+                          letterSpacing: 1.0,
                         ),
-                        subtitle: Text(
-                          company.referenceNumber ?? '',
-                          style: const TextStyle(fontSize: 10, color: AppColors.mutedText),
-                        ),
-                        selected: isSelected,
-                        trailing: IconButton(
-                          icon: const Icon(Icons.edit_outlined, size: 14, color: AppColors.mutedText),
-                          onPressed: () => _showEditCompanyDialog(company),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        ),
-                        onTap: () {
-                          ref.read(selectedCompanyIdProvider.notifier).state = company.id;
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: companiesAsync.when(
+                    data: (companies) {
+                      if (companies.isEmpty) {
+                        return const Center(
+                          child: Text('No companies', style: TextStyle(color: AppColors.mutedText, fontSize: 12)),
+                        );
+                      }
+                      return ListView.builder(
+                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                        itemCount: companies.length,
+                        itemBuilder: (context, index) {
+                          final company = companies[index];
+                          final isSelected = selectedCompanyId == company.id;
+                          final avatarColor = avatarColors[company.name.hashCode.abs() % avatarColors.length];
+
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 3.0),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              decoration: BoxDecoration(
+                                color: isSelected ? AppColors.badgeBlueBg : Colors.transparent,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isSelected ? AppColors.skyBlue.withOpacity(0.3) : Colors.transparent,
+                                ),
+                              ),
+                              child: ListTile(
+                                dense: true,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                                leading: CircleAvatar(
+                                  radius: 16,
+                                  backgroundColor: isSelected ? avatarColor : avatarColor.withOpacity(0.15),
+                                  child: Text(
+                                    company.name.isNotEmpty ? company.name[0].toUpperCase() : 'C',
+                                    style: TextStyle(
+                                      color: isSelected ? Colors.white : avatarColor,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                                title: Text(
+                                  company.name,
+                                  style: TextStyle(
+                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                    fontSize: 13,
+                                    color: isSelected ? AppColors.badgeBlueText : AppColors.headingText,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                subtitle: company.referenceNumber != null && company.referenceNumber!.isNotEmpty
+                                    ? Text(
+                                        company.referenceNumber!,
+                                        style: const TextStyle(fontSize: 10, color: AppColors.mutedText),
+                                        overflow: TextOverflow.ellipsis,
+                                      )
+                                    : null,
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.edit_outlined, size: 14, color: AppColors.mutedText),
+                                  onPressed: () => _showEditCompanyDialog(company),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                ),
+                                onTap: () {
+                                  ref.read(selectedCompanyIdProvider.notifier).state = company.id;
+                                },
+                              ),
+                            ),
+                          );
                         },
-                      ),
-                    );
-                  },
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Center(child: Text('Error: $err')),
+                      );
+                    },
+                    loading: () => const Center(child: CircularProgressIndicator(color: AppColors.skyBlue)),
+                    error: (err, stack) => Center(child: Text('Error: $err', style: const TextStyle(color: AppColors.roseAccent))),
+                  ),
+                ),
+              ],
             ),
           ),
           // Main Work Tracking Area
@@ -83,9 +156,9 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.business_outlined, size: 64, color: Colors.grey),
+                        Icon(Icons.business_outlined, size: 64, color: AppColors.mutedText),
                         SizedBox(height: 16),
-                        Text('Select a company from the left panel to manage daily tasks'),
+                        Text('Select a company from the left panel to manage daily tasks', style: TextStyle(color: AppColors.bodyText, fontWeight: FontWeight.w500)),
                       ],
                     ),
                   )
@@ -96,9 +169,9 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
       floatingActionButton: selectedCompanyId != null
           ? FloatingActionButton.extended(
               onPressed: () => _showAddTaskDialog(selectedCompanyId),
-              label: const Text('Add Task'),
+              label: const Text('Add Task', style: TextStyle(fontWeight: FontWeight.bold)),
               icon: const Icon(Icons.add),
-              backgroundColor: Colors.blueAccent,
+              backgroundColor: AppColors.skyBlue,
               foregroundColor: Colors.white,
             )
           : null,

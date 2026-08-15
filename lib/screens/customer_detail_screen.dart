@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import '../models/customer.dart';
 import '../services/database_service.dart';
+import '../services/dashboard_export_service.dart';
 import 'customer_form_screen.dart';
 import '../providers/customer_provider.dart';
 import '../providers/events_provider.dart';
@@ -233,6 +234,12 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
         backgroundColor: AppColors.cardSurface,
         actions: [
           IconButton(
+            tooltip: 'Share Customer Profile PDF',
+            icon: const Icon(Icons.picture_as_pdf_rounded, color: AppColors.limeGreen),
+            onPressed: () => DashboardExportService.shareCustomerProfilePdf(c),
+          ),
+          IconButton(
+            tooltip: 'Edit Profile',
             icon: const Icon(Icons.edit, color: AppColors.skyBlue),
             onPressed: () async {
               await Navigator.push(
@@ -302,19 +309,42 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                         children: [
                           Text(c.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.headingText)),
                           const SizedBox(height: 4),
-                          Text(c.customerId ?? 'No Business ID', style: const TextStyle(fontSize: 14, color: AppColors.mutedText)),
+                          Row(
+                            children: [
+                              Text('ID: ${c.customerId ?? 'CUST-${c.id}'}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.bodyText)),
+                              if (c.familyId != null && c.familyId!.isNotEmpty) ...[
+                                const SizedBox(width: 8),
+                                ColorBadge(text: 'Family: ${c.familyId}', style: BadgeStyle.blue),
+                              ],
+                            ],
+                          ),
                           const SizedBox(height: 6),
                           Row(
                             children: [
                               const ColorBadge(text: 'ACTIVE', style: BadgeStyle.green),
                               const SizedBox(width: 8),
                               Text(
-                                'Updated: ${DateFormat('dd MMM yy, hh:mm a').format(c.updatedAt)}',
+                                'Updated: ${DateFormat('dd MMM yy, hh:mm a').format(c.updatedAt.toLocal())}',
                                 style: const TextStyle(fontSize: 11, color: AppColors.mutedText),
                               ),
                             ],
                           ),
                         ],
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () => DashboardExportService.shareCustomerProfilePdf(c),
+                      icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
+                      label: const Text('Share PDF'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.badgeGreenBg,
+                        foregroundColor: AppColors.limeGreen,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          side: const BorderSide(color: AppColors.limeGreen, width: 1),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       ),
                     ),
                   ],
@@ -400,6 +430,12 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
               _buildDetailRow("Mother Policy", c.motherPolicyNumber != null && c.motherPolicyNumber!.isNotEmpty ? '${c.motherPolicyNumber} (${c.motherCompany ?? "N/A"})' : null),
               _buildDetailRow("Spouse Policy", c.spousePolicyNumber != null && c.spousePolicyNumber!.isNotEmpty ? '${c.spousePolicyNumber} (${c.spouseCompany ?? "N/A"})' : null),
               _buildDetailRow("Children Policy", c.childrenPolicyNumber != null && c.childrenPolicyNumber!.isNotEmpty ? '${c.childrenPolicyNumber} (${c.childrenCompany ?? "N/A"})' : null),
+              _buildDetailRow("Existing Insurance Policy", c.hasExistingPolicy),
+              if ((c.hasExistingPolicy ?? '').toLowerCase() == 'yes') ...[
+                _buildDetailRow("Existing Self-Assigned Company", c.existingSelfCompany),
+                _buildDetailRow("Existing Policy Number", c.existingPolicyNumber),
+                _buildDateRow("DOC (Date of Commencement)", c.existingDocDate),
+              ],
             ]),
 
             _buildAccordionSection('Health Details', Icons.health_and_safety_outlined, [
@@ -407,6 +443,9 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
               _buildDetailRow("Lifestyle Habits", c.lifestyleHabits),
               _buildDetailRow("Pregnancy Details", c.pregnancyDetails),
               _buildDetailRow("Other Remarks", c.healthRemarks),
+              _buildDetailRow("Personal Accident Cover", c.hasPersonalAccident),
+              if ((c.hasPersonalAccident ?? '').toLowerCase() == 'yes')
+                _buildDateRow("Date of the Incident", c.personalAccidentDate),
             ]),
 
             _buildAccordionSection('Plan Details', Icons.article_outlined, [

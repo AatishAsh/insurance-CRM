@@ -34,6 +34,9 @@ class Customer {
   @Index()
   String? customerId; // Business ID like CUST-001
 
+  @Index()
+  String? familyId; // Family ID like FAM-101
+
   @Index(caseSensitive: false)
   late String name;
 
@@ -114,11 +117,19 @@ class Customer {
   String? childrenPolicyNumber;
   String? childrenCompany;
 
+  // Existing Insurance Policy
+  String? hasExistingPolicy; // 'Yes' / 'No'
+  String? existingSelfCompany;
+  String? existingPolicyNumber;
+  DateTime? existingDocDate;
+
   // Health
   String? healthProblems;
   String? lifestyleHabits; // Smoking/Drinking
   String? pregnancyDetails;
   String? healthRemarks;
+  String? hasPersonalAccident; // 'Yes' / 'No'
+  DateTime? personalAccidentDate;
 
   // Address
   String? communicationAddress;

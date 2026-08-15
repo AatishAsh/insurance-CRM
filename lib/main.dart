@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'screens/dashboard_screen.dart';
 import 'screens/customer_list_screen.dart';
 import 'screens/work_management_screen.dart';
 import 'screens/upcoming_events_screen.dart';
@@ -13,6 +14,7 @@ import 'providers/customer_provider.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
 import 'widgets/brand_background.dart';
+import 'widgets/brand_sidenav.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -65,6 +67,7 @@ class MainNavigationShell extends ConsumerWidget {
     final int selectedIndex = ref.watch(navigationTabIndexProvider);
 
     final List<Widget> screens = [
+      const DashboardScreen(),
       const CustomerListScreen(),
       const UpcomingEventsScreen(),
       const PerformanceScreen(),
@@ -133,41 +136,11 @@ class MainNavigationShell extends ConsumerWidget {
         child: Row(
           children: [
             if (isDesktop)
-              NavigationRail(
+              BrandSidenav(
                 selectedIndex: selectedIndex,
                 onDestinationSelected: (int index) {
                   ref.read(navigationTabIndexProvider.notifier).state = index;
                 },
-                labelType: NavigationRailLabelType.all,
-                useIndicator: true,
-                indicatorColor: AppColors.badgeBlueBg,
-                destinations: const [
-                  NavigationRailDestination(
-                    icon: Icon(Icons.people_outline),
-                    selectedIcon: Icon(Icons.people, color: AppColors.skyBlue),
-                    label: Text('Customers'),
-                  ),
-                  NavigationRailDestination(
-                    icon: Icon(Icons.event_outlined),
-                    selectedIcon: Icon(Icons.event, color: AppColors.skyBlue),
-                    label: Text('Events'),
-                  ),
-                  NavigationRailDestination(
-                    icon: Icon(Icons.analytics_outlined),
-                    selectedIcon: Icon(Icons.analytics, color: AppColors.skyBlue),
-                    label: Text('Performance'),
-                  ),
-                  NavigationRailDestination(
-                    icon: Icon(Icons.assignment_outlined),
-                    selectedIcon: Icon(Icons.assignment, color: AppColors.skyBlue),
-                    label: Text('Work'),
-                  ),
-                  NavigationRailDestination(
-                    icon: Icon(Icons.campaign_outlined),
-                    selectedIcon: Icon(Icons.campaign, color: AppColors.skyBlue),
-                    label: Text('Marketing'),
-                  ),
-                ],
               ),
             Expanded(
               child: screens[selectedIndex],
@@ -178,35 +151,40 @@ class MainNavigationShell extends ConsumerWidget {
       bottomNavigationBar: !isDesktop
           ? NavigationBar(
               selectedIndex: selectedIndex,
-              elevation: 4,
+              elevation: 6,
               indicatorColor: AppColors.badgeBlueBg,
               onDestinationSelected: (int index) {
                 ref.read(navigationTabIndexProvider.notifier).state = index;
               },
               destinations: const [
                 NavigationDestination(
-                  icon: Icon(Icons.people_outline),
-                  selectedIcon: Icon(Icons.people, color: AppColors.skyBlue),
+                  icon: Icon(Icons.grid_view_outlined),
+                  selectedIcon: Icon(Icons.grid_view_rounded, color: AppColors.skyBlue),
+                  label: 'Dashboard',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.people_outline_rounded),
+                  selectedIcon: Icon(Icons.people_rounded, color: AppColors.limeGreen),
                   label: 'Customers',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.event_outlined),
-                  selectedIcon: Icon(Icons.event, color: AppColors.skyBlue),
+                  selectedIcon: Icon(Icons.event_rounded, color: AppColors.violetAccent),
                   label: 'Events',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.analytics_outlined),
-                  selectedIcon: Icon(Icons.analytics, color: AppColors.skyBlue),
+                  selectedIcon: Icon(Icons.analytics_rounded, color: AppColors.cyanAccent),
                   label: 'Performance',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.assignment_outlined),
-                  selectedIcon: Icon(Icons.assignment, color: AppColors.skyBlue),
+                  selectedIcon: Icon(Icons.assignment_rounded, color: AppColors.amberAccent),
                   label: 'Work',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.campaign_outlined),
-                  selectedIcon: Icon(Icons.campaign, color: AppColors.skyBlue),
+                  selectedIcon: Icon(Icons.campaign_rounded, color: AppColors.roseAccent),
                   label: 'Marketing',
                 ),
               ],

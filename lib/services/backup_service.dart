@@ -155,10 +155,16 @@ class BackupService {
       'spouseCompany': c.spouseCompany,
       'childrenPolicyNumber': c.childrenPolicyNumber,
       'childrenCompany': c.childrenCompany,
+      'hasExistingPolicy': c.hasExistingPolicy,
+      'existingSelfCompany': c.existingSelfCompany,
+      'existingPolicyNumber': c.existingPolicyNumber,
+      'existingDocDate': c.existingDocDate?.toIso8601String(),
       'healthProblems': c.healthProblems,
       'lifestyleHabits': c.lifestyleHabits,
       'pregnancyDetails': c.pregnancyDetails,
       'healthRemarks': c.healthRemarks,
+      'hasPersonalAccident': c.hasPersonalAccident,
+      'personalAccidentDate': c.personalAccidentDate?.toIso8601String(),
       'communicationAddress': c.communicationAddress,
       'permanentAddress': c.permanentAddress,
       'productName': c.productName,
@@ -255,10 +261,16 @@ class BackupService {
     c.spouseCompany = json['spouseCompany'] as String?;
     c.childrenPolicyNumber = json['childrenPolicyNumber'] as String?;
     c.childrenCompany = json['childrenCompany'] as String?;
+    c.hasExistingPolicy = json['hasExistingPolicy'] as String?;
+    c.existingSelfCompany = json['existingSelfCompany'] as String?;
+    c.existingPolicyNumber = json['existingPolicyNumber'] as String?;
+    c.existingDocDate = json['existingDocDate'] != null ? DateTime.parse(json['existingDocDate'] as String) : null;
     c.healthProblems = json['healthProblems'] as String?;
     c.lifestyleHabits = json['lifestyleHabits'] as String?;
     c.pregnancyDetails = json['pregnancyDetails'] as String?;
     c.healthRemarks = json['healthRemarks'] as String?;
+    c.hasPersonalAccident = json['hasPersonalAccident'] as String?;
+    c.personalAccidentDate = json['personalAccidentDate'] != null ? DateTime.parse(json['personalAccidentDate'] as String) : null;
     c.communicationAddress = json['communicationAddress'] as String?;
     c.permanentAddress = json['permanentAddress'] as String?;
     c.productName = json['productName'] as String?;
