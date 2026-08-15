@@ -151,11 +151,17 @@ class Customer {
   String? moneyBackPolicy;
   String? childrenEducationPlan;
 
-  // Reminders
+  // Reminders (1 to 5)
   DateTime? reminderDate1;
   String? reminderNote1;
   DateTime? reminderDate2;
   String? reminderNote2;
+  DateTime? reminderDate3;
+  String? reminderNote3;
+  DateTime? reminderDate4;
+  String? reminderNote4;
+  DateTime? reminderDate5;
+  String? reminderNote5;
 
   // Reference
   List<CustomerReferenceItem> references = [];

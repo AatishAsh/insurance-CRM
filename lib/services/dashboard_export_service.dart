@@ -515,6 +515,24 @@ class DashboardExportService {
                   'Reminder 2 Note',
                   customer.reminderNote2 ?? 'N/A',
                 ),
+                _buildPdfGridRow(
+                  'Reminder 3 Date',
+                  customer.reminderDate3 != null ? DateFormat('dd MMM yyyy').format(customer.reminderDate3!.toLocal()) : 'N/A',
+                  'Reminder 3 Note',
+                  customer.reminderNote3 ?? 'N/A',
+                ),
+                _buildPdfGridRow(
+                  'Reminder 4 Date',
+                  customer.reminderDate4 != null ? DateFormat('dd MMM yyyy').format(customer.reminderDate4!.toLocal()) : 'N/A',
+                  'Reminder 4 Note',
+                  customer.reminderNote4 ?? 'N/A',
+                ),
+                _buildPdfGridRow(
+                  'Reminder 5 Date',
+                  customer.reminderDate5 != null ? DateFormat('dd MMM yyyy').format(customer.reminderDate5!.toLocal()) : 'N/A',
+                  'Reminder 5 Note',
+                  customer.reminderNote5 ?? 'N/A',
+                ),
                 if (customer.notes != null && customer.notes!.isNotEmpty)
                   _buildPdfGridRow('Customer Notes', customer.notes!, '', ''),
               ],

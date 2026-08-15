@@ -415,103 +415,133 @@ const CustomerSchema = CollectionSchema(
       name: r'reminderDate2',
       type: IsarType.dateTime,
     ),
-    r'reminderNote1': PropertySchema(
+    r'reminderDate3': PropertySchema(
       id: 79,
+      name: r'reminderDate3',
+      type: IsarType.dateTime,
+    ),
+    r'reminderDate4': PropertySchema(
+      id: 80,
+      name: r'reminderDate4',
+      type: IsarType.dateTime,
+    ),
+    r'reminderDate5': PropertySchema(
+      id: 81,
+      name: r'reminderDate5',
+      type: IsarType.dateTime,
+    ),
+    r'reminderNote1': PropertySchema(
+      id: 82,
       name: r'reminderNote1',
       type: IsarType.string,
     ),
     r'reminderNote2': PropertySchema(
-      id: 80,
+      id: 83,
       name: r'reminderNote2',
       type: IsarType.string,
     ),
+    r'reminderNote3': PropertySchema(
+      id: 84,
+      name: r'reminderNote3',
+      type: IsarType.string,
+    ),
+    r'reminderNote4': PropertySchema(
+      id: 85,
+      name: r'reminderNote4',
+      type: IsarType.string,
+    ),
+    r'reminderNote5': PropertySchema(
+      id: 86,
+      name: r'reminderNote5',
+      type: IsarType.string,
+    ),
     r'rider': PropertySchema(
-      id: 81,
+      id: 87,
       name: r'rider',
       type: IsarType.string,
     ),
     r'riskCover': PropertySchema(
-      id: 82,
+      id: 88,
       name: r'riskCover',
       type: IsarType.string,
     ),
     r'selfAadhaarNumber': PropertySchema(
-      id: 83,
+      id: 89,
       name: r'selfAadhaarNumber',
       type: IsarType.string,
     ),
     r'selfCompany': PropertySchema(
-      id: 84,
+      id: 90,
       name: r'selfCompany',
       type: IsarType.string,
     ),
     r'selfPolicyNumber': PropertySchema(
-      id: 85,
+      id: 91,
       name: r'selfPolicyNumber',
       type: IsarType.string,
     ),
     r'selfSumAssured1': PropertySchema(
-      id: 86,
+      id: 92,
       name: r'selfSumAssured1',
       type: IsarType.string,
     ),
     r'selfSumAssured2': PropertySchema(
-      id: 87,
+      id: 93,
       name: r'selfSumAssured2',
       type: IsarType.string,
     ),
     r'selfYearOfIssue': PropertySchema(
-      id: 88,
+      id: 94,
       name: r'selfYearOfIssue',
       type: IsarType.string,
     ),
     r'sisterAge': PropertySchema(
-      id: 89,
+      id: 95,
       name: r'sisterAge',
       type: IsarType.string,
     ),
     r'spouseAge': PropertySchema(
-      id: 90,
+      id: 96,
       name: r'spouseAge',
       type: IsarType.string,
     ),
     r'spouseCompany': PropertySchema(
-      id: 91,
+      id: 97,
       name: r'spouseCompany',
       type: IsarType.string,
     ),
     r'spouseDOB': PropertySchema(
-      id: 92,
+      id: 98,
       name: r'spouseDOB',
       type: IsarType.dateTime,
     ),
     r'spouseName': PropertySchema(
-      id: 93,
+      id: 99,
       name: r'spouseName',
       type: IsarType.string,
     ),
     r'spousePolicyNumber': PropertySchema(
-      id: 94,
+      id: 100,
       name: r'spousePolicyNumber',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 95,
+      id: 101,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'uuid': PropertySchema(
-      id: 96,
+      id: 102,
       name: r'uuid',
       type: IsarType.string,
     ),
     r'weddingAnniversary': PropertySchema(
-      id: 97,
+      id: 103,
       name: r'weddingAnniversary',
       type: IsarType.dateTime,
     ),
     r'weight': PropertySchema(
-      id: 98,
+      id: 104,
       name: r'weight',
       type: IsarType.string,
     )
@@ -1019,6 +1049,24 @@ int _customerEstimateSize(
     }
   }
   {
+    final value = object.reminderNote3;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.reminderNote4;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.reminderNote5;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final value = object.rider;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -1206,26 +1254,32 @@ void _customerSerialize(
   );
   writer.writeDateTime(offsets[77], object.reminderDate1);
   writer.writeDateTime(offsets[78], object.reminderDate2);
-  writer.writeString(offsets[79], object.reminderNote1);
-  writer.writeString(offsets[80], object.reminderNote2);
-  writer.writeString(offsets[81], object.rider);
-  writer.writeString(offsets[82], object.riskCover);
-  writer.writeString(offsets[83], object.selfAadhaarNumber);
-  writer.writeString(offsets[84], object.selfCompany);
-  writer.writeString(offsets[85], object.selfPolicyNumber);
-  writer.writeString(offsets[86], object.selfSumAssured1);
-  writer.writeString(offsets[87], object.selfSumAssured2);
-  writer.writeString(offsets[88], object.selfYearOfIssue);
-  writer.writeString(offsets[89], object.sisterAge);
-  writer.writeString(offsets[90], object.spouseAge);
-  writer.writeString(offsets[91], object.spouseCompany);
-  writer.writeDateTime(offsets[92], object.spouseDOB);
-  writer.writeString(offsets[93], object.spouseName);
-  writer.writeString(offsets[94], object.spousePolicyNumber);
-  writer.writeDateTime(offsets[95], object.updatedAt);
-  writer.writeString(offsets[96], object.uuid);
-  writer.writeDateTime(offsets[97], object.weddingAnniversary);
-  writer.writeString(offsets[98], object.weight);
+  writer.writeDateTime(offsets[79], object.reminderDate3);
+  writer.writeDateTime(offsets[80], object.reminderDate4);
+  writer.writeDateTime(offsets[81], object.reminderDate5);
+  writer.writeString(offsets[82], object.reminderNote1);
+  writer.writeString(offsets[83], object.reminderNote2);
+  writer.writeString(offsets[84], object.reminderNote3);
+  writer.writeString(offsets[85], object.reminderNote4);
+  writer.writeString(offsets[86], object.reminderNote5);
+  writer.writeString(offsets[87], object.rider);
+  writer.writeString(offsets[88], object.riskCover);
+  writer.writeString(offsets[89], object.selfAadhaarNumber);
+  writer.writeString(offsets[90], object.selfCompany);
+  writer.writeString(offsets[91], object.selfPolicyNumber);
+  writer.writeString(offsets[92], object.selfSumAssured1);
+  writer.writeString(offsets[93], object.selfSumAssured2);
+  writer.writeString(offsets[94], object.selfYearOfIssue);
+  writer.writeString(offsets[95], object.sisterAge);
+  writer.writeString(offsets[96], object.spouseAge);
+  writer.writeString(offsets[97], object.spouseCompany);
+  writer.writeDateTime(offsets[98], object.spouseDOB);
+  writer.writeString(offsets[99], object.spouseName);
+  writer.writeString(offsets[100], object.spousePolicyNumber);
+  writer.writeDateTime(offsets[101], object.updatedAt);
+  writer.writeString(offsets[102], object.uuid);
+  writer.writeDateTime(offsets[103], object.weddingAnniversary);
+  writer.writeString(offsets[104], object.weight);
 }
 
 Customer _customerDeserialize(
@@ -1333,26 +1387,32 @@ Customer _customerDeserialize(
       [];
   object.reminderDate1 = reader.readDateTimeOrNull(offsets[77]);
   object.reminderDate2 = reader.readDateTimeOrNull(offsets[78]);
-  object.reminderNote1 = reader.readStringOrNull(offsets[79]);
-  object.reminderNote2 = reader.readStringOrNull(offsets[80]);
-  object.rider = reader.readStringOrNull(offsets[81]);
-  object.riskCover = reader.readStringOrNull(offsets[82]);
-  object.selfAadhaarNumber = reader.readStringOrNull(offsets[83]);
-  object.selfCompany = reader.readStringOrNull(offsets[84]);
-  object.selfPolicyNumber = reader.readStringOrNull(offsets[85]);
-  object.selfSumAssured1 = reader.readStringOrNull(offsets[86]);
-  object.selfSumAssured2 = reader.readStringOrNull(offsets[87]);
-  object.selfYearOfIssue = reader.readStringOrNull(offsets[88]);
-  object.sisterAge = reader.readStringOrNull(offsets[89]);
-  object.spouseAge = reader.readStringOrNull(offsets[90]);
-  object.spouseCompany = reader.readStringOrNull(offsets[91]);
-  object.spouseDOB = reader.readDateTimeOrNull(offsets[92]);
-  object.spouseName = reader.readStringOrNull(offsets[93]);
-  object.spousePolicyNumber = reader.readStringOrNull(offsets[94]);
-  object.updatedAt = reader.readDateTime(offsets[95]);
-  object.uuid = reader.readString(offsets[96]);
-  object.weddingAnniversary = reader.readDateTimeOrNull(offsets[97]);
-  object.weight = reader.readStringOrNull(offsets[98]);
+  object.reminderDate3 = reader.readDateTimeOrNull(offsets[79]);
+  object.reminderDate4 = reader.readDateTimeOrNull(offsets[80]);
+  object.reminderDate5 = reader.readDateTimeOrNull(offsets[81]);
+  object.reminderNote1 = reader.readStringOrNull(offsets[82]);
+  object.reminderNote2 = reader.readStringOrNull(offsets[83]);
+  object.reminderNote3 = reader.readStringOrNull(offsets[84]);
+  object.reminderNote4 = reader.readStringOrNull(offsets[85]);
+  object.reminderNote5 = reader.readStringOrNull(offsets[86]);
+  object.rider = reader.readStringOrNull(offsets[87]);
+  object.riskCover = reader.readStringOrNull(offsets[88]);
+  object.selfAadhaarNumber = reader.readStringOrNull(offsets[89]);
+  object.selfCompany = reader.readStringOrNull(offsets[90]);
+  object.selfPolicyNumber = reader.readStringOrNull(offsets[91]);
+  object.selfSumAssured1 = reader.readStringOrNull(offsets[92]);
+  object.selfSumAssured2 = reader.readStringOrNull(offsets[93]);
+  object.selfYearOfIssue = reader.readStringOrNull(offsets[94]);
+  object.sisterAge = reader.readStringOrNull(offsets[95]);
+  object.spouseAge = reader.readStringOrNull(offsets[96]);
+  object.spouseCompany = reader.readStringOrNull(offsets[97]);
+  object.spouseDOB = reader.readDateTimeOrNull(offsets[98]);
+  object.spouseName = reader.readStringOrNull(offsets[99]);
+  object.spousePolicyNumber = reader.readStringOrNull(offsets[100]);
+  object.updatedAt = reader.readDateTime(offsets[101]);
+  object.uuid = reader.readString(offsets[102]);
+  object.weddingAnniversary = reader.readDateTimeOrNull(offsets[103]);
+  object.weight = reader.readStringOrNull(offsets[104]);
   return object;
 }
 
@@ -1540,11 +1600,11 @@ P _customerDeserializeProp<P>(
     case 78:
       return (reader.readDateTimeOrNull(offset)) as P;
     case 79:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 80:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 81:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 82:
       return (reader.readStringOrNull(offset)) as P;
     case 83:
@@ -1566,18 +1626,30 @@ P _customerDeserializeProp<P>(
     case 91:
       return (reader.readStringOrNull(offset)) as P;
     case 92:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 93:
       return (reader.readStringOrNull(offset)) as P;
     case 94:
       return (reader.readStringOrNull(offset)) as P;
     case 95:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 96:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 97:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 98:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 99:
+      return (reader.readStringOrNull(offset)) as P;
+    case 100:
+      return (reader.readStringOrNull(offset)) as P;
+    case 101:
+      return (reader.readDateTime(offset)) as P;
+    case 102:
+      return (reader.readString(offset)) as P;
+    case 103:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 104:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -12761,6 +12833,222 @@ extension CustomerQueryFilter
   }
 
   QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderDate3IsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'reminderDate3',
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderDate3IsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'reminderDate3',
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderDate3EqualTo(
+      DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'reminderDate3',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderDate3GreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'reminderDate3',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderDate3LessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'reminderDate3',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderDate3Between(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'reminderDate3',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderDate4IsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'reminderDate4',
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderDate4IsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'reminderDate4',
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderDate4EqualTo(
+      DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'reminderDate4',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderDate4GreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'reminderDate4',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderDate4LessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'reminderDate4',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderDate4Between(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'reminderDate4',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderDate5IsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'reminderDate5',
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderDate5IsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'reminderDate5',
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderDate5EqualTo(
+      DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'reminderDate5',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderDate5GreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'reminderDate5',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderDate5LessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'reminderDate5',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderDate5Between(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'reminderDate5',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
       reminderNote1IsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -13059,6 +13347,462 @@ extension CustomerQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'reminderNote2',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderNote3IsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'reminderNote3',
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderNote3IsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'reminderNote3',
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderNote3EqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'reminderNote3',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderNote3GreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'reminderNote3',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderNote3LessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'reminderNote3',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderNote3Between(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'reminderNote3',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderNote3StartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'reminderNote3',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderNote3EndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'reminderNote3',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderNote3Contains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'reminderNote3',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderNote3Matches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'reminderNote3',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderNote3IsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'reminderNote3',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderNote3IsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'reminderNote3',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderNote4IsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'reminderNote4',
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderNote4IsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'reminderNote4',
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderNote4EqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'reminderNote4',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderNote4GreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'reminderNote4',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderNote4LessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'reminderNote4',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderNote4Between(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'reminderNote4',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderNote4StartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'reminderNote4',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderNote4EndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'reminderNote4',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderNote4Contains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'reminderNote4',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderNote4Matches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'reminderNote4',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderNote4IsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'reminderNote4',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderNote4IsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'reminderNote4',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderNote5IsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'reminderNote5',
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderNote5IsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'reminderNote5',
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderNote5EqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'reminderNote5',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderNote5GreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'reminderNote5',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderNote5LessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'reminderNote5',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderNote5Between(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'reminderNote5',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderNote5StartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'reminderNote5',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderNote5EndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'reminderNote5',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderNote5Contains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'reminderNote5',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> reminderNote5Matches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'reminderNote5',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderNote5IsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'reminderNote5',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      reminderNote5IsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'reminderNote5',
         value: '',
       ));
     });
@@ -16441,6 +17185,42 @@ extension CustomerQuerySortBy on QueryBuilder<Customer, Customer, QSortBy> {
     });
   }
 
+  QueryBuilder<Customer, Customer, QAfterSortBy> sortByReminderDate3() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderDate3', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterSortBy> sortByReminderDate3Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderDate3', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterSortBy> sortByReminderDate4() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderDate4', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterSortBy> sortByReminderDate4Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderDate4', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterSortBy> sortByReminderDate5() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderDate5', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterSortBy> sortByReminderDate5Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderDate5', Sort.desc);
+    });
+  }
+
   QueryBuilder<Customer, Customer, QAfterSortBy> sortByReminderNote1() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'reminderNote1', Sort.asc);
@@ -16462,6 +17242,42 @@ extension CustomerQuerySortBy on QueryBuilder<Customer, Customer, QSortBy> {
   QueryBuilder<Customer, Customer, QAfterSortBy> sortByReminderNote2Desc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'reminderNote2', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterSortBy> sortByReminderNote3() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderNote3', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterSortBy> sortByReminderNote3Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderNote3', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterSortBy> sortByReminderNote4() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderNote4', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterSortBy> sortByReminderNote4Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderNote4', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterSortBy> sortByReminderNote5() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderNote5', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterSortBy> sortByReminderNote5Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderNote5', Sort.desc);
     });
   }
 
@@ -17614,6 +18430,42 @@ extension CustomerQuerySortThenBy
     });
   }
 
+  QueryBuilder<Customer, Customer, QAfterSortBy> thenByReminderDate3() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderDate3', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterSortBy> thenByReminderDate3Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderDate3', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterSortBy> thenByReminderDate4() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderDate4', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterSortBy> thenByReminderDate4Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderDate4', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterSortBy> thenByReminderDate5() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderDate5', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterSortBy> thenByReminderDate5Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderDate5', Sort.desc);
+    });
+  }
+
   QueryBuilder<Customer, Customer, QAfterSortBy> thenByReminderNote1() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'reminderNote1', Sort.asc);
@@ -17635,6 +18487,42 @@ extension CustomerQuerySortThenBy
   QueryBuilder<Customer, Customer, QAfterSortBy> thenByReminderNote2Desc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'reminderNote2', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterSortBy> thenByReminderNote3() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderNote3', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterSortBy> thenByReminderNote3Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderNote3', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterSortBy> thenByReminderNote4() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderNote4', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterSortBy> thenByReminderNote4Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderNote4', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterSortBy> thenByReminderNote5() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderNote5', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterSortBy> thenByReminderNote5Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'reminderNote5', Sort.desc);
     });
   }
 
@@ -18416,6 +19304,24 @@ extension CustomerQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Customer, Customer, QDistinct> distinctByReminderDate3() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'reminderDate3');
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QDistinct> distinctByReminderDate4() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'reminderDate4');
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QDistinct> distinctByReminderDate5() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'reminderDate5');
+    });
+  }
+
   QueryBuilder<Customer, Customer, QDistinct> distinctByReminderNote1(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -18428,6 +19334,30 @@ extension CustomerQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'reminderNote2',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QDistinct> distinctByReminderNote3(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'reminderNote3',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QDistinct> distinctByReminderNote4(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'reminderNote4',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QDistinct> distinctByReminderNote5(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'reminderNote5',
           caseSensitive: caseSensitive);
     });
   }
@@ -19067,6 +19997,24 @@ extension CustomerQueryProperty
     });
   }
 
+  QueryBuilder<Customer, DateTime?, QQueryOperations> reminderDate3Property() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'reminderDate3');
+    });
+  }
+
+  QueryBuilder<Customer, DateTime?, QQueryOperations> reminderDate4Property() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'reminderDate4');
+    });
+  }
+
+  QueryBuilder<Customer, DateTime?, QQueryOperations> reminderDate5Property() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'reminderDate5');
+    });
+  }
+
   QueryBuilder<Customer, String?, QQueryOperations> reminderNote1Property() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'reminderNote1');
@@ -19076,6 +20024,24 @@ extension CustomerQueryProperty
   QueryBuilder<Customer, String?, QQueryOperations> reminderNote2Property() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'reminderNote2');
+    });
+  }
+
+  QueryBuilder<Customer, String?, QQueryOperations> reminderNote3Property() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'reminderNote3');
+    });
+  }
+
+  QueryBuilder<Customer, String?, QQueryOperations> reminderNote4Property() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'reminderNote4');
+    });
+  }
+
+  QueryBuilder<Customer, String?, QQueryOperations> reminderNote5Property() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'reminderNote5');
     });
   }
 

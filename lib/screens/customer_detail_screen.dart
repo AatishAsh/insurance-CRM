@@ -426,6 +426,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
               _buildDetailRow("Self Year of Issue", c.selfYearOfIssue),
               _buildDetailRow("Sum Assured 1", c.selfSumAssured1),
               _buildDetailRow("Sum Assured 2", c.selfSumAssured2),
+              _buildDetailRow("Mode", c.premiumMode),
               _buildDetailRow("Father Policy", c.fatherPolicyNumber != null && c.fatherPolicyNumber!.isNotEmpty ? '${c.fatherPolicyNumber} (${c.fatherCompany ?? "N/A"})' : null),
               _buildDetailRow("Mother Policy", c.motherPolicyNumber != null && c.motherPolicyNumber!.isNotEmpty ? '${c.motherPolicyNumber} (${c.motherCompany ?? "N/A"})' : null),
               _buildDetailRow("Spouse Policy", c.spousePolicyNumber != null && c.spousePolicyNumber!.isNotEmpty ? '${c.spousePolicyNumber} (${c.spouseCompany ?? "N/A"})' : null),
@@ -479,7 +480,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
               _buildDetailRow("Pension Plan", c.pensionPlan),
               _buildDetailRow("Investment Plan", c.investmentPlan),
               _buildDetailRow("Mutual Funds", c.mutualFunds),
-              _buildDetailRow("Medi Claim", c.mediClaim),
+              _buildDetailRow("Mediclaim", c.mediClaim),
               _buildDetailRow("Money Back Policy", c.moneyBackPolicy),
               _buildDetailRow("Children Education Plan", c.childrenEducationPlan),
             ]),
@@ -558,8 +559,15 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
     );
   }
   Widget _buildQuickRemindersPanel(Customer c) {
-    final hasReminder1 = c.reminderDate1 != null;
-    final hasReminder2 = c.reminderDate2 != null;
+    final reminders = [
+      (slot: 1, date: c.reminderDate1, note: c.reminderNote1),
+      (slot: 2, date: c.reminderDate2, note: c.reminderNote2),
+      (slot: 3, date: c.reminderDate3, note: c.reminderNote3),
+      (slot: 4, date: c.reminderDate4, note: c.reminderNote4),
+      (slot: 5, date: c.reminderDate5, note: c.reminderNote5),
+    ];
+    final activeReminders = reminders.where((r) => r.date != null).toList();
+    final emptyReminders = reminders.where((r) => r.date == null).toList();
 
     return Card(
       elevation: 0,
@@ -581,16 +589,15 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                     const Icon(Icons.alarm, color: Colors.blueAccent, size: 20),
                     const SizedBox(width: 8),
                     Text(
-                      'Reminders & Follow-ups',
+                      'Reminders & Follow-ups (${activeReminders.length}/5)',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.blue[900]),
                     ),
                   ],
                 ),
-                if (!hasReminder1 || !hasReminder2)
+                if (emptyReminders.isNotEmpty)
                   TextButton.icon(
                     onPressed: () {
-                      final slot = !hasReminder1 ? 1 : 2;
-                      _showAddReminderDialog(slot);
+                      _showAddReminderDialog(emptyReminders.first.slot);
                     },
                     icon: const Icon(Icons.add, size: 16),
                     label: const Text('Add', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
@@ -599,7 +606,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
               ],
             ),
             const Divider(height: 16),
-            if (!hasReminder1 && !hasReminder2)
+            if (activeReminders.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 8.0),
                 child: Text(
@@ -607,11 +614,15 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                   style: TextStyle(color: Colors.grey, fontSize: 13, fontStyle: FontStyle.italic),
                 ),
               )
-            else ...[
-              if (hasReminder1) _buildReminderTile(1, c.reminderDate1!, c.reminderNote1),
-              if (hasReminder1 && hasReminder2) const SizedBox(height: 8),
-              if (hasReminder2) _buildReminderTile(2, c.reminderDate2!, c.reminderNote2),
-            ],
+            else
+              Column(
+                children: [
+                  for (int i = 0; i < activeReminders.length; i++) ...[
+                    if (i > 0) const SizedBox(height: 8),
+                    _buildReminderTile(activeReminders[i].slot, activeReminders[i].date!, activeReminders[i].note),
+                  ]
+                ],
+              ),
           ],
         ),
       ),
@@ -688,9 +699,18 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
       if (slot == 1) {
         _customer!.reminderDate1 = null;
         _customer!.reminderNote1 = null;
-      } else {
+      } else if (slot == 2) {
         _customer!.reminderDate2 = null;
         _customer!.reminderNote2 = null;
+      } else if (slot == 3) {
+        _customer!.reminderDate3 = null;
+        _customer!.reminderNote3 = null;
+      } else if (slot == 4) {
+        _customer!.reminderDate4 = null;
+        _customer!.reminderNote4 = null;
+      } else if (slot == 5) {
+        _customer!.reminderDate5 = null;
+        _customer!.reminderNote5 = null;
       }
       await db.saveCustomer(_customer!);
       ref.invalidate(customerListProvider);
@@ -775,9 +795,18 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                 if (slot == 1) {
                   _customer!.reminderDate1 = selectedDate;
                   _customer!.reminderNote1 = noteController.text.trim();
-                } else {
+                } else if (slot == 2) {
                   _customer!.reminderDate2 = selectedDate;
                   _customer!.reminderNote2 = noteController.text.trim();
+                } else if (slot == 3) {
+                  _customer!.reminderDate3 = selectedDate;
+                  _customer!.reminderNote3 = noteController.text.trim();
+                } else if (slot == 4) {
+                  _customer!.reminderDate4 = selectedDate;
+                  _customer!.reminderNote4 = noteController.text.trim();
+                } else if (slot == 5) {
+                  _customer!.reminderDate5 = selectedDate;
+                  _customer!.reminderNote5 = noteController.text.trim();
                 }
                 await db.saveCustomer(_customer!);
                 ref.invalidate(customerListProvider);

@@ -158,21 +158,23 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                           letterSpacing: 1.5,
                         ),
                         children: [
-                          TextSpan(text: 'SHINECRAFT ', style: TextStyle(color: AppColors.headingText)),
+                          TextSpan(text: 'INSURANCE ', style: TextStyle(color: AppColors.headingText)),
                           TextSpan(text: 'CRM', style: TextStyle(color: AppColors.skyBlue)),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      isSetup ? 'Set up a 4-digit PIN to secure your data offline.' : 'Offline Client Vault',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppColors.mutedText,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
+                    if (isSetup) ...[
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Set up a 4-digit PIN to secure your data offline.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: AppColors.mutedText,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                    ),
+                    ],
                     const SizedBox(height: 20),
                     // Message State
                     Text(

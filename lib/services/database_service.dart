@@ -472,11 +472,17 @@ class DatabaseService {
         ..mediClaim = 'Star Health Comprehensive (₹ 10 Lakh)'
         ..moneyBackPolicy = 'LIC Money Back 20 Yrs'
         ..childrenEducationPlan = 'HDFC Young Star Super'
-        // Reminders
+        // Reminders (1 to 5)
         ..reminderDate1 = today.add(const Duration(days: 1))
         ..reminderNote1 = 'Collect premium cheque for Jeevan Umang policy renewal'
         ..reminderDate2 = today.add(const Duration(days: 5))
         ..reminderNote2 = 'Discuss new child higher education endowment plan options'
+        ..reminderDate3 = today.add(const Duration(days: 10))
+        ..reminderNote3 = 'Health policy Mediclaim sum assured top-up review'
+        ..reminderDate4 = today.add(const Duration(days: 15))
+        ..reminderNote4 = 'Annual tax saving ELSS Mutual Fund investment review'
+        ..reminderDate5 = today.add(const Duration(days: 20))
+        ..reminderNote5 = 'Send birthday greetings and anniversary gift voucher'
         // References
         ..references = [
           CustomerReferenceItem()
@@ -562,12 +568,22 @@ class DatabaseService {
             ..planSumAssured = '₹ 20,00,000'
             ..rider = 'Waiver of Premium',
         ]
+        ..productName = 'HDFC Click 2 Protect Super'
+        ..premiumMode = 'Yearly'
         ..riskCover = 'Moderate'
         ..pensionPlan = 'Corporate NPS'
         ..mutualFunds = 'Nippon India Small Cap & Parag Parikh Flexi Cap'
         ..mediClaim = 'Niva Bupa Health Companion (₹ 15 Lakh)'
         ..reminderDate1 = today.add(const Duration(days: 2))
         ..reminderNote1 = 'Send birthday & anniversary greetings proposal brochure'
+        ..reminderDate2 = today.add(const Duration(days: 6))
+        ..reminderNote2 = 'Follow up on HDFC Click 2 Protect policy document delivery'
+        ..reminderDate3 = today.add(const Duration(days: 12))
+        ..reminderNote3 = 'Corporate NPS tax exemption documentation assistance'
+        ..reminderDate4 = today.add(const Duration(days: 18))
+        ..reminderNote4 = 'Child education plan SIP installment reminder'
+        ..reminderDate5 = today.add(const Duration(days: 25))
+        ..reminderNote5 = 'Quarterly portfolio performance review call'
         ..notes = 'Prefers digital communication via email and WhatsApp.'
         ..updatedAt = DateTime.now()
         ..isDeleted = false
@@ -616,12 +632,22 @@ class DatabaseService {
             ..planSumAssured = '₹ 50,00,000'
             ..rider = 'Accidental Death Benefit Rider',
         ]
+        ..productName = 'ICICI Pru iProtect Smart'
+        ..premiumMode = 'Quarterly'
         ..riskCover = 'High Growth'
         ..investmentPlan = 'Direct Equity & Crypto Portfolio'
         ..mutualFunds = 'Mirae Asset Emerging Bluechip'
         ..mediClaim = 'Care Supreme Health Cover (₹ 25 Lakh)'
         ..reminderDate1 = today
         ..reminderNote1 = 'Review high net worth term plan upgrade option'
+        ..reminderDate2 = today.add(const Duration(days: 3))
+        ..reminderNote2 = 'Send ICICI Pru iProtect Smart proposal quote'
+        ..reminderDate3 = today.add(const Duration(days: 8))
+        ..reminderNote3 = 'Care Supreme Health Cover policy renewal'
+        ..reminderDate4 = today.add(const Duration(days: 14))
+        ..reminderNote4 = 'Discuss business keyman insurance policy'
+        ..reminderDate5 = today.add(const Duration(days: 22))
+        ..reminderNote5 = 'Direct equity portfolio strategy discussion'
         ..notes = 'Tech entrepreneur with interest in tax saving ULIPs and ELSS funds.'
         ..updatedAt = DateTime.now()
         ..isDeleted = false;
@@ -672,10 +698,20 @@ class DatabaseService {
             ..planSumAssured = '₹ 30,00,000'
             ..rider = 'Criticare Plus Rider',
         ]
+        ..productName = 'Tata AIA Sampoorna Raksha Supreme'
+        ..premiumMode = 'Monthly'
         ..mediClaim = 'Star Health Doctor\'s Special Policy (₹ 50 Lakh)'
         ..childrenEducationPlan = 'SBI Life Smart Champ Insurance'
         ..reminderDate1 = today.add(const Duration(days: 1))
         ..reminderNote1 = 'Send wedding anniversary greetings & gift voucher'
+        ..reminderDate2 = today.add(const Duration(days: 4))
+        ..reminderNote2 = 'Doctor special health policy renewal confirmation'
+        ..reminderDate3 = today.add(const Duration(days: 9))
+        ..reminderNote3 = 'Collect Tata AIA Sampoorna Raksha premium receipt'
+        ..reminderDate4 = today.add(const Duration(days: 16))
+        ..reminderNote4 = 'Children SBI Life Smart Champ policy review'
+        ..reminderDate5 = today.add(const Duration(days: 28))
+        ..reminderNote5 = 'Annual family health insurance audit'
         ..notes = 'Doctor by profession. Very punctual with annual premium renewals.'
         ..updatedAt = DateTime.now()
         ..isDeleted = false;
@@ -733,11 +769,22 @@ class DatabaseService {
             ..planSumAssured = '₹ 25,00,000'
             ..rider = 'None',
         ]
+        ..productName = 'SBI Life eShield Next'
+        ..premiumMode = 'Half-Yearly'
         ..riskCover = 'High'
         ..pensionPlan = 'VRS Annuity & LIC Jeevan Shanti'
         ..mutualFunds = 'SBI Bluechip Growth & HDFC Flexi Cap'
         ..mediClaim = 'HDFC ERGO Optima Secure (₹ 1 Crore Topup)'
-        ..reminderDate2 = today.add(const Duration(days: 2)) // Reminder in 2 days!
+        ..reminderDate1 = today.add(const Duration(days: 1))
+        ..reminderNote1 = 'Collect CA office group insurance proposal details'
+        ..reminderDate2 = today.add(const Duration(days: 2))
+        ..reminderNote2 = 'SBI Life eShield Next premium renewal follow-up'
+        ..reminderDate3 = today.add(const Duration(days: 7))
+        ..reminderNote3 = 'LIC Jeevan Shanti annuity payout schedule check'
+        ..reminderDate4 = today.add(const Duration(days: 13))
+        ..reminderNote4 = 'HDFC ERGO 1 Crore Topup policy bond handover'
+        ..reminderDate5 = today.add(const Duration(days: 21))
+        ..reminderNote5 = 'Year-end wealth management & tax advisory session'
         ..notes = 'High net worth client, focuses on mutual funds and large tax-saving annuity plans.'
         ..updatedAt = DateTime.now()
         ..isDeleted = false;

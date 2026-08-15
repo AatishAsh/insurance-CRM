@@ -378,7 +378,8 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
       'productName', 'planSumAssured', 'rider', 'riskCover', 'pensionPlan',
       'investmentPlan', 'mutualFunds', 'mediClaim', 'moneyBackPolicy',
       'childrenEducationPlan', 'referenceFriendName', 'referenceMobile',
-      'referenceAge', 'reminderNote1', 'reminderNote2', 'notes'
+      'referenceAge', 'reminderNote1', 'reminderNote2', 'reminderNote3',
+      'reminderNote4', 'reminderNote5', 'notes'
     ];
 
     for (final field in textFields) {
@@ -454,6 +455,9 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
       _controllers['referenceAge']!.text = c.referenceAge ?? '';
       _controllers['reminderNote1']!.text = c.reminderNote1 ?? '';
       _controllers['reminderNote2']!.text = c.reminderNote2 ?? '';
+      _controllers['reminderNote3']!.text = c.reminderNote3 ?? '';
+      _controllers['reminderNote4']!.text = c.reminderNote4 ?? '';
+      _controllers['reminderNote5']!.text = c.reminderNote5 ?? '';
       _controllers['notes']!.text = c.notes ?? '';
 
       // Date fields
@@ -468,6 +472,9 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
       _dates['personalAccidentDate'] = c.personalAccidentDate;
       _dates['reminderDate1'] = c.reminderDate1;
       _dates['reminderDate2'] = c.reminderDate2;
+      _dates['reminderDate3'] = c.reminderDate3;
+      _dates['reminderDate4'] = c.reminderDate4;
+      _dates['reminderDate5'] = c.reminderDate5;
 
       if (c.childrenDOBs != null) {
         _childrenDOBs = List.from(c.childrenDOBs!);
@@ -760,6 +767,9 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     }
     customer.reminderNote1 = _controllers['reminderNote1']!.text;
     customer.reminderNote2 = _controllers['reminderNote2']!.text;
+    customer.reminderNote3 = _controllers['reminderNote3']!.text;
+    customer.reminderNote4 = _controllers['reminderNote4']!.text;
+    customer.reminderNote5 = _controllers['reminderNote5']!.text;
     customer.notes = _controllers['notes']!.text;
 
     // Date assignments
@@ -774,6 +784,9 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     customer.appointeeDOB = _dates['appointeeDOB'];
     customer.reminderDate1 = _dates['reminderDate1'];
     customer.reminderDate2 = _dates['reminderDate2'];
+    customer.reminderDate3 = _dates['reminderDate3'];
+    customer.reminderDate4 = _dates['reminderDate4'];
+    customer.reminderDate5 = _dates['reminderDate5'];
 
     // Dropdown assignments
     customer.maritalStatus = _dropdowns['maritalStatus']?.isEmpty ?? true ? null : _dropdowns['maritalStatus'];
@@ -1211,6 +1224,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                   _buildField('selfSumAssured1', 'Sum Assured 1'),
                   _buildField('selfSumAssured2', 'Sum Assured 2'),
                 ]),
+                _buildDropdownField('premiumMode', 'Mode (Yearly / Half-Yearly / Quarterly / Monthly)', ['Yearly', 'Half-Yearly', 'Quarterly', 'Monthly']),
                 const Divider(height: 24),
                 _buildResponsiveRow(isDesktop, [
                   _buildField('fatherPolicyNumber', 'Father Policy Number'),
@@ -1387,14 +1401,14 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                   _buildField('mutualFunds', 'Mutual Funds'),
                 ]),
                 _buildResponsiveRow(isDesktop, [
-                  _buildField('mediClaim', 'Medi Claim'),
+                  _buildField('mediClaim', 'Mediclaim'),
                   _buildField('moneyBackPolicy', 'Money Back Policy'),
                 ]),
                 _buildField('childrenEducationPlan', "Children's Education Plan"),
               ]),
 
-              // Accordion 11: Reminders
-              _buildAccordionSection('Reminders', Icons.alarm_outlined, [
+              // Accordion 11: Reminders (5 Reminders)
+              _buildAccordionSection('Reminders (up to 5)', Icons.alarm_outlined, [
                 _buildResponsiveRow(isDesktop, [
                   Column(
                     children: [
@@ -1408,6 +1422,31 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                       _buildField('reminderNote2', 'Reminder 2 Note', maxLines: 2),
                     ],
                   ),
+                ]),
+                const SizedBox(height: 12),
+                _buildResponsiveRow(isDesktop, [
+                  Column(
+                    children: [
+                      _buildDateField('reminderDate3', 'Reminder Date 3'),
+                      _buildField('reminderNote3', 'Reminder 3 Note', maxLines: 2),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      _buildDateField('reminderDate4', 'Reminder Date 4'),
+                      _buildField('reminderNote4', 'Reminder 4 Note', maxLines: 2),
+                    ],
+                  ),
+                ]),
+                const SizedBox(height: 12),
+                _buildResponsiveRow(isDesktop, [
+                  Column(
+                    children: [
+                      _buildDateField('reminderDate5', 'Reminder Date 5'),
+                      _buildField('reminderNote5', 'Reminder 5 Note', maxLines: 2),
+                    ],
+                  ),
+                  const SizedBox(),
                 ]),
               ]),
 

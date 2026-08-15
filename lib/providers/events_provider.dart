@@ -144,6 +144,9 @@ final upcomingEventsProvider = FutureProvider<List<UpcomingEvent>>((ref) async {
 
     addReminder(customer.reminderDate1, customer.reminderNote1, '1');
     addReminder(customer.reminderDate2, customer.reminderNote2, '2');
+    addReminder(customer.reminderDate3, customer.reminderNote3, '3');
+    addReminder(customer.reminderDate4, customer.reminderNote4, '4');
+    addReminder(customer.reminderDate5, customer.reminderNote5, '5');
   }
 
   // 2. Marketing Visits
@@ -313,34 +316,28 @@ final todaySummaryEventsProvider = FutureProvider<List<TodayEventSummaryItem>>((
       ));
     }
 
-    // Reminder 1 & 2
-    if (customer.reminderDate1 != null && isSameDate(customer.reminderDate1!)) {
-      final note = customer.reminderNote1 != null && customer.reminderNote1!.isNotEmpty
-          ? 'Note: ${customer.reminderNote1}'
-          : 'Scheduled follow-up reminder 1';
-      items.add(TodayEventSummaryItem(
-        id: 'rem1_${customer.id}',
-        title: "Follow-up: ${customer.name}",
-        subtitle: note,
-        categoryLabel: 'Reminder',
-        type: TodayEventType.reminder,
-        customer: customer,
-      ));
+    // Reminders (Slots 1 to 5)
+    void addTodayReminder(DateTime? remDate, String? remNote, String slot) {
+      if (remDate != null && isSameDate(remDate)) {
+        final note = remNote != null && remNote.trim().isNotEmpty
+            ? 'Note: ${remNote.trim()}'
+            : 'Scheduled follow-up reminder $slot';
+        items.add(TodayEventSummaryItem(
+          id: 'rem${slot}_${customer.id}',
+          title: "Follow-up: ${customer.name}",
+          subtitle: note,
+          categoryLabel: 'Reminder',
+          type: TodayEventType.reminder,
+          customer: customer,
+        ));
+      }
     }
 
-    if (customer.reminderDate2 != null && isSameDate(customer.reminderDate2!)) {
-      final note = customer.reminderNote2 != null && customer.reminderNote2!.isNotEmpty
-          ? 'Note: ${customer.reminderNote2}'
-          : 'Scheduled follow-up reminder 2';
-      items.add(TodayEventSummaryItem(
-        id: 'rem2_${customer.id}',
-        title: "Follow-up: ${customer.name}",
-        subtitle: note,
-        categoryLabel: 'Reminder',
-        type: TodayEventType.reminder,
-        customer: customer,
-      ));
-    }
+    addTodayReminder(customer.reminderDate1, customer.reminderNote1, '1');
+    addTodayReminder(customer.reminderDate2, customer.reminderNote2, '2');
+    addTodayReminder(customer.reminderDate3, customer.reminderNote3, '3');
+    addTodayReminder(customer.reminderDate4, customer.reminderNote4, '4');
+    addTodayReminder(customer.reminderDate5, customer.reminderNote5, '5');
   }
 
   // 2. Work Tasks Due Today
