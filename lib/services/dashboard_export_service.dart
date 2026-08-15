@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -27,6 +28,12 @@ class DashboardExportService {
     final taskCount = items.where((i) => i.type == TodayEventType.workTask).length;
     final marketingCount = items.where((i) => i.type == TodayEventType.marketing).length;
 
+    pw.MemoryImage? logoImage;
+    try {
+      final logoBytes = (await rootBundle.load('assets/images/logo.png')).buffer.asUint8List();
+      logoImage = pw.MemoryImage(logoBytes);
+    } catch (_) {}
+
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
@@ -35,7 +42,7 @@ class DashboardExportService {
           return [
             // Header Title Box
             pw.Container(
-              padding: const pw.EdgeInsets.all(16),
+              padding: const pw.EdgeInsets.all(14),
               decoration: pw.BoxDecoration(
                 color: PdfColors.blue50,
                 borderRadius: pw.BorderRadius.circular(8),
@@ -44,25 +51,34 @@ class DashboardExportService {
               child: pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  pw.Row(
+                    crossAxisAlignment: pw.CrossAxisAlignment.center,
                     children: [
-                      pw.Text(
-                        'INSURANCE CRM',
-                        style: pw.TextStyle(
-                          fontSize: 20,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.blue900,
-                        ),
-                      ),
-                      pw.SizedBox(height: 4),
-                      pw.Text(
-                        'Today\'s Event & Follow-up Summary Report',
-                        style: pw.TextStyle(
-                          fontSize: 13,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.grey800,
-                        ),
+                      if (logoImage != null) ...[
+                        pw.Image(logoImage, width: 40, height: 40),
+                        pw.SizedBox(width: 12),
+                      ],
+                      pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text(
+                            'INSURANCE CRM',
+                            style: pw.TextStyle(
+                              fontSize: 18,
+                              fontWeight: pw.FontWeight.bold,
+                              color: PdfColors.blue900,
+                            ),
+                          ),
+                          pw.SizedBox(height: 2),
+                          pw.Text(
+                            'Today\'s Event & Follow-up Summary Report',
+                            style: pw.TextStyle(
+                              fontSize: 12,
+                              fontWeight: pw.FontWeight.bold,
+                              color: PdfColors.grey800,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -311,6 +327,12 @@ class DashboardExportService {
     final dobStr = customer.dateOfBirth != null ? DateFormat('dd MMM yyyy').format(customer.dateOfBirth!.toLocal()) : 'N/A';
     final anniversaryStr = customer.weddingAnniversary != null ? DateFormat('dd MMM yyyy').format(customer.weddingAnniversary!.toLocal()) : 'N/A';
 
+    pw.MemoryImage? logoImage;
+    try {
+      final logoBytes = (await rootBundle.load('assets/images/logo.png')).buffer.asUint8List();
+      logoImage = pw.MemoryImage(logoBytes);
+    } catch (_) {}
+
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
@@ -328,17 +350,26 @@ class DashboardExportService {
               child: pw.Row(
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  pw.Row(
+                    crossAxisAlignment: pw.CrossAxisAlignment.center,
                     children: [
-                      pw.Text(
-                        'INSURANCE CRM - CUSTOMER PROFILE',
-                        style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900),
-                      ),
-                      pw.SizedBox(height: 2),
-                      pw.Text(
-                        customer.name.toUpperCase(),
-                        style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.black),
+                      if (logoImage != null) ...[
+                        pw.Image(logoImage, width: 36, height: 36),
+                        pw.SizedBox(width: 10),
+                      ],
+                      pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: [
+                          pw.Text(
+                            'INSURANCE CRM - CUSTOMER PROFILE',
+                            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900),
+                          ),
+                          pw.SizedBox(height: 2),
+                          pw.Text(
+                            customer.name.toUpperCase(),
+                            style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold, color: PdfColors.black),
+                          ),
+                        ],
                       ),
                     ],
                   ),

@@ -25,11 +25,22 @@ class CustomerListScreen extends ConsumerStatefulWidget {
 
 class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
   String? _localDocsDirPath;
+  late final TextEditingController _searchController;
+  late final FocusNode _searchFocusNode;
 
   @override
   void initState() {
     super.initState();
+    _searchController = TextEditingController(text: ref.read(searchQueryProvider));
+    _searchFocusNode = FocusNode();
     _initLocalDocsDirPath();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
   }
 
   void _initLocalDocsDirPath() async {
@@ -152,7 +163,13 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
           customer.name.toLowerCase().contains(k) ||
           (doc.documentName?.toLowerCase().contains(k) ?? false) ||
           (doc.fileName?.toLowerCase().contains(k) ?? false) ||
-          (customer.customerId?.toLowerCase().contains(k) ?? false)
+          (customer.customerId?.toLowerCase().contains(k) ?? false) ||
+          (customer.familyId?.toLowerCase().contains(k) ?? false) ||
+          (customer.mobileNumber1?.toLowerCase().contains(k) ?? false) ||
+          (customer.mobileNumber2?.toLowerCase().contains(k) ?? false) ||
+          (customer.mobileNumber3?.toLowerCase().contains(k) ?? false) ||
+          (customer.mobileNumber4?.toLowerCase().contains(k) ?? false) ||
+          (customer.officeContactNumber?.toLowerCase().contains(k) ?? false)
         );
 
         if (custNameMatch || docNameMatch || fileNameMatch || keywordMatch) {
@@ -181,16 +198,47 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
           preferredSize: const Size.fromHeight(70),
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 12.0),
-            child: SearchBar(
-              hintText: 'Search by Name, ID, Document or File Name...',
-              leading: const Icon(Icons.search, color: AppColors.skyBlue),
-              elevation: WidgetStateProperty.all(0),
-              side: WidgetStateProperty.all(const BorderSide(color: AppColors.cardBorder)),
-              backgroundColor: WidgetStateProperty.all(AppColors.cardSurface),
-              padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 16.0)),
-              onChanged: (value) {
-                ref.read(searchQueryProvider.notifier).state = value;
-                ref.read(customerPageProvider.notifier).state = 0; // Reset page to 0 on search
+            child: ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _searchController,
+              builder: (context, value, child) {
+                return TextField(
+                  controller: _searchController,
+                  focusNode: _searchFocusNode,
+                  onChanged: (text) {
+                    ref.read(searchQueryProvider.notifier).state = text;
+                    ref.read(customerPageProvider.notifier).state = 0;
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Search by Name, Family ID, Phone, ID, Document...',
+                    hintStyle: const TextStyle(fontSize: 13.5, color: AppColors.mutedText),
+                    prefixIcon: const Icon(Icons.search_rounded, color: AppColors.skyBlue),
+                    suffixIcon: value.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear_rounded, color: AppColors.mutedText, size: 18),
+                            onPressed: () {
+                              _searchController.clear();
+                              ref.read(searchQueryProvider.notifier).state = '';
+                              ref.read(customerPageProvider.notifier).state = 0;
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: AppColors.cardSurface,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: AppColors.cardBorder),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: AppColors.cardBorder),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: AppColors.skyBlue, width: 1.5),
+                    ),
+                  ),
+                );
               },
             ),
           ),
@@ -573,7 +621,7 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
                         Text(customer.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                         const SizedBox(height: 4),
                         Text(
-                          '${customer.customerId ?? 'No ID'}  •  ${customer.mobileNumber1 ?? 'No Phone'}',
+                          'ID: ${customer.customerId ?? 'CUST-${customer.id}'}${customer.familyId != null && customer.familyId!.isNotEmpty ? '  •  Fam: ${customer.familyId}' : ''}  •  ${customer.mobileNumber1 ?? 'No Phone'}',
                           style: TextStyle(color: Colors.grey[700], fontSize: 13),
                         ),
                         const SizedBox(height: 2),

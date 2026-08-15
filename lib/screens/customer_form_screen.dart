@@ -806,7 +806,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
         controller: _controllers[key],
         keyboardType: isMultiLine ? TextInputType.multiline : keyboardType,
         maxLines: maxLines,
-        textInputAction: isMultiLine ? TextInputAction.newline : null,
+        textInputAction: isMultiLine ? TextInputAction.newline : TextInputAction.next,
         onChanged: onChanged,
         decoration: InputDecoration(
           labelText: label,

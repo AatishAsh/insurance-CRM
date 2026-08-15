@@ -123,23 +123,28 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Logo Icon Container with Brand Gradient
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            AppColors.skyBlue.withOpacity(0.12),
-                            AppColors.limeGreen.withOpacity(0.12),
-                          ],
+                    // Logo Image
+                    Image.asset(
+                      'assets/images/logo.png',
+                      height: 56,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppColors.skyBlue.withOpacity(0.12),
+                              AppColors.limeGreen.withOpacity(0.12),
+                            ],
+                          ),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.skyBlue.withOpacity(0.3), width: 1.5),
                         ),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.skyBlue.withOpacity(0.3), width: 1.5),
-                      ),
-                      child: const Icon(
-                        Icons.lock_person_rounded,
-                        size: 44,
-                        color: AppColors.skyBlue,
+                        child: const Icon(
+                          Icons.lock_person_rounded,
+                          size: 44,
+                          color: AppColors.skyBlue,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),

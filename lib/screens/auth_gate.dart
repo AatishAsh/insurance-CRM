@@ -23,6 +23,7 @@ class _AuthGateState extends ConsumerState<AuthGate> with WidgetsBindingObserver
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _lastActivityTime = DateTime.now();
     _idleTimer = Timer.periodic(const Duration(seconds: 3), (_) => _checkIdleTimeout());
   }
 
@@ -42,7 +43,7 @@ class _AuthGateState extends ConsumerState<AuthGate> with WidgetsBindingObserver
     if (authState.status != AuthStatus.unlocked) return;
 
     final timeoutMinutes = ref.read(autoLockTimeoutProvider);
-    if (timeoutMinutes == 0) return; // 0 = Never lock on idle
+    if (timeoutMinutes <= 0) return; // 0 = Never lock on idle
 
     final idleDuration = DateTime.now().difference(_lastActivityTime);
     if (idleDuration >= Duration(minutes: timeoutMinutes)) {
@@ -57,22 +58,42 @@ class _AuthGateState extends ConsumerState<AuthGate> with WidgetsBindingObserver
 
     if (state == AppLifecycleState.paused) {
       _pausedTime = DateTime.now();
-    } else if (state == AppLifecycleState.resumed && _pausedTime != null) {
-      final timeoutMinutes = ref.read(autoLockTimeoutProvider);
-      if (timeoutMinutes > 0) {
-        final elapsed = DateTime.now().difference(_pausedTime!);
-        if (elapsed >= Duration(minutes: timeoutMinutes)) {
-          ref.read(authStateProvider.notifier).lock();
+    } else if (state == AppLifecycleState.resumed) {
+      if (_pausedTime != null) {
+        final timeoutMinutes = ref.read(autoLockTimeoutProvider);
+        if (timeoutMinutes > 0) {
+          final elapsed = DateTime.now().difference(_pausedTime!);
+          if (elapsed >= Duration(minutes: timeoutMinutes)) {
+            ref.read(authStateProvider.notifier).lock();
+          }
         }
+        _pausedTime = null;
       }
-      _pausedTime = null;
+      _onUserActivity();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AuthState>(authStateProvider, (previous, next) {
+      if (next.status == AuthStatus.unlocked) {
+        _onUserActivity();
+      }
+    });
+
     final authState = ref.watch(authStateProvider);
 
+    return Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerDown: (_) => _onUserActivity(),
+      onPointerMove: (_) => _onUserActivity(),
+      onPointerHover: (_) => _onUserActivity(),
+      onPointerSignal: (_) => _onUserActivity(),
+      child: _buildBody(authState),
+    );
+  }
+
+  Widget _buildBody(AuthState authState) {
     switch (authState.status) {
       case AuthStatus.uninitialized:
         return const Scaffold(
@@ -87,14 +108,7 @@ class _AuthGateState extends ConsumerState<AuthGate> with WidgetsBindingObserver
       case AuthStatus.locked:
         return const SecurityLockScreen();
       case AuthStatus.unlocked:
-        return Listener(
-          behavior: HitTestBehavior.translucent,
-          onPointerDown: (_) => _onUserActivity(),
-          onPointerMove: (_) => _onUserActivity(),
-          onPointerHover: (_) => _onUserActivity(),
-          onPointerSignal: (_) => _onUserActivity(),
-          child: widget.child,
-        );
+        return widget.child;
     }
   }
 }
