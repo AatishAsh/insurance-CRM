@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import 'shinecraft_branding_footer.dart';
 
 class NavItemData {
   final String label;
@@ -208,34 +209,14 @@ class BrandSidenav extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(12.0),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 decoration: BoxDecoration(
                   color: AppColors.appBackgroundAlt,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppColors.cardBorder),
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: AppColors.limeGreen,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        'Offline Vault Ready',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.mutedText,
-                        ),
-                      ),
-                    ),
-                  ],
+                child: const Center(
+                  child: ShineCraftBrandingFooter(fontSize: 11, logoHeight: 32),
                 ),
               ),
             ),

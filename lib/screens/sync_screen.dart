@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import '../widgets/shinecraft_branding_footer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
@@ -668,22 +669,7 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
             Center(
               child: Column(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.code_rounded, size: 16, color: Colors.blueAccent),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Crafted by Shine Craft Technologies',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey[700],
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
+                  const ShineCraftBrandingFooter(fontSize: 14, logoHeight: 64),
                   const SizedBox(height: 4),
                   Text(
                     'Offline Customer Detail Management System v1.0.0',

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../theme/app_colors.dart';
 import '../widgets/brand_background.dart';
+import '../widgets/shinecraft_branding_footer.dart';
 
 class SecurityLockScreen extends ConsumerStatefulWidget {
   const SecurityLockScreen({super.key});
@@ -269,22 +270,7 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                     ),
                     const SizedBox(height: 20),
                     // Footer Branding
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.shield_outlined, size: 14, color: AppColors.skyBlue),
-                        const SizedBox(width: 6),
-                        const Text(
-                          'Crafted by Shine Craft Technologies',
-                          style: TextStyle(
-                            color: AppColors.mutedText,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                      ],
-                    ),
+                    const ShineCraftBrandingFooter(fontSize: 14, logoHeight: 64),
                   ],
                 ),
               ),
