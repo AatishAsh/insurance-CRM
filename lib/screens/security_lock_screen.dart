@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
 import '../theme/app_colors.dart';
@@ -18,6 +19,22 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
   bool _isConfirming = false;
   String _message = 'Enter Security PIN';
   bool _hasError = false;
+  late final FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
 
   void _onKeyPress(int number) {
     if (_digits.length >= 6) return; // Cap at 6 digits
@@ -51,8 +68,7 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
     final authState = ref.read(authStateProvider);
     final isSetup = authState.status == AuthStatus.setupRequired;
 
-    // Trigger check when 4 or more digits are entered (let's use 4 digits as standard, or 4-6)
-    // For convenience, we will expect a 4-digit PIN.
+    // Trigger check when 4 or more digits are entered
     if (_digits.length == 4) {
       final pin = _digits.join();
       
@@ -105,175 +121,222 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.appBackground,
-      body: BrandBackground(
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 400),
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: AppColors.cardSurface,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: AppColors.cardBorder),
-                  boxShadow: [AppColors.cardShadow],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Software Logo Image
-                    Image.asset(
-                      'assets/images/logo.png',
-                      height: 56,
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppColors.skyBlue.withOpacity(0.12),
-                              AppColors.limeGreen.withOpacity(0.12),
-                            ],
-                          ),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: AppColors.skyBlue.withOpacity(0.3), width: 1.5),
-                        ),
-                        child: const Icon(
-                          Icons.lock_person_rounded,
-                          size: 44,
-                          color: AppColors.skyBlue,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // App Title
-                    RichText(
-                      text: const TextSpan(
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.5,
-                        ),
-                        children: [
-                          TextSpan(text: 'INSURANCE ', style: TextStyle(color: AppColors.headingText)),
-                          TextSpan(text: 'CRM', style: TextStyle(color: AppColors.skyBlue)),
-                        ],
-                      ),
-                    ),
-                    if (isSetup) ...[
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Set up a 4-digit PIN to secure your data offline.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: AppColors.mutedText,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 20),
-                    // Message State
-                    Text(
-                      _message,
-                      style: TextStyle(
-                        color: _hasError ? AppColors.roseAccent : AppColors.headingText,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // PIN Dots Display
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(4, (index) {
-                        final filled = index < _digits.length;
-                        return Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 10),
-                          width: 16,
-                          height: 16,
+      body: Focus(
+        focusNode: _focusNode,
+        autofocus: true,
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent) {
+            final key = event.logicalKey;
+            if (key == LogicalKeyboardKey.digit0 || key == LogicalKeyboardKey.numpad0) {
+              _onKeyPress(0);
+              return KeyEventResult.handled;
+            } else if (key == LogicalKeyboardKey.digit1 || key == LogicalKeyboardKey.numpad1) {
+              _onKeyPress(1);
+              return KeyEventResult.handled;
+            } else if (key == LogicalKeyboardKey.digit2 || key == LogicalKeyboardKey.numpad2) {
+              _onKeyPress(2);
+              return KeyEventResult.handled;
+            } else if (key == LogicalKeyboardKey.digit3 || key == LogicalKeyboardKey.numpad3) {
+              _onKeyPress(3);
+              return KeyEventResult.handled;
+            } else if (key == LogicalKeyboardKey.digit4 || key == LogicalKeyboardKey.numpad4) {
+              _onKeyPress(4);
+              return KeyEventResult.handled;
+            } else if (key == LogicalKeyboardKey.digit5 || key == LogicalKeyboardKey.numpad5) {
+              _onKeyPress(5);
+              return KeyEventResult.handled;
+            } else if (key == LogicalKeyboardKey.digit6 || key == LogicalKeyboardKey.numpad6) {
+              _onKeyPress(6);
+              return KeyEventResult.handled;
+            } else if (key == LogicalKeyboardKey.digit7 || key == LogicalKeyboardKey.numpad7) {
+              _onKeyPress(7);
+              return KeyEventResult.handled;
+            } else if (key == LogicalKeyboardKey.digit8 || key == LogicalKeyboardKey.numpad8) {
+              _onKeyPress(8);
+              return KeyEventResult.handled;
+            } else if (key == LogicalKeyboardKey.digit9 || key == LogicalKeyboardKey.numpad9) {
+              _onKeyPress(9);
+              return KeyEventResult.handled;
+            } else if (key == LogicalKeyboardKey.backspace || key == LogicalKeyboardKey.delete) {
+              _onBackspace();
+              return KeyEventResult.handled;
+            } else if (key == LogicalKeyboardKey.keyC || key == LogicalKeyboardKey.escape) {
+              _onClear();
+              return KeyEventResult.handled;
+            }
+          }
+          return KeyEventResult.ignored;
+        },
+        child: BrandBackground(
+          child: SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardSurface,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: AppColors.cardBorder),
+                    boxShadow: [AppColors.cardShadow],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Software Logo Image
+                      Image.asset(
+                        'assets/images/logo.png',
+                        height: 56,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => Container(
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: filled
-                                ? (_hasError ? AppColors.roseAccent : AppColors.limeGreen)
-                                : Colors.transparent,
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.skyBlue.withOpacity(0.12),
+                                AppColors.limeGreen.withOpacity(0.12),
+                              ],
+                            ),
                             shape: BoxShape.circle,
-                            border: Border.all(
-                              color: _hasError
-                                  ? AppColors.roseAccent
-                                  : (filled ? AppColors.limeGreen : AppColors.cardBorder),
-                              width: 2,
-                            ),
-                            boxShadow: filled && !_hasError
-                                ? [
-                                    BoxShadow(
-                                      color: AppColors.limeGreen.withOpacity(0.4),
-                                      blurRadius: 8,
-                                      spreadRadius: 1,
-                                    )
-                                  ]
-                                : null,
+                            border: Border.all(color: AppColors.skyBlue.withOpacity(0.3), width: 1.5),
                           ),
-                        );
-                      }),
-                    ),
-                    const SizedBox(height: 24),
-                    // Keypad
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                        childAspectRatio: 1.35,
+                          child: const Icon(
+                            Icons.lock_person_rounded,
+                            size: 44,
+                            color: AppColors.skyBlue,
+                          ),
+                        ),
                       ),
-                      itemCount: 12,
-                      itemBuilder: (context, index) {
-                        if (index == 9) {
-                          // Clear Button
-                          return _buildKeypadButton(
-                            child: const Text(
-                              'C',
-                              style: TextStyle(color: AppColors.mutedText, fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                            onTap: _onClear,
-                          );
-                        }
-                        if (index == 10) {
-                          // Zero Key
-                          return _buildKeypadButton(
-                            child: const Text(
-                              '0',
-                              style: TextStyle(color: AppColors.headingText, fontSize: 22, fontWeight: FontWeight.bold),
-                            ),
-                            onTap: () => _onKeyPress(0),
-                          );
-                        }
-                        if (index == 11) {
-                          // Backspace Button
-                          return _buildKeypadButton(
-                            child: const Icon(Icons.backspace_outlined, color: AppColors.mutedText, size: 20),
-                            onTap: _onBackspace,
-                          );
-                        }
-                        // Number Keys 1-9
-                        final num = index + 1;
-                        return _buildKeypadButton(
-                          child: Text(
-                            '$num',
-                            style: const TextStyle(color: AppColors.headingText, fontSize: 22, fontWeight: FontWeight.bold),
+                      const SizedBox(height: 16),
+                      // App Title
+                      RichText(
+                        text: const TextSpan(
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
                           ),
-                          onTap: () => _onKeyPress(num),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    // Footer Branding
-                    const ShineCraftBrandingFooter(fontSize: 14, logoHeight: 64),
-                  ],
+                          children: [
+                            TextSpan(text: 'INSURANCE ', style: TextStyle(color: AppColors.headingText)),
+                            TextSpan(text: 'CRM', style: TextStyle(color: AppColors.skyBlue)),
+                          ],
+                        ),
+                      ),
+                      if (isSetup) ...[
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Set up a 4-digit PIN to secure your data offline.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: AppColors.mutedText,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 20),
+                      // Message State
+                      Text(
+                        _message,
+                        style: TextStyle(
+                          color: _hasError ? AppColors.roseAccent : AppColors.headingText,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // PIN Dots Display
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(4, (index) {
+                          final filled = index < _digits.length;
+                          return Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 10),
+                            width: 16,
+                            height: 16,
+                            decoration: BoxDecoration(
+                              color: filled
+                                  ? (_hasError ? AppColors.roseAccent : AppColors.limeGreen)
+                                  : Colors.transparent,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: _hasError
+                                    ? AppColors.roseAccent
+                                    : (filled ? AppColors.limeGreen : AppColors.cardBorder),
+                                width: 2,
+                              ),
+                              boxShadow: filled && !_hasError
+                                  ? [
+                                      BoxShadow(
+                                        color: AppColors.limeGreen.withOpacity(0.4),
+                                        blurRadius: 8,
+                                        spreadRadius: 1,
+                                      )
+                                    ]
+                                  : null,
+                            ),
+                          );
+                        }),
+                      ),
+                      const SizedBox(height: 24),
+                      // Keypad
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 1.35,
+                        ),
+                        itemCount: 12,
+                        itemBuilder: (context, index) {
+                          if (index == 9) {
+                            // Clear Button
+                            return _buildKeypadButton(
+                              child: const Text(
+                                'C',
+                                style: TextStyle(color: AppColors.mutedText, fontSize: 18, fontWeight: FontWeight.bold),
+                              ),
+                              onTap: _onClear,
+                            );
+                          }
+                          if (index == 10) {
+                            // Zero Key
+                            return _buildKeypadButton(
+                              child: const Text(
+                                '0',
+                                style: TextStyle(color: AppColors.headingText, fontSize: 22, fontWeight: FontWeight.bold),
+                              ),
+                              onTap: () => _onKeyPress(0),
+                            );
+                          }
+                          if (index == 11) {
+                            // Backspace Button
+                            return _buildKeypadButton(
+                              child: const Icon(Icons.backspace_outlined, color: AppColors.mutedText, size: 20),
+                              onTap: _onBackspace,
+                            );
+                          }
+                          // Number Keys 1-9
+                          final num = index + 1;
+                          return _buildKeypadButton(
+                            child: Text(
+                              '$num',
+                              style: const TextStyle(color: AppColors.headingText, fontSize: 22, fontWeight: FontWeight.bold),
+                            ),
+                            onTap: () => _onKeyPress(num),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      // Footer Branding
+                      const ShineCraftBrandingFooter(fontSize: 14, logoHeight: 64),
+                    ],
+                  ),
                 ),
               ),
             ),
