@@ -177,18 +177,29 @@ const PerformanceRecordSchema = CollectionSchema(
       name: r'newBusiness',
       type: IsarType.string,
     ),
-    r'updatedAt': PropertySchema(
+    r'topicHeaders': PropertySchema(
       id: 32,
+      name: r'topicHeaders',
+      type: IsarType.stringList,
+    ),
+    r'topicRows': PropertySchema(
+      id: 33,
+      name: r'topicRows',
+      type: IsarType.objectList,
+      target: r'TopicTableRow',
+    ),
+    r'updatedAt': PropertySchema(
+      id: 34,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'urgent': PropertySchema(
-      id: 33,
+      id: 35,
       name: r'urgent',
       type: IsarType.string,
     ),
     r'year': PropertySchema(
-      id: 34,
+      id: 36,
       name: r'year',
       type: IsarType.long,
     )
@@ -232,7 +243,7 @@ const PerformanceRecordSchema = CollectionSchema(
     )
   },
   links: {},
-  embeddedSchemas: {},
+  embeddedSchemas: {r'TopicTableRow': TopicTableRowSchema},
   getId: _performanceRecordGetId,
   getLinks: _performanceRecordGetLinks,
   attach: _performanceRecordAttach,
@@ -276,6 +287,22 @@ int _performanceRecordEstimateSize(
   bytesCount += 3 + object.fireHealthPa.length * 3;
   bytesCount += 3 + object.life.length * 3;
   bytesCount += 3 + object.newBusiness.length * 3;
+  bytesCount += 3 + object.topicHeaders.length * 3;
+  {
+    for (var i = 0; i < object.topicHeaders.length; i++) {
+      final value = object.topicHeaders[i];
+      bytesCount += value.length * 3;
+    }
+  }
+  bytesCount += 3 + object.topicRows.length * 3;
+  {
+    final offsets = allOffsets[TopicTableRow]!;
+    for (var i = 0; i < object.topicRows.length; i++) {
+      final value = object.topicRows[i];
+      bytesCount +=
+          TopicTableRowSchema.estimateSize(value, offsets, allOffsets);
+    }
+  }
   bytesCount += 3 + object.urgent.length * 3;
   return bytesCount;
 }
@@ -318,9 +345,16 @@ void _performanceRecordSerialize(
   writer.writeString(offsets[29], object.life);
   writer.writeLong(offsets[30], object.month);
   writer.writeString(offsets[31], object.newBusiness);
-  writer.writeDateTime(offsets[32], object.updatedAt);
-  writer.writeString(offsets[33], object.urgent);
-  writer.writeLong(offsets[34], object.year);
+  writer.writeStringList(offsets[32], object.topicHeaders);
+  writer.writeObjectList<TopicTableRow>(
+    offsets[33],
+    allOffsets,
+    TopicTableRowSchema.serialize,
+    object.topicRows,
+  );
+  writer.writeDateTime(offsets[34], object.updatedAt);
+  writer.writeString(offsets[35], object.urgent);
+  writer.writeLong(offsets[36], object.year);
 }
 
 PerformanceRecord _performanceRecordDeserialize(
@@ -363,9 +397,17 @@ PerformanceRecord _performanceRecordDeserialize(
   object.life = reader.readString(offsets[29]);
   object.month = reader.readLong(offsets[30]);
   object.newBusiness = reader.readString(offsets[31]);
-  object.updatedAt = reader.readDateTime(offsets[32]);
-  object.urgent = reader.readString(offsets[33]);
-  object.year = reader.readLong(offsets[34]);
+  object.topicHeaders = reader.readStringList(offsets[32]) ?? [];
+  object.topicRows = reader.readObjectList<TopicTableRow>(
+        offsets[33],
+        TopicTableRowSchema.deserialize,
+        allOffsets,
+        TopicTableRow(),
+      ) ??
+      [];
+  object.updatedAt = reader.readDateTime(offsets[34]);
+  object.urgent = reader.readString(offsets[35]);
+  object.year = reader.readLong(offsets[36]);
   return object;
 }
 
@@ -441,10 +483,20 @@ P _performanceRecordDeserializeProp<P>(
     case 31:
       return (reader.readString(offset)) as P;
     case 32:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readStringList(offset) ?? []) as P;
     case 33:
-      return (reader.readString(offset)) as P;
+      return (reader.readObjectList<TopicTableRow>(
+            offset,
+            TopicTableRowSchema.deserialize,
+            allOffsets,
+            TopicTableRow(),
+          ) ??
+          []) as P;
     case 34:
+      return (reader.readDateTime(offset)) as P;
+    case 35:
+      return (reader.readString(offset)) as P;
+    case 36:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -5264,6 +5316,320 @@ extension PerformanceRecordQueryFilter
   }
 
   QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicHeadersElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'topicHeaders',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicHeadersElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'topicHeaders',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicHeadersElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'topicHeaders',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicHeadersElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'topicHeaders',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicHeadersElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'topicHeaders',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicHeadersElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'topicHeaders',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicHeadersElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'topicHeaders',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicHeadersElementMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'topicHeaders',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicHeadersElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'topicHeaders',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicHeadersElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'topicHeaders',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicHeadersLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'topicHeaders',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicHeadersIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'topicHeaders',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicHeadersIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'topicHeaders',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicHeadersLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'topicHeaders',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicHeadersLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'topicHeaders',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicHeadersLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'topicHeaders',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicRowsLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'topicRows',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicRowsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'topicRows',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicRowsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'topicRows',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicRowsLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'topicRows',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicRowsLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'topicRows',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicRowsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'topicRows',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
       updatedAtEqualTo(DateTime value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -5513,7 +5879,14 @@ extension PerformanceRecordQueryFilter
 }
 
 extension PerformanceRecordQueryObject
-    on QueryBuilder<PerformanceRecord, PerformanceRecord, QFilterCondition> {}
+    on QueryBuilder<PerformanceRecord, PerformanceRecord, QFilterCondition> {
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      topicRowsElement(FilterQuery<TopicTableRow> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.object(q, r'topicRows');
+    });
+  }
+}
 
 extension PerformanceRecordQueryLinks
     on QueryBuilder<PerformanceRecord, PerformanceRecord, QFilterCondition> {}
@@ -6758,6 +7131,13 @@ extension PerformanceRecordQueryWhereDistinct
   }
 
   QueryBuilder<PerformanceRecord, PerformanceRecord, QDistinct>
+      distinctByTopicHeaders() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'topicHeaders');
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QDistinct>
       distinctByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'updatedAt');
@@ -7008,6 +7388,20 @@ extension PerformanceRecordQueryProperty
     });
   }
 
+  QueryBuilder<PerformanceRecord, List<String>, QQueryOperations>
+      topicHeadersProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'topicHeaders');
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, List<TopicTableRow>, QQueryOperations>
+      topicRowsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'topicRows');
+    });
+  }
+
   QueryBuilder<PerformanceRecord, DateTime, QQueryOperations>
       updatedAtProperty() {
     return QueryBuilder.apply(this, (query) {
@@ -7027,3 +7421,453 @@ extension PerformanceRecordQueryProperty
     });
   }
 }
+
+// **************************************************************************
+// IsarEmbeddedGenerator
+// **************************************************************************
+
+// coverage:ignore-file
+// ignore_for_file: duplicate_ignore, non_constant_identifier_names, constant_identifier_names, invalid_use_of_protected_member, unnecessary_cast, prefer_const_constructors, lines_longer_than_80_chars, require_trailing_commas, inference_failure_on_function_invocation, unnecessary_parenthesis, unnecessary_raw_strings, unnecessary_null_checks, join_return_with_assignment, prefer_final_locals, avoid_js_rounded_ints, avoid_positional_boolean_parameters, always_specify_types
+
+const TopicTableRowSchema = Schema(
+  name: r'TopicTableRow',
+  id: -4197528225521063974,
+  properties: {
+    r'dateStr': PropertySchema(
+      id: 0,
+      name: r'dateStr',
+      type: IsarType.string,
+    ),
+    r'values': PropertySchema(
+      id: 1,
+      name: r'values',
+      type: IsarType.stringList,
+    )
+  },
+  estimateSize: _topicTableRowEstimateSize,
+  serialize: _topicTableRowSerialize,
+  deserialize: _topicTableRowDeserialize,
+  deserializeProp: _topicTableRowDeserializeProp,
+);
+
+int _topicTableRowEstimateSize(
+  TopicTableRow object,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  var bytesCount = offsets.last;
+  bytesCount += 3 + object.dateStr.length * 3;
+  bytesCount += 3 + object.values.length * 3;
+  {
+    for (var i = 0; i < object.values.length; i++) {
+      final value = object.values[i];
+      bytesCount += value.length * 3;
+    }
+  }
+  return bytesCount;
+}
+
+void _topicTableRowSerialize(
+  TopicTableRow object,
+  IsarWriter writer,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  writer.writeString(offsets[0], object.dateStr);
+  writer.writeStringList(offsets[1], object.values);
+}
+
+TopicTableRow _topicTableRowDeserialize(
+  Id id,
+  IsarReader reader,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  final object = TopicTableRow();
+  object.dateStr = reader.readString(offsets[0]);
+  object.values = reader.readStringList(offsets[1]) ?? [];
+  return object;
+}
+
+P _topicTableRowDeserializeProp<P>(
+  IsarReader reader,
+  int propertyId,
+  int offset,
+  Map<Type, List<int>> allOffsets,
+) {
+  switch (propertyId) {
+    case 0:
+      return (reader.readString(offset)) as P;
+    case 1:
+      return (reader.readStringList(offset) ?? []) as P;
+    default:
+      throw IsarError('Unknown property with id $propertyId');
+  }
+}
+
+extension TopicTableRowQueryFilter
+    on QueryBuilder<TopicTableRow, TopicTableRow, QFilterCondition> {
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      dateStrEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'dateStr',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      dateStrGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'dateStr',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      dateStrLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'dateStr',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      dateStrBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'dateStr',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      dateStrStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'dateStr',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      dateStrEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'dateStr',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      dateStrContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'dateStr',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      dateStrMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'dateStr',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      dateStrIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'dateStr',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      dateStrIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'dateStr',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      valuesElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'values',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      valuesElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'values',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      valuesElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'values',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      valuesElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'values',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      valuesElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'values',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      valuesElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'values',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      valuesElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'values',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      valuesElementMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'values',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      valuesElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'values',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      valuesElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'values',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      valuesLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'values',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      valuesIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'values',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      valuesIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'values',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      valuesLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'values',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      valuesLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'values',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<TopicTableRow, TopicTableRow, QAfterFilterCondition>
+      valuesLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'values',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+}
+
+extension TopicTableRowQueryObject
+    on QueryBuilder<TopicTableRow, TopicTableRow, QFilterCondition> {}

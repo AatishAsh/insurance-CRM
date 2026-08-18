@@ -931,7 +931,8 @@ class DatabaseService {
   Future<void> savePerformanceRecord(PerformanceRecord record) async {
     record.updatedAt = DateTime.now();
     await isar.writeTxn(() async {
-      await isar.performanceRecords.put(record);
+      final id = await isar.performanceRecords.put(record);
+      record.id = id;
     });
   }
 }

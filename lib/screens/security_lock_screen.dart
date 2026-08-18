@@ -124,7 +124,7 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Logo Image
+                    // Software Logo Image
                     Image.asset(
                       'assets/images/logo.png',
                       height: 56,

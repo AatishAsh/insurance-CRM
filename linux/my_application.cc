@@ -40,14 +40,22 @@ static void my_application_activate(GApplication* application) {
   if (use_header_bar) {
     GtkHeaderBar* header_bar = GTK_HEADER_BAR(gtk_header_bar_new());
     gtk_widget_show(GTK_WIDGET(header_bar));
-    gtk_header_bar_set_title(header_bar, "customer_detail_management");
+    gtk_header_bar_set_title(header_bar, "Insurance CRM");
     gtk_header_bar_set_show_close_button(header_bar, TRUE);
     gtk_window_set_titlebar(window, GTK_WIDGET(header_bar));
   } else {
-    gtk_window_set_title(window, "customer_detail_management");
+    gtk_window_set_title(window, "Insurance CRM");
   }
 
   gtk_window_set_default_size(window, 1280, 720);
+
+  // Set Linux desktop application icon to applogo.png
+  GError* icon_error = NULL;
+  gtk_window_set_icon_from_file(window, "assets/images/applogo.png", &icon_error);
+  if (icon_error) {
+    g_clear_error(&icon_error);
+    gtk_window_set_icon_from_file(window, "data/flutter_assets/assets/images/applogo.png", NULL);
+  }
   gtk_widget_show(GTK_WIDGET(window));
 
   g_autoptr(FlDartProject) project = fl_dart_project_new();

@@ -741,8 +741,8 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   _buildPeriodFilterChip('All Time', 'all'),
-                                  _buildPeriodFilterChip('This Month', 'month'),
                                   _buildPeriodFilterChip('This Year', 'year'),
+                                  _buildPeriodFilterChip('This Month', 'month'),
                                 ],
                               ),
                             );

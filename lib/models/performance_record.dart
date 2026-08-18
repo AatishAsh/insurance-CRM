@@ -2,6 +2,12 @@ import 'package:isar/isar.dart';
 
 part 'performance_record.g.dart';
 
+@embedded
+class TopicTableRow {
+  String dateStr = '';
+  List<String> values = [];
+}
+
 @collection
 class PerformanceRecord {
   Id id = Isar.autoIncrement;
@@ -54,6 +60,10 @@ class PerformanceRecord {
   String box4Balance = '';
   String box4Target = '';
   String box4Achieved = '';
+
+  // Monthly Topic Table (14 Columns: Date + 13 Topics)
+  List<String> topicHeaders = [];
+  List<TopicTableRow> topicRows = [];
 
   // Metadata
   @Index()

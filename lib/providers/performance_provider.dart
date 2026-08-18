@@ -71,6 +71,8 @@ class PerformanceNotifier extends StateNotifier<PerformanceRecord> {
       ..box4Balance = state.box4Balance
       ..box4Target = state.box4Target
       ..box4Achieved = state.box4Achieved
+      ..topicHeaders = state.topicHeaders
+      ..topicRows = state.topicRows
       ..updatedAt = DateTime.now();
 
     await db.savePerformanceRecord(updated);
@@ -119,6 +121,8 @@ class PerformanceNotifier extends StateNotifier<PerformanceRecord> {
       ..box4Balance = state.box4Balance
       ..box4Target = state.box4Target
       ..box4Achieved = state.box4Achieved
+      ..topicHeaders = state.topicHeaders
+      ..topicRows = state.topicRows
       ..updatedAt = DateTime.now();
 
     await db.savePerformanceRecord(updated);
@@ -162,6 +166,8 @@ class PerformanceNotifier extends StateNotifier<PerformanceRecord> {
       ..box4Balance = state.box4Balance
       ..box4Target = state.box4Target
       ..box4Achieved = state.box4Achieved
+      ..topicHeaders = state.topicHeaders
+      ..topicRows = state.topicRows
       ..updatedAt = DateTime.now();
 
     await db.savePerformanceRecord(updated);
@@ -209,6 +215,293 @@ class PerformanceNotifier extends StateNotifier<PerformanceRecord> {
       ..box4Balance = box4Balance ?? state.box4Balance
       ..box4Target = box4Target ?? state.box4Target
       ..box4Achieved = box4Achieved ?? state.box4Achieved
+      ..topicHeaders = state.topicHeaders
+      ..topicRows = state.topicRows
+      ..updatedAt = DateTime.now();
+
+    await db.savePerformanceRecord(updated);
+    state = updated;
+  }
+
+  // Monthly Topic Table Methods (14 Columns: Date + 13 Topics)
+  Future<void> updateTopicHeader(int colIndex, String newTitle) async {
+    final headers = List<String>.from(
+      state.topicHeaders.isEmpty
+          ? List.generate(13, (i) => 'Topic ${i + 1}')
+          : state.topicHeaders,
+    );
+    while (headers.length < 13) {
+      headers.add('Topic ${headers.length + 1}');
+    }
+    headers[colIndex] = newTitle;
+
+    final updated = PerformanceRecord()
+      ..id = state.id
+      ..year = year
+      ..month = month
+      ..urgent = state.urgent
+      ..newBusiness = state.newBusiness
+      ..life = state.life
+      ..fireHealthPa = state.fireHealthPa
+      ..earned = state.earned
+      ..box2Row1Days = state.box2Row1Days
+      ..box2EarningsOnWorkedDays = state.box2EarningsOnWorkedDays
+      ..box2Row2Days = state.box2Row2Days
+      ..box2TotalWorkingDay = state.box2TotalWorkingDay
+      ..box3JjWorkwayCol1 = state.box3JjWorkwayCol1
+      ..box3JjWorkwayCol2 = state.box3JjWorkwayCol2
+      ..box3JjWorkwayCol3 = state.box3JjWorkwayCol3
+      ..box3JjWorkwayCol4 = state.box3JjWorkwayCol4
+      ..box3TargetCol1 = state.box3TargetCol1
+      ..box3TargetCol2 = state.box3TargetCol2
+      ..box3TargetCol3 = state.box3TargetCol3
+      ..box3TargetCol4 = state.box3TargetCol4
+      ..box3YyCol1 = state.box3YyCol1
+      ..box3YyCol2 = state.box3YyCol2
+      ..box3YyCol3 = state.box3YyCol3
+      ..box3YyCol4 = state.box3YyCol4
+      ..box3ZzCol1 = state.box3ZzCol1
+      ..box3ZzCol2 = state.box3ZzCol2
+      ..box3ZzCol3 = state.box3ZzCol3
+      ..box3ZzCol4 = state.box3ZzCol4
+      ..box3PercentageCol1 = state.box3PercentageCol1
+      ..box3PercentageCol2 = state.box3PercentageCol2
+      ..box3PercentageCol3 = state.box3PercentageCol3
+      ..box3PercentageCol4 = state.box3PercentageCol4
+      ..box4Balance = state.box4Balance
+      ..box4Target = state.box4Target
+      ..box4Achieved = state.box4Achieved
+      ..topicHeaders = headers
+      ..topicRows = state.topicRows
+      ..updatedAt = DateTime.now();
+
+    await db.savePerformanceRecord(updated);
+    state = updated;
+  }
+
+  Future<void> addTopicRow({String? dateStr}) async {
+    final now = DateTime.now();
+    final defaultDate = dateStr ?? '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+    final newRow = TopicTableRow()
+      ..dateStr = defaultDate
+      ..values = List.generate(13, (_) => '');
+
+    final currentRows = List<TopicTableRow>.from(
+      state.topicRows.map((r) => TopicTableRow()
+        ..dateStr = r.dateStr
+        ..values = List<String>.from(r.values)),
+    );
+    currentRows.add(newRow);
+
+    final currentHeaders = List<String>.from(
+      state.topicHeaders.isEmpty
+          ? List.generate(13, (i) => 'Topic ${i + 1}')
+          : state.topicHeaders,
+    );
+
+    final updated = PerformanceRecord()
+      ..id = state.id
+      ..year = year
+      ..month = month
+      ..urgent = state.urgent
+      ..newBusiness = state.newBusiness
+      ..life = state.life
+      ..fireHealthPa = state.fireHealthPa
+      ..earned = state.earned
+      ..box2Row1Days = state.box2Row1Days
+      ..box2EarningsOnWorkedDays = state.box2EarningsOnWorkedDays
+      ..box2Row2Days = state.box2Row2Days
+      ..box2TotalWorkingDay = state.box2TotalWorkingDay
+      ..box3JjWorkwayCol1 = state.box3JjWorkwayCol1
+      ..box3JjWorkwayCol2 = state.box3JjWorkwayCol2
+      ..box3JjWorkwayCol3 = state.box3JjWorkwayCol3
+      ..box3JjWorkwayCol4 = state.box3JjWorkwayCol4
+      ..box3TargetCol1 = state.box3TargetCol1
+      ..box3TargetCol2 = state.box3TargetCol2
+      ..box3TargetCol3 = state.box3TargetCol3
+      ..box3TargetCol4 = state.box3TargetCol4
+      ..box3YyCol1 = state.box3YyCol1
+      ..box3YyCol2 = state.box3YyCol2
+      ..box3YyCol3 = state.box3YyCol3
+      ..box3YyCol4 = state.box3YyCol4
+      ..box3ZzCol1 = state.box3ZzCol1
+      ..box3ZzCol2 = state.box3ZzCol2
+      ..box3ZzCol3 = state.box3ZzCol3
+      ..box3ZzCol4 = state.box3ZzCol4
+      ..box3PercentageCol1 = state.box3PercentageCol1
+      ..box3PercentageCol2 = state.box3PercentageCol2
+      ..box3PercentageCol3 = state.box3PercentageCol3
+      ..box3PercentageCol4 = state.box3PercentageCol4
+      ..box4Balance = state.box4Balance
+      ..box4Target = state.box4Target
+      ..box4Achieved = state.box4Achieved
+      ..topicHeaders = currentHeaders
+      ..topicRows = currentRows
+      ..updatedAt = DateTime.now();
+
+    await db.savePerformanceRecord(updated);
+    state = updated;
+  }
+
+  Future<void> updateTopicRowDate(int rowIndex, String dateStr) async {
+    final currentRows = List<TopicTableRow>.from(
+      state.topicRows.map((r) => TopicTableRow()
+        ..dateStr = r.dateStr
+        ..values = List<String>.from(r.values)),
+    );
+    if (rowIndex >= 0 && rowIndex < currentRows.length) {
+      currentRows[rowIndex].dateStr = dateStr;
+    }
+
+    final updated = PerformanceRecord()
+      ..id = state.id
+      ..year = year
+      ..month = month
+      ..urgent = state.urgent
+      ..newBusiness = state.newBusiness
+      ..life = state.life
+      ..fireHealthPa = state.fireHealthPa
+      ..earned = state.earned
+      ..box2Row1Days = state.box2Row1Days
+      ..box2EarningsOnWorkedDays = state.box2EarningsOnWorkedDays
+      ..box2Row2Days = state.box2Row2Days
+      ..box2TotalWorkingDay = state.box2TotalWorkingDay
+      ..box3JjWorkwayCol1 = state.box3JjWorkwayCol1
+      ..box3JjWorkwayCol2 = state.box3JjWorkwayCol2
+      ..box3JjWorkwayCol3 = state.box3JjWorkwayCol3
+      ..box3JjWorkwayCol4 = state.box3JjWorkwayCol4
+      ..box3TargetCol1 = state.box3TargetCol1
+      ..box3TargetCol2 = state.box3TargetCol2
+      ..box3TargetCol3 = state.box3TargetCol3
+      ..box3TargetCol4 = state.box3TargetCol4
+      ..box3YyCol1 = state.box3YyCol1
+      ..box3YyCol2 = state.box3YyCol2
+      ..box3YyCol3 = state.box3YyCol3
+      ..box3YyCol4 = state.box3YyCol4
+      ..box3ZzCol1 = state.box3ZzCol1
+      ..box3ZzCol2 = state.box3ZzCol2
+      ..box3ZzCol3 = state.box3ZzCol3
+      ..box3ZzCol4 = state.box3ZzCol4
+      ..box3PercentageCol1 = state.box3PercentageCol1
+      ..box3PercentageCol2 = state.box3PercentageCol2
+      ..box3PercentageCol3 = state.box3PercentageCol3
+      ..box3PercentageCol4 = state.box3PercentageCol4
+      ..box4Balance = state.box4Balance
+      ..box4Target = state.box4Target
+      ..box4Achieved = state.box4Achieved
+      ..topicHeaders = state.topicHeaders
+      ..topicRows = currentRows
+      ..updatedAt = DateTime.now();
+
+    await db.savePerformanceRecord(updated);
+    state = updated;
+  }
+
+  Future<void> updateTopicCell(int rowIndex, int topicIndex, String value) async {
+    final currentRows = List<TopicTableRow>.from(
+      state.topicRows.map((r) => TopicTableRow()
+        ..dateStr = r.dateStr
+        ..values = List<String>.from(r.values)),
+    );
+    if (rowIndex >= 0 && rowIndex < currentRows.length) {
+      while (currentRows[rowIndex].values.length < 13) {
+        currentRows[rowIndex].values.add('');
+      }
+      currentRows[rowIndex].values[topicIndex] = value;
+    }
+
+    final updated = PerformanceRecord()
+      ..id = state.id
+      ..year = year
+      ..month = month
+      ..urgent = state.urgent
+      ..newBusiness = state.newBusiness
+      ..life = state.life
+      ..fireHealthPa = state.fireHealthPa
+      ..earned = state.earned
+      ..box2Row1Days = state.box2Row1Days
+      ..box2EarningsOnWorkedDays = state.box2EarningsOnWorkedDays
+      ..box2Row2Days = state.box2Row2Days
+      ..box2TotalWorkingDay = state.box2TotalWorkingDay
+      ..box3JjWorkwayCol1 = state.box3JjWorkwayCol1
+      ..box3JjWorkwayCol2 = state.box3JjWorkwayCol2
+      ..box3JjWorkwayCol3 = state.box3JjWorkwayCol3
+      ..box3JjWorkwayCol4 = state.box3JjWorkwayCol4
+      ..box3TargetCol1 = state.box3TargetCol1
+      ..box3TargetCol2 = state.box3TargetCol2
+      ..box3TargetCol3 = state.box3TargetCol3
+      ..box3TargetCol4 = state.box3TargetCol4
+      ..box3YyCol1 = state.box3YyCol1
+      ..box3YyCol2 = state.box3YyCol2
+      ..box3YyCol3 = state.box3YyCol3
+      ..box3YyCol4 = state.box3YyCol4
+      ..box3ZzCol1 = state.box3ZzCol1
+      ..box3ZzCol2 = state.box3ZzCol2
+      ..box3ZzCol3 = state.box3ZzCol3
+      ..box3ZzCol4 = state.box3ZzCol4
+      ..box3PercentageCol1 = state.box3PercentageCol1
+      ..box3PercentageCol2 = state.box3PercentageCol2
+      ..box3PercentageCol3 = state.box3PercentageCol3
+      ..box3PercentageCol4 = state.box3PercentageCol4
+      ..box4Balance = state.box4Balance
+      ..box4Target = state.box4Target
+      ..box4Achieved = state.box4Achieved
+      ..topicHeaders = state.topicHeaders
+      ..topicRows = currentRows
+      ..updatedAt = DateTime.now();
+
+    await db.savePerformanceRecord(updated);
+    state = updated;
+  }
+
+  Future<void> deleteTopicRow(int rowIndex) async {
+    final currentRows = List<TopicTableRow>.from(
+      state.topicRows.map((r) => TopicTableRow()
+        ..dateStr = r.dateStr
+        ..values = List<String>.from(r.values)),
+    );
+    if (rowIndex >= 0 && rowIndex < currentRows.length) {
+      currentRows.removeAt(rowIndex);
+    }
+
+    final updated = PerformanceRecord()
+      ..id = state.id
+      ..year = year
+      ..month = month
+      ..urgent = state.urgent
+      ..newBusiness = state.newBusiness
+      ..life = state.life
+      ..fireHealthPa = state.fireHealthPa
+      ..earned = state.earned
+      ..box2Row1Days = state.box2Row1Days
+      ..box2EarningsOnWorkedDays = state.box2EarningsOnWorkedDays
+      ..box2Row2Days = state.box2Row2Days
+      ..box2TotalWorkingDay = state.box2TotalWorkingDay
+      ..box3JjWorkwayCol1 = state.box3JjWorkwayCol1
+      ..box3JjWorkwayCol2 = state.box3JjWorkwayCol2
+      ..box3JjWorkwayCol3 = state.box3JjWorkwayCol3
+      ..box3JjWorkwayCol4 = state.box3JjWorkwayCol4
+      ..box3TargetCol1 = state.box3TargetCol1
+      ..box3TargetCol2 = state.box3TargetCol2
+      ..box3TargetCol3 = state.box3TargetCol3
+      ..box3TargetCol4 = state.box3TargetCol4
+      ..box3YyCol1 = state.box3YyCol1
+      ..box3YyCol2 = state.box3YyCol2
+      ..box3YyCol3 = state.box3YyCol3
+      ..box3YyCol4 = state.box3YyCol4
+      ..box3ZzCol1 = state.box3ZzCol1
+      ..box3ZzCol2 = state.box3ZzCol2
+      ..box3ZzCol3 = state.box3ZzCol3
+      ..box3ZzCol4 = state.box3ZzCol4
+      ..box3PercentageCol1 = state.box3PercentageCol1
+      ..box3PercentageCol2 = state.box3PercentageCol2
+      ..box3PercentageCol3 = state.box3PercentageCol3
+      ..box3PercentageCol4 = state.box3PercentageCol4
+      ..box4Balance = state.box4Balance
+      ..box4Target = state.box4Target
+      ..box4Achieved = state.box4Achieved
+      ..topicHeaders = state.topicHeaders
+      ..topicRows = currentRows
       ..updatedAt = DateTime.now();
 
     await db.savePerformanceRecord(updated);
@@ -219,7 +512,8 @@ class PerformanceNotifier extends StateNotifier<PerformanceRecord> {
 final performanceRecordProvider =
     StateNotifierProvider.family<PerformanceNotifier, PerformanceRecord, String>((ref, key) {
   final db = ref.watch(databaseServiceProvider);
-  final year = ref.watch(selectedPerformanceYearProvider);
-  final month = ref.watch(selectedPerformanceMonthProvider);
+  final parts = key.split('_');
+  final year = int.tryParse(parts.isNotEmpty ? parts[0] : '') ?? DateTime.now().year;
+  final month = int.tryParse(parts.length > 1 ? parts[1] : '') ?? DateTime.now().month;
   return PerformanceNotifier(db, year, month);
 });

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../models/performance_record.dart';
 import '../providers/performance_provider.dart';
 import '../theme/app_colors.dart';
@@ -14,6 +15,11 @@ class PerformanceScreen extends ConsumerStatefulWidget {
 }
 
 class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
+  // Monthly Topic Table Controllers & Pagination
+  String? _lastLoadedKey;
+  int _topicTablePage = 0;
+  static const int _entriesPerPage = 10;
+  final Map<String, TextEditingController> _topicCellControllers = {};
   // Box 1 Controllers
   late TextEditingController _urgentController;
   late TextEditingController _newBusinessController;
@@ -141,6 +147,12 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
     _box4BalanceController.dispose();
     _box4TargetController.dispose();
     _box4AchievedController.dispose();
+
+    // Monthly Topic Table Controllers Dispose
+    for (var c in _topicCellControllers.values) {
+      c.dispose();
+    }
+    _topicCellControllers.clear();
 
     super.dispose();
   }
@@ -347,16 +359,64 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
     }
   }
 
+  void _syncTopicControllers(PerformanceRecord record) {
+    final rowCount = record.topicRows.length;
+    final keysToRemove = <String>[];
+    _topicCellControllers.forEach((key, controller) {
+      if (key.startsWith('date_')) {
+        final rIdx = int.tryParse(key.substring(5));
+        if (rIdx == null || rIdx >= rowCount) {
+          keysToRemove.add(key);
+        }
+      } else if (key.startsWith('cell_')) {
+        final parts = key.split('_');
+        if (parts.length >= 2) {
+          final rIdx = int.tryParse(parts[1]);
+          if (rIdx == null || rIdx >= rowCount) {
+            keysToRemove.add(key);
+          }
+        }
+      }
+    });
+
+    for (final k in keysToRemove) {
+      _topicCellControllers[k]?.dispose();
+      _topicCellControllers.remove(k);
+    }
+  }
+
+  TextEditingController _getTopicCellController(String key, String initialText) {
+    if (!_topicCellControllers.containsKey(key)) {
+      _topicCellControllers[key] = TextEditingController(text: initialText);
+    } else {
+      if (_topicCellControllers[key]!.text != initialText && !_topicCellControllers[key]!.selection.isValid) {
+        _topicCellControllers[key]!.text = initialText;
+      }
+    }
+    return _topicCellControllers[key]!;
+  }
+
   @override
   Widget build(BuildContext context) {
     final selectedYear = ref.watch(selectedPerformanceYearProvider);
     final selectedMonth = ref.watch(selectedPerformanceMonthProvider);
     final providerKey = '${selectedYear}_$selectedMonth';
+
+    if (_lastLoadedKey != providerKey) {
+      _lastLoadedKey = providerKey;
+      _topicTablePage = 0;
+      for (var c in _topicCellControllers.values) {
+        c.dispose();
+      }
+      _topicCellControllers.clear();
+    }
+
     final performanceRecord = ref.watch(performanceRecordProvider(providerKey));
     final notifier = ref.read(performanceRecordProvider(providerKey).notifier);
 
     // Sync input text controllers with loaded record
     _syncControllers(performanceRecord);
+    _syncTopicControllers(performanceRecord);
 
     final bool isDesktop = MediaQuery.of(context).size.width > 700;
 
@@ -605,34 +665,8 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
 
                   const SizedBox(height: 24),
 
-                  // ==================== ADDITIONAL ANALYTICS & REPORTS ====================
-                  Card(
-                    elevation: 0,
-                    color: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: BorderSide(color: Colors.grey.shade200, width: 1.5),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: Column(
-                        children: [
-                          Icon(Icons.analytics_outlined, size: 38, color: Colors.blue.shade300),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Additional Analytics & Reports',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey.shade800),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'This section is prepared for future metric charts, comparative reports, and deep analytics.',
-                            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  // ==================== MONTHLY TOPIC TABLE (14 COLUMNS) ====================
+                  _buildMonthlyTopicTableCard(context, performanceRecord, notifier),
                 ],
               ),
             ),
@@ -640,6 +674,518 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
         ],
       ),
     ),
+    );
+  }
+
+  // Second Half: Monthly Topic Matrix Table Card (14 Columns with 10 Entries/Page Pagination)
+  Widget _buildMonthlyTopicTableCard(
+    BuildContext context,
+    PerformanceRecord record,
+    PerformanceNotifier notifier,
+  ) {
+    // Determine Topic Headers (Topic 1 to Topic 13)
+    final topicHeaders = List<String>.generate(13, (i) {
+      if (i < record.topicHeaders.length && record.topicHeaders[i].trim().isNotEmpty) {
+        return record.topicHeaders[i];
+      }
+      return 'Topic ${i + 1}';
+    });
+
+    // Pagination Calculations (10 entries per page)
+    final totalEntries = record.topicRows.length;
+    final totalPages = totalEntries == 0 ? 1 : ((totalEntries + _entriesPerPage - 1) ~/ _entriesPerPage);
+
+    if (_topicTablePage >= totalPages) {
+      _topicTablePage = (totalPages - 1).clamp(0, totalPages);
+    }
+
+    final startIndex = _topicTablePage * _entriesPerPage;
+    final endIndex = (startIndex + _entriesPerPage) < totalEntries ? (startIndex + _entriesPerPage) : totalEntries;
+
+    return Card(
+      elevation: 1,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.blue.shade100, width: 1.5),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Card Header Bar with Title & Add Entry Button
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.table_rows_rounded, color: Colors.blueAccent, size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Monthly Activity & Topic Matrix',
+                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.black87),
+                    ),
+                  ],
+                ),
+
+                // Add Entry Button
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final now = DateTime.now();
+                    final todayStr = DateFormat('dd/MM/yyyy').format(now);
+                    await notifier.addTopicRow(dateStr: todayStr);
+                    final newTotal = record.topicRows.length + 1;
+                    final newPage = (newTotal - 1) ~/ _entriesPerPage;
+                    setState(() {
+                      _topicTablePage = newPage;
+                    });
+                  },
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: const Text('Add Entry', style: TextStyle(fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    elevation: 1,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+            const Divider(height: 1),
+            const SizedBox(height: 16),
+
+            // Table Content Area
+            if (record.topicRows.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Column(
+                  children: [
+                    Icon(Icons.post_add_rounded, size: 48, color: Colors.blue.shade200),
+                    const SizedBox(height: 12),
+                    Text(
+                      'No entries added for ${_monthNames[record.month - 1]} ${record.year} yet.',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.grey.shade800),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Click the "+ Add Entry" button to add a new row to this month\'s performance table.',
+                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        final now = DateTime.now();
+                        final todayStr = DateFormat('dd/MM/yyyy').format(now);
+                        await notifier.addTopicRow(dateStr: todayStr);
+                        final newTotal = record.topicRows.length + 1;
+                        final newPage = (newTotal - 1) ~/ _entriesPerPage;
+                        setState(() {
+                          _topicTablePage = newPage;
+                        });
+                      },
+                      icon: const Icon(Icons.add_rounded, size: 18),
+                      label: const Text('Add Entry', style: TextStyle(fontWeight: FontWeight.bold)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueAccent,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        elevation: 1,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.blue.shade100),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header Row (14 Columns: Date + Topic 1..13 + Action)
+                        Container(
+                          color: Colors.blue.shade50,
+                          child: Row(
+                            children: [
+                              // Col 1: Date Header
+                              Container(
+                                width: 140,
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                                alignment: Alignment.centerLeft,
+                                decoration: BoxDecoration(
+                                  border: Border(right: BorderSide(color: Colors.blue.shade200)),
+                                ),
+                                child: const Row(
+                                  children: [
+                                    Icon(Icons.calendar_today_rounded, size: 15, color: Colors.blueAccent),
+                                    SizedBox(width: 6),
+                                    Text(
+                                      'Date',
+                                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent, fontSize: 13),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              // Cols 2..14: Topic 1 to Topic 13 Headers (Renameable)
+                              for (int c = 0; c < 13; c++)
+                                Container(
+                                  width: 160,
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    border: Border(right: BorderSide(color: Colors.blue.shade200)),
+                                  ),
+                                  child: InkWell(
+                                    borderRadius: BorderRadius.circular(6),
+                                    onTap: () {
+                                      _showRenameTopicDialog(context, c, topicHeaders[c], notifier);
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: Colors.blue.shade200),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              topicHeaders[c],
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.blue.shade900,
+                                                fontSize: 12,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Icon(Icons.edit_outlined, size: 14, color: Colors.blue.shade700),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                              // Action Column Header
+                              Container(
+                                width: 60,
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                                alignment: Alignment.center,
+                                child: const Text(
+                                  'Action',
+                                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey, fontSize: 11),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Table Body Rows (Paginated: 10 per page, Typable multiline cells)
+                        for (int r = startIndex; r < endIndex; r++) ...[
+                          Container(
+                            decoration: BoxDecoration(
+                              color: r.isEven ? Colors.white : Colors.grey.shade50.withOpacity(0.5),
+                              border: Border(top: BorderSide(color: Colors.grey.shade200)),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Col 1: Date Cell
+                                Container(
+                                  width: 140,
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    border: Border(right: BorderSide(color: Colors.grey.shade200)),
+                                  ),
+                                  child: TextField(
+                                    controller: _getTopicCellController('date_$r', record.topicRows[r].dateStr),
+                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                                    decoration: InputDecoration(
+                                      isDense: true,
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      suffixIcon: IconButton(
+                                        icon: const Icon(Icons.event, size: 16, color: Colors.blueAccent),
+                                        padding: EdgeInsets.zero,
+                                        constraints: const BoxConstraints(),
+                                        onPressed: () async {
+                                          final currentParts = record.topicRows[r].dateStr.split('/');
+                                          DateTime initialDate = DateTime.now();
+                                          if (currentParts.length == 3) {
+                                            final d = int.tryParse(currentParts[0]);
+                                            final m = int.tryParse(currentParts[1]);
+                                            final y = int.tryParse(currentParts[2]);
+                                            if (d != null && m != null && y != null) {
+                                              initialDate = DateTime(y, m, d);
+                                            }
+                                          }
+                                          final picked = await showDatePicker(
+                                            context: context,
+                                            initialDate: initialDate,
+                                            firstDate: DateTime(2000),
+                                            lastDate: DateTime(2100),
+                                          );
+                                          if (picked != null) {
+                                            final formatted = DateFormat('dd/MM/yyyy').format(picked);
+                                            _topicCellControllers['date_$r']?.text = formatted;
+                                            notifier.updateTopicRowDate(r, formatted);
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                    onChanged: (val) {
+                                      notifier.updateTopicRowDate(r, val);
+                                    },
+                                  ),
+                                ),
+
+                                // Cols 2..14: Topic 1 to Topic 13 Multiline Cells (Enter inserts \n)
+                                for (int c = 0; c < 13; c++)
+                                  Container(
+                                    width: 160,
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      border: Border(right: BorderSide(color: Colors.grey.shade200)),
+                                    ),
+                                    child: TextField(
+                                      controller: _getTopicCellController(
+                                        'cell_${r}_$c',
+                                        c < record.topicRows[r].values.length ? record.topicRows[r].values[c] : '',
+                                      ),
+                                      keyboardType: TextInputType.multiline,
+                                      maxLines: null,
+                                      minLines: 1,
+                                      textInputAction: TextInputAction.newline,
+                                      style: const TextStyle(fontSize: 12),
+                                      decoration: InputDecoration(
+                                        isDense: true,
+                                        hintText: 'Type text...',
+                                        hintStyle: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(6),
+                                          borderSide: BorderSide(color: Colors.grey.shade300),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(6),
+                                          borderSide: const BorderSide(color: Colors.blueAccent, width: 1.5),
+                                        ),
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                      ),
+                                      onChanged: (val) {
+                                        notifier.updateTopicCell(r, c, val);
+                                      },
+                                    ),
+                                  ),
+
+                                // Action Cell (Delete Row Button)
+                                Container(
+                                  width: 60,
+                                  padding: const EdgeInsets.all(6),
+                                  alignment: Alignment.center,
+                                  child: IconButton(
+                                    icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 20),
+                                    tooltip: 'Delete Row #${r + 1}',
+                                    onPressed: () {
+                                      _topicCellControllers.remove('date_$r');
+                                      for (int c = 0; c < 13; c++) {
+                                        _topicCellControllers.remove('cell_${r}_$c');
+                                      }
+                                      notifier.deleteTopicRow(r);
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+            // Pagination Controls Footer Bar (10 Entries Per Page)
+            if (record.topicRows.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.blue.shade100),
+                ),
+                child: Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 12,
+                  runSpacing: 8,
+                  children: [
+                    Text(
+                      'Showing ${totalEntries == 0 ? 0 : startIndex + 1} to $endIndex of $totalEntries entries (10 per page)',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.blue.shade900),
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Previous Page Button (<)
+                        OutlinedButton.icon(
+                          onPressed: _topicTablePage > 0
+                              ? () {
+                                  setState(() {
+                                    _topicTablePage--;
+                                  });
+                                }
+                              : null,
+                          icon: const Icon(Icons.chevron_left_rounded, size: 18),
+                          label: const Text('Prev', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            side: BorderSide(color: Colors.blue.shade200),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+
+                        // Page Number Badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: Colors.blue.shade300),
+                          ),
+                          child: Text(
+                            'Page ${_topicTablePage + 1} of $totalPages',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.blue.shade900),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+
+                        // Next Page Button (>)
+                        OutlinedButton.icon(
+                          onPressed: _topicTablePage < totalPages - 1
+                              ? () {
+                                  setState(() {
+                                    _topicTablePage++;
+                                  });
+                                }
+                              : null,
+                          icon: const Text('Next', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          label: const Icon(Icons.chevron_right_rounded, size: 18),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            side: BorderSide(color: Colors.blue.shade200),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Rename Topic Dialog
+  void _showRenameTopicDialog(
+    BuildContext context,
+    int colIdx,
+    String currentTitle,
+    PerformanceNotifier notifier,
+  ) {
+    final controller = TextEditingController(text: currentTitle);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: Row(
+          children: [
+            const Icon(Icons.edit_note_rounded, color: Colors.blueAccent),
+            const SizedBox(width: 8),
+            Text('Rename Topic ${colIdx + 1}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Enter a new title for column #${colIdx + 2} in this month\'s table:',
+              style: const TextStyle(fontSize: 13, color: Colors.black87),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Topic Title',
+                hintText: 'e.g. Calls, Meetings, Proposals...',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+              onSubmitted: (val) {
+                if (val.trim().isNotEmpty) {
+                  notifier.updateTopicHeader(colIdx, val.trim());
+                }
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final newTitle = controller.text.trim();
+              if (newTitle.isNotEmpty) {
+                notifier.updateTopicHeader(colIdx, newTitle);
+              }
+              Navigator.pop(context);
+            },
+            child: const Text('Save Header'),
+          ),
+        ],
+      ),
     );
   }
 
