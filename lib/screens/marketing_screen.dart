@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import '../models/marketing_lead.dart';
 import '../services/database_service.dart';
 import '../providers/marketing_provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/rename_file_dialog.dart';
+import '../services/app_storage_service.dart';
 import '../theme/app_colors.dart';
 
 // Consistent status options
@@ -120,9 +120,9 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
   }
 
   void _initLocalDirPath() async {
-    final appDir = await getApplicationDocumentsDirectory();
+    final docsDir = await AppStorageService.getCustomerDocumentsDirectory();
     setState(() {
-      _localDocsDirPath = '${appDir.path}/customer_documents';
+      _localDocsDirPath = docsDir.path;
     });
   }
 
@@ -1518,14 +1518,8 @@ class _AddEditMarketingLeadDialogState extends ConsumerState<AddEditMarketingLea
         }
 
         // Save locally
-        final appDir = await getApplicationDocumentsDirectory();
-        final docsDir = Directory('${appDir.path}/customer_documents');
-        if (!await docsDir.exists()) {
-          await docsDir.create(recursive: true);
-        }
-
         final localFileName = 'marketing_${DateTime.now().millisecondsSinceEpoch}_$customFileName';
-        await srcFile.copy('${docsDir.path}/$localFileName');
+        await AppStorageService.saveDocumentLocally(srcFile, localFileName);
 
         setState(() {
           _visitPhotos[index].add(localFileName);

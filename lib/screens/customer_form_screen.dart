@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import '../models/customer.dart';
 import '../models/insurance_company.dart';
 import '../services/database_service.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/rename_file_dialog.dart';
+import '../services/app_storage_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/brand_background.dart';
 
@@ -620,14 +620,8 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
           }
 
           // Save locally using relative path
-          final appDir = await getApplicationDocumentsDirectory();
-          final docsDir = Directory('${appDir.path}/customer_documents');
-          if (!await docsDir.exists()) {
-            await docsDir.create(recursive: true);
-          }
-
           final localFileName = '${DateTime.now().millisecondsSinceEpoch}_$customFileName';
-          await srcFile.copy('${docsDir.path}/$localFileName');
+          await AppStorageService.saveDocumentLocally(srcFile, localFileName);
 
           setState(() {
             _documents.add(CustomerDocument()

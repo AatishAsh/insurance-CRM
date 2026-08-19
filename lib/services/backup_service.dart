@@ -1,13 +1,16 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:archive/archive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import 'app_storage_service.dart';
 import 'database_service.dart';
 import '../models/customer.dart';
 import '../models/company.dart';
 import '../models/work_task.dart';
+import '../models/marketing_lead.dart';
+import '../models/performance_record.dart';
 
 final backupServiceProvider = Provider<BackupService>((ref) {
   final db = ref.watch(databaseServiceProvider);
@@ -18,69 +21,123 @@ class BackupService {
   final DatabaseService db;
   BackupService(this.db);
 
-  Future<Map<String, dynamic>> exportBackup() async {
+  /// Exports database records and all attached photos/documents into a single compressed ZIP file.
+  Future<List<int>> exportZipBackup() async {
     final customers = await db.isar.customers.where().findAll();
     final companies = await db.isar.companys.where().findAll();
     final tasks = await db.isar.workTasks.where().findAll();
+    final marketingLeads = await db.isar.marketingLeads.where().findAll();
+    final performanceRecords = await db.isar.performanceRecords.where().findAll();
 
     final customersJson = customers.map((c) => _customerToJson(c)).toList();
     final companiesJson = companies.map((c) => _companyToJson(c)).toList();
     final tasksJson = tasks.map((t) => _taskToJson(t)).toList();
+    final marketingLeadsJson = marketingLeads.map((m) => _marketingLeadToJson(m)).toList();
+    final performanceRecordsJson = performanceRecords.map((p) => _performanceRecordToJson(p)).toList();
 
-    // Export files
-    final Map<String, String> documentFiles = {};
-    final appDir = await getApplicationDocumentsDirectory();
-    final docsDir = Directory('${appDir.path}/customer_documents');
-    if (await docsDir.exists()) {
-      final List<FileSystemEntity> files = docsDir.listSync();
-      for (final entity in files) {
-        if (entity is File) {
-          final bytes = await entity.readAsBytes();
-          final base64Str = base64Encode(bytes);
-          final fileName = p.basename(entity.path);
-          documentFiles[fileName] = base64Str;
-        }
-      }
-    }
-
-    return {
-      'version': 1,
+    final Map<String, dynamic> dbJsonMap = {
+      'version': 2,
       'exportedAt': DateTime.now().toIso8601String(),
       'customers': customersJson,
       'companies': companiesJson,
       'tasks': tasksJson,
-      'documentFiles': documentFiles,
+      'marketingLeads': marketingLeadsJson,
+      'performanceRecords': performanceRecordsJson,
     };
+
+    final archive = Archive();
+
+    // 1. Add database JSON file to archive
+    final jsonBytes = utf8.encode(jsonEncode(dbJsonMap));
+    archive.addFile(ArchiveFile('backup_data.json', jsonBytes.length, jsonBytes));
+
+    // 2. Add all physical photo & document files to customer_documents/ subfolder inside ZIP archive
+    final docsDir = await AppStorageService.getCustomerDocumentsDirectory();
+    if (await docsDir.exists()) {
+      final List<FileSystemEntity> files = docsDir.listSync();
+      for (final entity in files) {
+        if (entity is File) {
+          final fileName = p.basename(entity.path);
+          final bytes = await entity.readAsBytes();
+          archive.addFile(ArchiveFile('customer_documents/$fileName', bytes.length, bytes));
+        }
+      }
+    }
+
+    // 3. Compress ZIP archive
+    final encoder = ZipEncoder();
+    final zipData = encoder.encode(archive);
+    return zipData ?? [];
   }
 
-  Future<void> importBackup(Map<String, dynamic> backup) async {
-    final List<dynamic> customersJson = backup['customers'] ?? [];
-    final List<dynamic> companiesJson = backup['companies'] ?? [];
-    final List<dynamic> tasksJson = backup['tasks'] ?? [];
-    final Map<String, dynamic> documentFiles = backup['documentFiles'] ?? {};
+  /// Restores database records and extracted document/photo files from a ZIP archive or legacy JSON.
+  Future<void> importZipBackup(File backupFile) async {
+    final bytes = await backupFile.readAsBytes();
+    final docsDir = await AppStorageService.getCustomerDocumentsDirectory();
 
-    final appDir = await getApplicationDocumentsDirectory();
-    final docsDir = Directory('${appDir.path}/customer_documents');
+    Map<String, dynamic>? backupData;
 
-    // 1. Clear and restore local document files
-    if (await docsDir.exists()) {
-      await docsDir.delete(recursive: true);
+    if (backupFile.path.toLowerCase().endsWith('.zip') || _isZipBytes(bytes)) {
+      final archive = ZipDecoder().decodeBytes(bytes);
+
+      // Clean local documents directory before restoring
+      if (await docsDir.exists()) {
+        await docsDir.delete(recursive: true);
+      }
+      await docsDir.create(recursive: true);
+
+      for (final file in archive) {
+        final filename = file.name;
+        if (file.isFile) {
+          if (filename == 'backup_data.json' || filename.endsWith('/backup_data.json')) {
+            final jsonStr = utf8.decode(file.content as List<int>);
+            backupData = jsonDecode(jsonStr) as Map<String, dynamic>;
+          } else if (filename.startsWith('customer_documents/')) {
+            final subFileName = filename.replaceFirst('customer_documents/', '');
+            if (subFileName.isNotEmpty) {
+              final outFile = File('${docsDir.path}/$subFileName');
+              await outFile.writeAsBytes(file.content as List<int>, flush: true);
+            }
+          }
+        }
+      }
+    } else {
+      // Legacy JSON support
+      final jsonStr = utf8.decode(bytes);
+      backupData = jsonDecode(jsonStr) as Map<String, dynamic>;
+
+      final Map<String, dynamic> documentFiles = backupData['documentFiles'] ?? {};
+      if (await docsDir.exists()) {
+        await docsDir.delete(recursive: true);
+      }
+      await docsDir.create(recursive: true);
+
+      for (final entry in documentFiles.entries) {
+        final fileName = entry.key;
+        final base64Str = entry.value as String;
+        final fileBytes = base64Decode(base64Str);
+        final file = File('${docsDir.path}/$fileName');
+        await file.writeAsBytes(fileBytes, flush: true);
+      }
     }
-    await docsDir.create(recursive: true);
 
-    for (final entry in documentFiles.entries) {
-      final fileName = entry.key;
-      final base64Str = entry.value as String;
-      final bytes = base64Decode(base64Str);
-      final file = File('${docsDir.path}/$fileName');
-      await file.writeAsBytes(bytes);
+    if (backupData == null) {
+      throw Exception('Invalid or corrupted backup archive');
     }
 
-    // 2. Clear database and restore records in a single transaction
+    final List<dynamic> customersJson = backupData['customers'] ?? [];
+    final List<dynamic> companiesJson = backupData['companies'] ?? [];
+    final List<dynamic> tasksJson = backupData['tasks'] ?? [];
+    final List<dynamic> marketingLeadsJson = backupData['marketingLeads'] ?? [];
+    final List<dynamic> performanceRecordsJson = backupData['performanceRecords'] ?? [];
+
+    // Clear database and restore records in a single transaction
     await db.isar.writeTxn(() async {
       await db.isar.customers.clear();
       await db.isar.companys.clear();
       await db.isar.workTasks.clear();
+      await db.isar.marketingLeads.clear();
+      await db.isar.performanceRecords.clear();
 
       for (final json in companiesJson) {
         final company = _companyFromJson(json as Map<String, dynamic>);
@@ -94,7 +151,20 @@ class BackupService {
         final task = _taskFromJson(json as Map<String, dynamic>);
         await db.isar.workTasks.put(task);
       }
+      for (final json in marketingLeadsJson) {
+        final lead = _marketingLeadFromJson(json as Map<String, dynamic>);
+        await db.isar.marketingLeads.put(lead);
+      }
+      for (final json in performanceRecordsJson) {
+        final record = _performanceRecordFromJson(json as Map<String, dynamic>);
+        await db.isar.performanceRecords.put(record);
+      }
     });
+  }
+
+  bool _isZipBytes(List<int> bytes) {
+    if (bytes.length < 4) return false;
+    return bytes[0] == 0x50 && bytes[1] == 0x4B && bytes[2] == 0x03 && bytes[3] == 0x04;
   }
 
   // --- Serialization Mappers ---
@@ -381,5 +451,139 @@ class BackupService {
     t.updatedAt = DateTime.parse(json['updatedAt'] as String);
     t.isDeleted = json['isDeleted'] as bool? ?? false;
     return t;
+  }
+
+  Map<String, dynamic> _marketingLeadToJson(MarketingLead m) {
+    return {
+      'uuid': m.uuid,
+      'name': m.name,
+      'mobile': m.mobile,
+      'status': m.status,
+      'updatedAt': m.updatedAt.toIso8601String(),
+      'isDeleted': m.isDeleted,
+      'visits': m.visits.map((v) => {
+        'visitDate': v.visitDate?.toIso8601String(),
+        'visitTime': v.visitTime,
+        'visitNote': v.visitNote,
+        'attachedPhoto': v.attachedPhoto,
+        'attachedPhotos': v.attachedPhotos,
+      }).toList(),
+    };
+  }
+
+  MarketingLead _marketingLeadFromJson(Map<String, dynamic> json) {
+    final m = MarketingLead();
+    m.uuid = json['uuid'] as String;
+    m.name = json['name'] as String;
+    m.mobile = json['mobile'] as String;
+    m.status = json['status'] as String;
+    m.updatedAt = DateTime.parse(json['updatedAt'] as String);
+    m.isDeleted = json['isDeleted'] as bool? ?? false;
+    if (json['visits'] != null) {
+      m.visits = (json['visits'] as List).map((v) {
+        final visit = MarketingVisit();
+        visit.visitDate = v['visitDate'] != null ? DateTime.parse(v['visitDate'] as String) : null;
+        visit.visitTime = v['visitTime'] as String?;
+        visit.visitNote = v['visitNote'] as String?;
+        visit.attachedPhoto = v['attachedPhoto'] as String?;
+        visit.attachedPhotos = (v['attachedPhotos'] as List?)?.map((e) => e as String).toList() ?? [];
+        return visit;
+      }).toList();
+    }
+    return m;
+  }
+
+  Map<String, dynamic> _performanceRecordToJson(PerformanceRecord p) {
+    return {
+      'year': p.year,
+      'month': p.month,
+      'urgent': p.urgent,
+      'newBusiness': p.newBusiness,
+      'life': p.life,
+      'fireHealthPa': p.fireHealthPa,
+      'earned': p.earned,
+      'box2Row1Days': p.box2Row1Days,
+      'box2EarningsOnWorkedDays': p.box2EarningsOnWorkedDays,
+      'box2Row2Days': p.box2Row2Days,
+      'box2TotalWorkingDay': p.box2TotalWorkingDay,
+      'box3JjWorkwayCol1': p.box3JjWorkwayCol1,
+      'box3JjWorkwayCol2': p.box3JjWorkwayCol2,
+      'box3JjWorkwayCol3': p.box3JjWorkwayCol3,
+      'box3JjWorkwayCol4': p.box3JjWorkwayCol4,
+      'box3TargetCol1': p.box3TargetCol1,
+      'box3TargetCol2': p.box3TargetCol2,
+      'box3TargetCol3': p.box3TargetCol3,
+      'box3TargetCol4': p.box3TargetCol4,
+      'box3YyCol1': p.box3YyCol1,
+      'box3YyCol2': p.box3YyCol2,
+      'box3YyCol3': p.box3YyCol3,
+      'box3YyCol4': p.box3YyCol4,
+      'box3ZzCol1': p.box3ZzCol1,
+      'box3ZzCol2': p.box3ZzCol2,
+      'box3ZzCol3': p.box3ZzCol3,
+      'box3ZzCol4': p.box3ZzCol4,
+      'box3PercentageCol1': p.box3PercentageCol1,
+      'box3PercentageCol2': p.box3PercentageCol2,
+      'box3PercentageCol3': p.box3PercentageCol3,
+      'box3PercentageCol4': p.box3PercentageCol4,
+      'box4Balance': p.box4Balance,
+      'box4Target': p.box4Target,
+      'box4Achieved': p.box4Achieved,
+      'topicHeaders': p.topicHeaders,
+      'updatedAt': p.updatedAt.toIso8601String(),
+      'topicRows': p.topicRows.map((r) => {
+        'dateStr': r.dateStr,
+        'values': r.values,
+      }).toList(),
+    };
+  }
+
+  PerformanceRecord _performanceRecordFromJson(Map<String, dynamic> json) {
+    final p = PerformanceRecord();
+    p.year = json['year'] as int;
+    p.month = json['month'] as int;
+    p.urgent = json['urgent'] as String? ?? '';
+    p.newBusiness = json['newBusiness'] as String? ?? '';
+    p.life = json['life'] as String? ?? '';
+    p.fireHealthPa = json['fireHealthPa'] as String? ?? '';
+    p.earned = json['earned'] as String? ?? '';
+    p.box2Row1Days = json['box2Row1Days'] as String? ?? '';
+    p.box2EarningsOnWorkedDays = json['box2EarningsOnWorkedDays'] as String? ?? '';
+    p.box2Row2Days = json['box2Row2Days'] as String? ?? '';
+    p.box2TotalWorkingDay = json['box2TotalWorkingDay'] as String? ?? '';
+    p.box3JjWorkwayCol1 = json['box3JjWorkwayCol1'] as String? ?? '';
+    p.box3JjWorkwayCol2 = json['box3JjWorkwayCol2'] as String? ?? '';
+    p.box3JjWorkwayCol3 = json['box3JjWorkwayCol3'] as String? ?? '';
+    p.box3JjWorkwayCol4 = json['box3JjWorkwayCol4'] as String? ?? '';
+    p.box3TargetCol1 = json['box3TargetCol1'] as String? ?? '';
+    p.box3TargetCol2 = json['box3TargetCol2'] as String? ?? '';
+    p.box3TargetCol3 = json['box3TargetCol3'] as String? ?? '';
+    p.box3TargetCol4 = json['box3TargetCol4'] as String? ?? '';
+    p.box3YyCol1 = json['box3YyCol1'] as String? ?? '';
+    p.box3YyCol2 = json['box3YyCol2'] as String? ?? '';
+    p.box3YyCol3 = json['box3YyCol3'] as String? ?? '';
+    p.box3YyCol4 = json['box3YyCol4'] as String? ?? '';
+    p.box3ZzCol1 = json['box3ZzCol1'] as String? ?? '';
+    p.box3ZzCol2 = json['box3ZzCol2'] as String? ?? '';
+    p.box3ZzCol3 = json['box3ZzCol3'] as String? ?? '';
+    p.box3ZzCol4 = json['box3ZzCol4'] as String? ?? '';
+    p.box3PercentageCol1 = json['box3PercentageCol1'] as String? ?? '';
+    p.box3PercentageCol2 = json['box3PercentageCol2'] as String? ?? '';
+    p.box3PercentageCol3 = json['box3PercentageCol3'] as String? ?? '';
+    p.box3PercentageCol4 = json['box3PercentageCol4'] as String? ?? '';
+    p.box4Balance = json['box4Balance'] as String? ?? '';
+    p.box4Target = json['box4Target'] as String? ?? '';
+    p.box4Achieved = json['box4Achieved'] as String? ?? '';
+    p.topicHeaders = (json['topicHeaders'] as List?)?.map((e) => e as String).toList() ?? [];
+    p.updatedAt = json['updatedAt'] != null ? DateTime.parse(json['updatedAt'] as String) : DateTime.now();
+    if (json['topicRows'] != null) {
+      p.topicRows = (json['topicRows'] as List).map((r) {
+        final row = TopicTableRow();
+        row.dateStr = r['dateStr'] as String? ?? '';
+        row.values = (r['values'] as List?)?.map((e) => e as String).toList() ?? [];
+        return row;
+      }).toList();
+    }
+    return p;
   }
 }

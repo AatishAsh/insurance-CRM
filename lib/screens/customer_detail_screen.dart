@@ -2,9 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
 import '../models/customer.dart';
 import '../services/database_service.dart';
+import '../services/app_storage_service.dart';
 import '../services/dashboard_export_service.dart';
 import 'customer_form_screen.dart';
 import '../providers/customer_provider.dart';
@@ -31,16 +31,24 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
   void initState() {
     super.initState();
     _loadCustomerData();
+    _initLocalDirPath();
+  }
+
+  void _initLocalDirPath() async {
+    final docsDir = await AppStorageService.getCustomerDocumentsDirectory();
+    if (mounted) {
+      setState(() {
+        _localDocsDirPath = docsDir.path;
+      });
+    }
   }
 
   void _loadCustomerData() async {
     setState(() => _isLoading = true);
     final db = ref.read(databaseServiceProvider);
     final cust = await db.getCustomerById(widget.customerId);
-    final appDir = await getApplicationDocumentsDirectory();
     setState(() {
       _customer = cust;
-      _localDocsDirPath = '${appDir.path}/customer_documents';
       _isLoading = false;
     });
   }

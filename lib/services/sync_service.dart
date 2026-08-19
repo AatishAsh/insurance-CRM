@@ -7,12 +7,13 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_router/shelf_router.dart' as shelf_router;
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
 import 'package:isar/isar.dart';
 import 'database_service.dart';
+import 'app_storage_service.dart';
 import '../models/customer.dart';
 import '../models/company.dart';
 import '../models/work_task.dart';
+import '../models/marketing_lead.dart';
 
 final syncServiceProvider = ChangeNotifierProvider<SyncService>((ref) {
   final db = ref.watch(databaseServiceProvider);
@@ -98,8 +99,8 @@ class SyncService extends ChangeNotifier {
     // 3. File serving endpoint
     router.get('/sync/file/<filename>', (Request request, String filename) async {
       try {
-        final appDir = await getApplicationDocumentsDirectory();
-        final file = File('${appDir.path}/customer_documents/$filename');
+        final docsDir = await AppStorageService.getCustomerDocumentsDirectory();
+        final file = File('${docsDir.path}/$filename');
         if (await file.exists()) {
           return Response.ok(file.openRead(), headers: {
             'Content-Type': 'application/octet-stream',
@@ -616,31 +617,48 @@ class SyncService extends ChangeNotifier {
     });
   }
 
-  /// Downloads missing attachment files from the server
+  /// Downloads missing attachment files (customer documents & marketing photos) from the server
   Future<void> _syncMissingFiles(http.Client client, String baseUrl) async {
-    final appDir = await getApplicationDocumentsDirectory();
-    final docsDir = Directory('${appDir.path}/customer_documents');
-    if (!await docsDir.exists()) {
-      await docsDir.create(recursive: true);
-    }
+    final docsDir = await AppStorageService.getCustomerDocumentsDirectory();
+    final Set<String> requiredFileNames = {};
 
+    // 1. Collect Customer documents
     final customers = await _db.isar.customers.where().findAll();
     for (final cust in customers) {
       for (final doc in cust.documents) {
-        if (doc.fileName == null || doc.fileName!.isEmpty) continue;
-        final localFile = File('${docsDir.path}/${doc.fileName}');
-        
-        // If file doesn't exist locally, fetch it from remote server
-        if (!localFile.existsSync()) {
-          try {
-            final fileUrl = '$baseUrl/sync/file/${doc.fileName}';
-            final response = await client.get(Uri.parse(fileUrl));
-            if (response.statusCode == 200) {
-              await localFile.writeAsBytes(response.bodyBytes);
-            }
-          } catch (e) {
-            debugPrint('Failed to download missing file ${doc.fileName}: $e');
+        if (doc.fileName != null && doc.fileName!.trim().isNotEmpty) {
+          requiredFileNames.add(doc.fileName!.trim());
+        }
+      }
+    }
+
+    // 2. Collect Marketing Lead photos and documents
+    final leads = await _db.isar.marketingLeads.where().findAll();
+    for (final lead in leads) {
+      for (final visit in lead.visits) {
+        if (visit.attachedPhoto != null && visit.attachedPhoto!.trim().isNotEmpty) {
+          requiredFileNames.add(visit.attachedPhoto!.trim());
+        }
+        for (final photo in visit.attachedPhotos) {
+          if (photo.trim().isNotEmpty) {
+            requiredFileNames.add(photo.trim());
           }
+        }
+      }
+    }
+
+    // 3. Download any missing files from remote server
+    for (final fileName in requiredFileNames) {
+      final localFile = File('${docsDir.path}/$fileName');
+      if (!localFile.existsSync()) {
+        try {
+          final fileUrl = '$baseUrl/sync/file/$fileName';
+          final response = await client.get(Uri.parse(fileUrl));
+          if (response.statusCode == 200) {
+            await localFile.writeAsBytes(response.bodyBytes, flush: true);
+          }
+        } catch (e) {
+          debugPrint('Failed to download missing file $fileName: $e');
         }
       }
     }

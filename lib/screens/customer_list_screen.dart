@@ -1,13 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path_provider/path_provider.dart';
 import '../providers/customer_provider.dart';
 import '../models/customer.dart';
 import '../theme/app_colors.dart';
 import '../widgets/color_badge.dart';
 import 'customer_form_screen.dart';
 import 'customer_detail_screen.dart';
+import '../services/app_storage_service.dart';
 
 class CustomerDocumentResult {
   final Customer customer;
@@ -44,9 +44,9 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
   }
 
   void _initLocalDocsDirPath() async {
-    final appDir = await getApplicationDocumentsDirectory();
+    final docsDir = await AppStorageService.getCustomerDocumentsDirectory();
     setState(() {
-      _localDocsDirPath = '${appDir.path}/customer_documents';
+      _localDocsDirPath = docsDir.path;
     });
   }
 

@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import '../widgets/shinecraft_branding_footer.dart';
 import 'package:flutter/material.dart';
@@ -772,22 +771,21 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
     );
 
     try {
-      final backupData = await ref.read(backupServiceProvider).exportBackup();
-      final jsonStr = jsonEncode(backupData);
+      final zipBytes = await ref.read(backupServiceProvider).exportZipBackup();
       
       if (mounted) Navigator.pop(context); // Close loading dialog
 
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = 'shinecraft_backup_$timestamp.json';
+      final fileName = 'insurance_crm_backup_$timestamp.zip';
 
       ref.read(isPickingFileProvider.notifier).state = true;
       String? outputPath;
       try {
         outputPath = await FilePicker.platform.saveFile(
-          dialogTitle: 'Save Database Backup',
+          dialogTitle: 'Save ZIP Backup Archive',
           fileName: fileName,
           type: FileType.custom,
-          allowedExtensions: ['json'],
+          allowedExtensions: ['zip'],
         );
       } finally {
         ref.read(isPickingFileProvider.notifier).state = false;
@@ -795,11 +793,11 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
 
       if (outputPath != null) {
         final file = File(outputPath);
-        await file.writeAsString(jsonStr);
+        await file.writeAsBytes(zipBytes, flush: true);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Database and attachments exported successfully!'),
+              content: Text('ZIP Backup archive (with photos & documents) exported successfully!'),
               backgroundColor: Colors.green,
             ),
           );
@@ -861,7 +859,7 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
       try {
         result = await FilePicker.platform.pickFiles(
           type: FileType.custom,
-          allowedExtensions: ['json'],
+          allowedExtensions: ['zip', 'json'],
         );
       } finally {
         ref.read(isPickingFileProvider.notifier).state = false;
@@ -885,7 +883,7 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
                 children: [
                   CircularProgressIndicator(),
                   SizedBox(height: 16),
-                  Text('Restoring database records and writing files...'),
+                  Text('Unpacking ZIP archive & restoring records...'),
                 ],
               ),
             ),
@@ -894,14 +892,7 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
       );
 
       final file = File(result.files.single.path!);
-      final content = await file.readAsString();
-      final backup = jsonDecode(content) as Map<String, dynamic>;
-
-      if (!backup.containsKey('customers') || !backup.containsKey('documentFiles')) {
-        throw 'Selected file is not a valid ShineCraft backup.';
-      }
-
-      await ref.read(backupServiceProvider).importBackup(backup);
+      await ref.read(backupServiceProvider).importZipBackup(file);
 
       // Reload providers
       ref.invalidate(customerListProvider);
