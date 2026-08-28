@@ -30,6 +30,17 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
   bool _isChangingPin = false;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final syncService = ref.read(syncServiceProvider);
+      if (!syncService.isServerRunning) {
+        syncService.startServer();
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _pinController.dispose();
     _newPinController.dispose();

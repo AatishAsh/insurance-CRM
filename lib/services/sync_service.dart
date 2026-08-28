@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -38,6 +39,11 @@ class SyncService extends ChangeNotifier {
 
   BonsoirBroadcast? _broadcast;
   BonsoirDiscovery? _discovery;
+  
+  RawDatagramSocket? _udpSocket;
+  Timer? _udpBeaconTimer;
+  static const int _udpPort = 8888;
+
   final List<DiscoveredDevice> _discoveredDevices = [];
   bool _isDiscovering = false;
   bool _isSyncing = false;
@@ -65,11 +71,13 @@ class SyncService extends ChangeNotifier {
         final customers = await _db.isar.customers.where().findAll();
         final companies = await _db.isar.companys.where().findAll();
         final tasks = await _db.isar.workTasks.where().findAll();
+        final leads = await _db.isar.marketingLeads.where().findAll();
 
         final meta = {
           'customers': customers.map((c) => {'uuid': c.uuid, 'updatedAt': c.updatedAt.toIso8601String()}).toList(),
           'companies': companies.map((c) => {'uuid': c.uuid, 'updatedAt': c.updatedAt.toIso8601String()}).toList(),
           'tasks': tasks.map((t) => {'uuid': t.uuid, 'updatedAt': t.updatedAt.toIso8601String()}).toList(),
+          'leads': leads.map((l) => {'uuid': l.uuid, 'updatedAt': l.updatedAt.toIso8601String()}).toList(),
         };
 
         return Response.ok(jsonEncode(meta), headers: {'Content-Type': 'application/json'});
@@ -100,14 +108,15 @@ class SyncService extends ChangeNotifier {
     router.get('/sync/file/<filename>', (Request request, String filename) async {
       try {
         final docsDir = await AppStorageService.getCustomerDocumentsDirectory();
-        final file = File('${docsDir.path}/$filename');
+        final safeName = filename.replaceAll('\\', '/').split('/').last;
+        final file = File('${docsDir.path}/$safeName');
         if (await file.exists()) {
           return Response.ok(file.openRead(), headers: {
             'Content-Type': 'application/octet-stream',
-            'Content-Disposition': 'attachment; filename="$filename"',
+            'Content-Disposition': 'attachment; filename="$safeName"',
           });
         } else {
-          return Response.notFound('File $filename not found');
+          return Response.notFound('File $safeName not found');
         }
       } catch (e) {
         return Response.internalServerError(body: 'Error: $e');
@@ -118,7 +127,7 @@ class SyncService extends ChangeNotifier {
     int port = 8080;
     while (port < 8090) {
       try {
-        _server = await shelf_io.serve(router, InternetAddress.anyIPv4, port);
+        _server = await shelf_io.serve(router, InternetAddress.anyIPv4, port, shared: true);
         _serverPort = port;
         _isServerRunning = true;
         break;
@@ -130,18 +139,22 @@ class SyncService extends ChangeNotifier {
     if (_isServerRunning) {
       notifyListeners();
       await _startBroadcasting();
+      await _startUdpBeacon();
     }
   }
 
   Future<void> stopServer() async {
     await _stopBroadcasting();
+    if (!_isDiscovering) {
+      _stopUdpBeacon();
+    }
     await _server?.close(force: true);
     _server = null;
     _isServerRunning = false;
     notifyListeners();
   }
 
-  // --- MDNS BROADCASTING & DISCOVERY ---
+  // --- MDNS & UDP BROADCASTING & DISCOVERY ---
 
   Future<void> _startBroadcasting() async {
     try {
@@ -157,12 +170,14 @@ class SyncService extends ChangeNotifier {
       await _broadcast!.ready;
       await _broadcast!.start();
     } catch (e) {
-      debugPrint('mDNS Broadcast error: $e');
+      debugPrint('mDNS Bonsoir Broadcast notice (falling back to UDP beacon): $e');
     }
   }
 
   Future<void> _stopBroadcasting() async {
-    await _broadcast?.stop();
+    try {
+      await _broadcast?.stop();
+    } catch (_) {}
     _broadcast = null;
   }
 
@@ -172,6 +187,10 @@ class SyncService extends ChangeNotifier {
     _isDiscovering = true;
     notifyListeners();
 
+    // 1. Start pure Dart UDP Socket beacon (works natively on Windows, Linux, macOS, Android, iOS without plugin channels)
+    await _startUdpBeacon();
+
+    // 2. Try Bonsoir mDNS discovery if supported
     try {
       _discovery = BonsoirDiscovery(type: '_shinecrm._tcp');
       await _discovery!.ready;
@@ -186,12 +205,9 @@ class SyncService extends ChangeNotifier {
             // Verify it isn't ourselves
             final isOurselves = service.name.contains(Platform.localHostname.replaceAll(' ', '_')) && service.port == _serverPort;
             if (!isOurselves) {
-              // Find resolved IP address
               String hostIp = service.ip ?? 'localhost';
-              
-              // Add device if not already present
               final deviceId = service.name;
-              if (!_discoveredDevices.any((d) => d.id == deviceId)) {
+              if (!_discoveredDevices.any((d) => d.id == deviceId || (d.host == hostIp && d.port == service.port))) {
                 _discoveredDevices.add(DiscoveredDevice(
                   id: deviceId,
                   name: service.name.split('_').first,
@@ -210,17 +226,123 @@ class SyncService extends ChangeNotifier {
 
       await _discovery!.start();
     } catch (e) {
-      _isDiscovering = false;
-      notifyListeners();
-      debugPrint('mDNS Discovery error: $e');
+      debugPrint('mDNS Bonsoir Discovery non-critical notice (UDP Beacon active): $e');
     }
   }
 
   Future<void> stopDiscovery() async {
-    await _discovery?.stop();
+    try {
+      await _discovery?.stop();
+    } catch (_) {}
     _discovery = null;
     _isDiscovering = false;
+    if (!_isServerRunning) {
+      _stopUdpBeacon();
+    }
     notifyListeners();
+  }
+
+  // Pure Dart UDP Broadcast Implementation
+  Future<void> _startUdpBeacon() async {
+    try {
+      _udpSocket ??= await RawDatagramSocket.bind(
+        InternetAddress.anyIPv4,
+        _udpPort,
+        reuseAddress: true,
+        reusePort: !Platform.isWindows,
+      );
+      _udpSocket?.broadcastEnabled = true;
+
+      _udpSocket?.listen((RawSocketEvent event) {
+        if (event == RawSocketEvent.read) {
+          final datagram = _udpSocket?.receive();
+          if (datagram != null) {
+            _handleUdpDatagram(datagram);
+          }
+        }
+      });
+
+      _udpBeaconTimer?.cancel();
+      _udpBeaconTimer = Timer.periodic(const Duration(seconds: 3), (_) => _sendUdpPing());
+      _sendUdpPing();
+    } catch (e) {
+      debugPrint('UDP Beacon initialization notice: $e');
+    }
+  }
+
+  void _sendUdpPing() async {
+    if (!_isServerRunning && !_isDiscovering) return;
+    try {
+      final localIps = await getLocalIpAddresses();
+      final primaryIp = localIps.isNotEmpty ? localIps.first : '';
+      final payload = jsonEncode({
+        'app': 'ShineCRM',
+        'name': Platform.localHostname,
+        'ip': primaryIp,
+        'port': _serverPort,
+        'isServer': _isServerRunning,
+      });
+      final bytes = utf8.encode(payload);
+
+      // 1. General broadcast (255.255.255.255)
+      try {
+        _udpSocket?.send(bytes, InternetAddress('255.255.255.255'), _udpPort);
+      } catch (_) {}
+
+      // 2. Targeted subnet broadcast for Windows/Linux multi-interface networks
+      for (final ip in localIps) {
+        final parts = ip.split('.');
+        if (parts.length == 4) {
+          final subnetBroadcast = '${parts[0]}.${parts[1]}.${parts[2]}.255';
+          try {
+            _udpSocket?.send(bytes, InternetAddress(subnetBroadcast), _udpPort);
+          } catch (_) {}
+        }
+      }
+    } catch (e) {
+      debugPrint('UDP send ping notice: $e');
+    }
+  }
+
+  void _handleUdpDatagram(Datagram datagram) {
+    try {
+      final message = utf8.decode(datagram.data);
+      final data = jsonDecode(message) as Map<String, dynamic>;
+      if (data['app'] == 'ShineCRM') {
+        final String remoteName = data['name'] ?? 'Unknown Node';
+        final String remoteIp = (data['ip'] != null && (data['ip'] as String).isNotEmpty)
+            ? data['ip'] as String
+            : datagram.address.address;
+        final int remotePort = data['port'] as int? ?? 8080;
+        final bool remoteIsServer = data['isServer'] as bool? ?? true;
+
+        if (!remoteIsServer) return;
+
+        // Check if it's ourselves
+        final isOurselves = datagram.address.address == '127.0.0.1' ||
+            (remoteName == Platform.localHostname && remotePort == _serverPort);
+        if (!isOurselves) {
+          final deviceId = 'udp_${remoteIp}_$remotePort';
+          final existingIndex = _discoveredDevices.indexWhere((d) => d.host == remoteIp && d.port == remotePort);
+          if (existingIndex == -1) {
+            _discoveredDevices.add(DiscoveredDevice(
+              id: deviceId,
+              name: remoteName,
+              host: remoteIp,
+              port: remotePort,
+            ));
+            notifyListeners();
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  void _stopUdpBeacon() {
+    _udpBeaconTimer?.cancel();
+    _udpBeaconTimer = null;
+    _udpSocket?.close();
+    _udpSocket = null;
   }
 
   Future<List<String>> getLocalIpAddresses() async {
@@ -232,21 +354,55 @@ class SyncService extends ChangeNotifier {
       );
       for (final interface in interfaces) {
         for (final addr in interface.addresses) {
-          if (!addr.isLoopback) {
+          if (!addr.isLoopback && !addr.isLinkLocal) {
             ips.add(addr.address);
           }
         }
       }
     } catch (_) {}
+
+    // Sort to prioritize standard Wi-Fi LAN subnets (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
+    ips.sort((a, b) {
+      final aIsLan = a.startsWith('192.168.') || a.startsWith('10.') || (a.startsWith('172.') && !a.startsWith('172.17.'));
+      final bIsLan = b.startsWith('192.168.') || b.startsWith('10.') || (b.startsWith('172.') && !b.startsWith('172.17.'));
+      if (aIsLan && !bIsLan) return -1;
+      if (!aIsLan && bIsLan) return 1;
+      return a.compareTo(b);
+    });
+
     return ips;
   }
 
-  Future<void> triggerSyncWithIp(String host, int port) async {
+  Future<void> triggerSyncWithIp(String rawHost, int port) async {
+    String cleanHost = rawHost.trim();
+    int cleanPort = port;
+
+    // Handle user entering http:// or https://
+    if (cleanHost.startsWith('http://')) {
+      cleanHost = cleanHost.substring(7);
+    } else if (cleanHost.startsWith('https://')) {
+      cleanHost = cleanHost.substring(8);
+    }
+
+    // Handle user pasting IP:Port e.g. "192.168.1.15:8081"
+    if (cleanHost.contains(':')) {
+      final parts = cleanHost.split(':');
+      cleanHost = parts[0].trim();
+      final parsedPort = int.tryParse(parts[1].trim());
+      if (parsedPort != null) {
+        cleanPort = parsedPort;
+      }
+    }
+
+    if (cleanHost.contains('/')) {
+      cleanHost = cleanHost.split('/').first.trim();
+    }
+
     final device = DiscoveredDevice(
-      id: 'manual_$host:$port',
-      name: 'Manual ($host)',
-      host: host.trim(),
-      port: port,
+      id: 'manual_$cleanHost:$cleanPort',
+      name: 'Manual ($cleanHost)',
+      host: cleanHost,
+      port: cleanPort,
     );
     await triggerSyncWith(device);
   }
@@ -254,7 +410,7 @@ class SyncService extends ChangeNotifier {
   Future<void> triggerSyncWith(DiscoveredDevice device) async {
     if (_isSyncing) return;
     _isSyncing = true;
-    _syncStatusText = 'Connecting to ${device.name}...';
+    _syncStatusText = 'Connecting to ${device.host}:${device.port}...';
     notifyListeners();
 
     final client = http.Client();
@@ -265,7 +421,7 @@ class SyncService extends ChangeNotifier {
       _syncStatusText = 'Fetching metadata...';
       notifyListeners();
 
-      final metaRes = await client.get(Uri.parse('$baseUrl/sync/meta')).timeout(const Duration(seconds: 5));
+      final metaRes = await client.get(Uri.parse('$baseUrl/sync/meta')).timeout(const Duration(seconds: 8));
       if (metaRes.statusCode != 200) throw Exception('Server responded with status ${metaRes.statusCode}');
       
       final remoteMeta = jsonDecode(metaRes.body) as Map<String, dynamic>;
@@ -282,7 +438,7 @@ class SyncService extends ChangeNotifier {
         Uri.parse('$baseUrl/sync/exchange'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(localPayload),
-      ).timeout(const Duration(seconds: 15));
+      ).timeout(const Duration(seconds: 30));
 
       if (exchangeRes.statusCode != 200) throw Exception('Exchange failed: ${exchangeRes.body}');
       final responsePayload = jsonDecode(exchangeRes.body) as Map<String, dynamic>;
@@ -299,7 +455,13 @@ class SyncService extends ChangeNotifier {
 
       _syncStatusText = 'Sync complete!';
     } catch (e) {
-      _syncStatusText = 'Sync failed: $e';
+      if (e is SocketException) {
+        _syncStatusText = 'Connection failed: Cannot reach ${device.host}:${device.port}. Ensure server switch is ON on remote device & both are on same Wi-Fi.';
+      } else if (e is TimeoutException) {
+        _syncStatusText = 'Connection timed out to ${device.host}:${device.port}. Check firewall or network connection.';
+      } else {
+        _syncStatusText = 'Sync failed: $e';
+      }
     } finally {
       client.close();
       _isSyncing = false;
@@ -314,10 +476,12 @@ class SyncService extends ChangeNotifier {
     final remoteCustomers = {for (var item in remoteMeta['customers'] ?? []) item['uuid'] as String: DateTime.parse(item['updatedAt'] as String)};
     final remoteCompanies = {for (var item in remoteMeta['companies'] ?? []) item['uuid'] as String: DateTime.parse(item['updatedAt'] as String)};
     final remoteTasks = {for (var item in remoteMeta['tasks'] ?? []) item['uuid'] as String: DateTime.parse(item['updatedAt'] as String)};
+    final remoteLeads = {for (var item in remoteMeta['leads'] ?? []) item['uuid'] as String: DateTime.parse(item['updatedAt'] as String)};
 
     final localCustomers = await _db.isar.customers.where().findAll();
     final localCompanies = await _db.isar.companys.where().findAll();
     final localTasks = await _db.isar.workTasks.where().findAll();
+    final localLeads = await _db.isar.marketingLeads.where().findAll();
 
     final List<Map<String, dynamic>> sendCustomers = [];
     for (final c in localCustomers) {
@@ -449,17 +613,41 @@ class SyncService extends ChangeNotifier {
       }
     }
 
-    // Build overall metadata of A
+    final List<Map<String, dynamic>> sendLeads = [];
+    for (final l in localLeads) {
+      final remTime = remoteLeads[l.uuid];
+      if (remTime == null || l.updatedAt.isAfter(remTime)) {
+        sendLeads.add({
+          'uuid': l.uuid,
+          'name': l.name,
+          'mobile': l.mobile,
+          'status': l.status,
+          'visits': l.visits.map((v) => {
+            'visitDate': v.visitDate?.toIso8601String(),
+            'visitTime': v.visitTime,
+            'visitNote': v.visitNote,
+            'attachedPhoto': v.attachedPhoto,
+            'attachedPhotos': v.attachedPhotos,
+          }).toList(),
+          'updatedAt': l.updatedAt.toIso8601String(),
+          'isDeleted': l.isDeleted,
+        });
+      }
+    }
+
+    // Build overall metadata
     final localMeta = {
       'customers': localCustomers.map((c) => {'uuid': c.uuid, 'updatedAt': c.updatedAt.toIso8601String()}).toList(),
       'companies': localCompanies.map((c) => {'uuid': c.uuid, 'updatedAt': c.updatedAt.toIso8601String()}).toList(),
       'tasks': localTasks.map((t) => {'uuid': t.uuid, 'updatedAt': t.updatedAt.toIso8601String()}).toList(),
+      'leads': localLeads.map((l) => {'uuid': l.uuid, 'updatedAt': l.updatedAt.toIso8601String()}).toList(),
     };
 
     return {
       'customers': sendCustomers,
       'companies': sendCompanies,
       'tasks': sendTasks,
+      'leads': sendLeads,
       'meta': localMeta
     };
   }
@@ -612,6 +800,34 @@ class SyncService extends ChangeNotifier {
           task.updatedAt = updatedAt;
           task.isDeleted = json['isDeleted'] as bool? ?? false;
           await _db.isar.workTasks.put(task);
+        }
+      }
+
+      // 4. Merge Marketing Leads
+      final List<dynamic> remLeads = payload['leads'] ?? [];
+      for (final json in remLeads) {
+        final uuid = json['uuid'] as String;
+        final updatedAt = DateTime.parse(json['updatedAt'] as String);
+
+        final existing = await _db.isar.marketingLeads.filter().uuidEqualTo(uuid).findFirst();
+        if (existing == null || updatedAt.isAfter(existing.updatedAt)) {
+          final lead = existing ?? MarketingLead();
+          lead.uuid = uuid;
+          lead.name = json['name'] as String;
+          lead.mobile = json['mobile'] as String;
+          lead.status = json['status'] as String;
+          lead.updatedAt = updatedAt;
+          lead.isDeleted = json['isDeleted'] as bool? ?? false;
+
+          final List<dynamic> visitsJson = json['visits'] ?? [];
+          lead.visits = visitsJson.map((v) => MarketingVisit()
+            ..visitDate = v['visitDate'] != null ? DateTime.parse(v['visitDate'] as String) : null
+            ..visitTime = v['visitTime'] as String?
+            ..visitNote = v['visitNote'] as String?
+            ..attachedPhoto = v['attachedPhoto'] as String?
+            ..attachedPhotos = (v['attachedPhotos'] as List?)?.map((e) => e as String).toList() ?? []).toList();
+
+          await _db.isar.marketingLeads.put(lead);
         }
       }
     });
