@@ -51,23 +51,31 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
   void _changePin() async {
     if (!_pinFormKey.currentState!.validate()) return;
 
+    final securityService = ref.read(securityServiceProvider);
     final authNotifier = ref.read(authStateProvider.notifier);
-    final success = await authNotifier.unlock(_pinController.text);
-    if (!success) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Current PIN is incorrect'), backgroundColor: Colors.redAccent),
-        );
+    final isPinSet = await securityService.isPinSet();
+
+    if (isPinSet) {
+      final verified = await securityService.verifyPin(_pinController.text);
+      if (!verified) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Current PIN code is incorrect'), backgroundColor: Colors.redAccent),
+          );
+        }
+        return;
       }
-      return;
     }
 
-    // Set new pin
+    // Set new PIN code
     await authNotifier.setPin(_newPinController.text);
     
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('PIN updated successfully'), backgroundColor: Colors.green),
+        SnackBar(
+          content: Text(isPinSet ? 'PIN code changed successfully!' : 'Security PIN code set successfully!'),
+          backgroundColor: Colors.green,
+        ),
       );
       setState(() {
         _isChangingPin = false;
@@ -76,6 +84,164 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
         _confirmPinController.clear();
       });
     }
+  }
+
+  void _openChangePinDialog(BuildContext context) async {
+    final securityService = ref.read(securityServiceProvider);
+    final isPinSet = await securityService.isPinSet();
+
+    if (!context.mounted) return;
+
+    final currentPinController = TextEditingController();
+    final newPinController = TextEditingController();
+    final confirmPinController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+    bool isSubmitting = false;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Row(
+                children: [
+                  const Icon(Icons.lock_reset, color: Colors.blueAccent),
+                  const SizedBox(width: 8),
+                  Text(isPinSet ? 'Change Security PIN Code' : 'Set Security PIN Code'),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        isPinSet
+                            ? 'Enter your current 4-digit PIN code followed by your new 4-digit PIN code.'
+                            : 'Create a 4-digit PIN code to secure your offline app data.',
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 16),
+                      if (isPinSet) ...[
+                        TextFormField(
+                          controller: currentPinController,
+                          obscureText: true,
+                          keyboardType: TextInputType.number,
+                          maxLength: 4,
+                          decoration: const InputDecoration(
+                            labelText: 'Current 4-digit PIN Code *',
+                            prefixIcon: Icon(Icons.lock_outline),
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                          validator: (val) {
+                            if (val == null || val.length != 4 || int.tryParse(val) == null) {
+                              return 'Must be 4 digits';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      TextFormField(
+                        controller: newPinController,
+                        obscureText: true,
+                        keyboardType: TextInputType.number,
+                        maxLength: 4,
+                        decoration: const InputDecoration(
+                          labelText: 'New 4-digit PIN Code *',
+                          prefixIcon: Icon(Icons.password),
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                        validator: (val) {
+                          if (val == null || val.length != 4 || int.tryParse(val) == null) {
+                            return 'Must be 4 digits';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: confirmPinController,
+                        obscureText: true,
+                        keyboardType: TextInputType.number,
+                        maxLength: 4,
+                        decoration: const InputDecoration(
+                          labelText: 'Confirm New PIN Code *',
+                          prefixIcon: Icon(Icons.check_circle_outline),
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
+                        validator: (val) {
+                          if (val == null || val.length != 4 || int.tryParse(val) == null) {
+                            return 'Must be 4 digits';
+                          }
+                          if (val != newPinController.text) {
+                            return 'PIN codes do not match';
+                          }
+                          return null;
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSubmitting ? null : () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          if (!formKey.currentState!.validate()) return;
+
+                          setDialogState(() => isSubmitting = true);
+
+                          if (isPinSet) {
+                            final verified = await securityService.verifyPin(currentPinController.text);
+                            if (!verified) {
+                              if (context.mounted) {
+                                setDialogState(() => isSubmitting = false);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Current PIN code is incorrect'),
+                                    backgroundColor: Colors.redAccent,
+                                  ),
+                                );
+                              }
+                              return;
+                            }
+                          }
+
+                          await ref.read(authStateProvider.notifier).setPin(newPinController.text);
+
+                          if (context.mounted) {
+                            Navigator.pop(dialogContext);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(isPinSet ? 'PIN code changed successfully!' : 'Security PIN code set successfully!'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                        },
+                  icon: isSubmitting
+                      ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Icon(Icons.save, size: 18),
+                  label: const Text('Save PIN Code'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   void _openDirectConnectDialog(BuildContext context, SyncService syncService) {
@@ -405,14 +571,15 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
                     ),
                     const SizedBox(height: 12),
                     if (!_isChangingPin)
-                      ElevatedButton(
-                        onPressed: () => setState(() => _isChangingPin = true),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.lock_reset, size: 18),
+                        label: const Text('Change Security PIN Code'),
+                        onPressed: () => _openChangePinDialog(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[200],
-                          foregroundColor: Colors.black87,
+                          backgroundColor: Colors.blueAccent,
+                          foregroundColor: Colors.white,
                           elevation: 0,
                         ),
-                        child: const Text('Change Security PIN'),
                       )
                     else
                       Form(
@@ -424,7 +591,7 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
                               obscureText: true,
                               keyboardType: TextInputType.number,
                               maxLength: 4,
-                              decoration: const InputDecoration(labelText: 'Current 4-digit PIN', border: OutlineInputBorder()),
+                              decoration: const InputDecoration(labelText: 'Current 4-digit PIN Code', border: OutlineInputBorder()),
                               validator: (val) => val == null || val.length != 4 ? 'Must be 4 digits' : null,
                             ),
                             const SizedBox(height: 12),
@@ -433,7 +600,7 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
                               obscureText: true,
                               keyboardType: TextInputType.number,
                               maxLength: 4,
-                              decoration: const InputDecoration(labelText: 'New 4-digit PIN', border: OutlineInputBorder()),
+                              decoration: const InputDecoration(labelText: 'New 4-digit PIN Code', border: OutlineInputBorder()),
                               validator: (val) => val == null || val.length != 4 ? 'Must be 4 digits' : null,
                             ),
                             const SizedBox(height: 12),
@@ -442,10 +609,10 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
                               obscureText: true,
                               keyboardType: TextInputType.number,
                               maxLength: 4,
-                              decoration: const InputDecoration(labelText: 'Confirm New PIN', border: OutlineInputBorder()),
+                              decoration: const InputDecoration(labelText: 'Confirm New PIN Code', border: OutlineInputBorder()),
                               validator: (val) {
                                 if (val == null || val.length != 4) return 'Must be 4 digits';
-                                if (val != _newPinController.text) return 'PINs do not match';
+                                if (val != _newPinController.text) return 'PIN codes do not match';
                                 return null;
                               },
                             ),
@@ -460,7 +627,7 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
                                 const SizedBox(width: 8),
                                 ElevatedButton(
                                   onPressed: _changePin,
-                                  child: const Text('Update PIN'),
+                                  child: const Text('Update PIN Code'),
                                 ),
                               ],
                             ),
