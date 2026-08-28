@@ -66,7 +66,7 @@ class AppTheme {
       ),
 
       // Card Theme
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.cardSurface,
         elevation: 0,
         shadowColor: AppColors.meshGlowBlue,
@@ -228,7 +228,7 @@ class AppTheme {
       ),
 
       // Dialog Theme
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: AppColors.cardSurface,
         elevation: 10,
         shadowColor: AppColors.meshGlowBlue,
@@ -248,7 +248,7 @@ class AppTheme {
       ),
 
       // TabBar Theme
-      tabBarTheme: TabBarTheme(
+      tabBarTheme: TabBarThemeData(
         labelColor: AppColors.skyBlue,
         unselectedLabelColor: AppColors.mutedText,
         indicatorSize: TabBarIndicatorSize.tab,
