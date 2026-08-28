@@ -9,6 +9,8 @@ enum BadgeStyle {
   violet,
   amber,
   rose,
+  indigo,
+  orange,
 }
 
 /// Light, tinted background tags with bright text for vibrant light theme badges.
@@ -37,12 +39,9 @@ class ColorBadge extends StatelessWidget {
         fg = AppColors.badgeBlueText;
         break;
       case BadgeStyle.green:
+      case BadgeStyle.mint:
         bg = AppColors.badgeGreenBg;
         fg = AppColors.badgeGreenText;
-        break;
-      case BadgeStyle.mint:
-        bg = AppColors.badgeMintBg;
-        fg = AppColors.badgeMintText;
         break;
       case BadgeStyle.cyan:
         bg = AppColors.badgeCyanBg;
@@ -59,6 +58,14 @@ class ColorBadge extends StatelessWidget {
       case BadgeStyle.rose:
         bg = AppColors.badgeRoseBg;
         fg = AppColors.badgeRoseText;
+        break;
+      case BadgeStyle.indigo:
+        bg = AppColors.badgeIndigoBg;
+        fg = AppColors.badgeIndigoText;
+        break;
+      case BadgeStyle.orange:
+        bg = AppColors.badgeOrangeBg;
+        fg = AppColors.badgeOrangeText;
         break;
     }
 

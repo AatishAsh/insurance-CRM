@@ -1196,7 +1196,7 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
       color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.blue.shade100, width: 1.5),
+        side: BorderSide(color: AppColors.violetAccent.withOpacity(0.3), width: 1.5),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -1208,15 +1208,15 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
+                    color: AppColors.badgeVioletBg,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.dashboard_rounded, color: Colors.blueAccent, size: 20),
+                  child: const Icon(Icons.dashboard_rounded, color: AppColors.violetAccent, size: 20),
                 ),
                 const SizedBox(width: 10),
                 const Text(
                   'Primary Metrics',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.headingText),
                 ),
               ],
             ),
@@ -1282,7 +1282,7 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
       color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.blue.shade100, width: 1.5),
+        side: BorderSide(color: AppColors.emeraldGreen.withOpacity(0.3), width: 1.5),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -1294,15 +1294,15 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
+                    color: AppColors.badgeGreenBg,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.work_history_rounded, color: Colors.blueAccent, size: 20),
+                  child: const Icon(Icons.work_history_rounded, color: AppColors.emeraldGreen, size: 20),
                 ),
                 const SizedBox(width: 10),
                 const Text(
                   'Days & Earnings',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.headingText),
                 ),
               ],
             ),
@@ -1361,7 +1361,7 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
     );
   }
 
-  // Section 3: JJ Workway & Targets Card (Excel/Spreadsheet keyboard-navigable matrix with Arrow keys & Enter)
+  // Section 3: JJ Workway & Targets Card
   Widget _buildBoxThreeCard(BuildContext context, PerformanceNotifier notifier) {
     final columns = [
       {
@@ -1369,30 +1369,40 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
         'icon': Icons.alt_route_rounded,
         'controllers': _box3JjWorkwayControllers,
         'prefixKey': 'box3JjWorkwayCol',
+        'bgColor': AppColors.badgeIndigoBg,
+        'fgColor': AppColors.badgeIndigoText,
       },
       {
         'title': 'Target',
         'icon': Icons.track_changes_rounded,
         'controllers': _box3TargetControllers,
         'prefixKey': 'box3TargetCol',
+        'bgColor': AppColors.badgeRoseBg,
+        'fgColor': AppColors.badgeRoseText,
       },
       {
         'title': 'YY',
         'icon': Icons.analytics_outlined,
         'controllers': _box3YyControllers,
         'prefixKey': 'box3YyCol',
+        'bgColor': AppColors.badgeAmberBg,
+        'fgColor': AppColors.badgeAmberText,
       },
       {
         'title': 'ZZ',
         'icon': Icons.assessment_outlined,
         'controllers': _box3ZzControllers,
         'prefixKey': 'box3ZzCol',
+        'bgColor': AppColors.badgeCyanBg,
+        'fgColor': AppColors.badgeCyanText,
       },
       {
         'title': 'Percentage',
         'icon': Icons.percent_rounded,
         'controllers': _box3PercentageControllers,
         'prefixKey': 'box3PercentageCol',
+        'bgColor': AppColors.badgeGreenBg,
+        'fgColor': AppColors.badgeGreenText,
       },
     ];
 
@@ -1401,7 +1411,7 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
       color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.blue.shade100, width: 1.5),
+        side: BorderSide(color: AppColors.cyanAccent.withOpacity(0.3), width: 1.5),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -1413,15 +1423,15 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
+                    color: AppColors.badgeCyanBg,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.table_chart_rounded, color: Colors.blueAccent, size: 20),
+                  child: const Icon(Icons.table_chart_rounded, color: AppColors.cyanAccent, size: 20),
                 ),
                 const SizedBox(width: 10),
                 const Text(
                   'JJ Workway & Targets',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.headingText),
                 ),
               ],
             ),
@@ -1573,7 +1583,7 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
       color: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: Colors.blue.shade100, width: 1.5),
+        side: BorderSide(color: AppColors.amberAccent.withOpacity(0.3), width: 1.5),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -1585,15 +1595,15 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade50,
+                    color: AppColors.badgeAmberBg,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.stars_rounded, color: Colors.blueAccent, size: 20),
+                  child: const Icon(Icons.stars_rounded, color: AppColors.amberAccent, size: 20),
                 ),
                 const SizedBox(width: 10),
                 const Text(
-                  'For MDRT',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                  'For MDRT Goal',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.headingText),
                 ),
               ],
             ),
