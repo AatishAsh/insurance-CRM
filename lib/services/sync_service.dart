@@ -679,11 +679,31 @@ class SyncService extends ChangeNotifier {
         final uuid = json['uuid'] as String;
         final updatedAt = DateTime.parse(json['updatedAt'] as String);
 
-        final existing = await _db.isar.customers.filter().uuidEqualTo(uuid).findFirst();
+        // 1. Primary lookup by UUID
+        Customer? existing = await _db.isar.customers.filter().uuidEqualTo(uuid).findFirst();
+
+        // 2. Fallback lookup by customerId (e.g. CUST-001)
+        final customerIdVal = json['customerId'] as String?;
+        if (existing == null && customerIdVal != null && customerIdVal.trim().isNotEmpty) {
+          existing = await _db.isar.customers.filter().customerIdEqualTo(customerIdVal.trim()).findFirst();
+        }
+
+        // 3. Fallback lookup by Name + Mobile 1
+        final nameVal = json['name'] as String?;
+        final mobileVal = json['mobileNumber1'] as String?;
+        if (existing == null && nameVal != null && nameVal.trim().isNotEmpty && mobileVal != null && mobileVal.trim().isNotEmpty) {
+          existing = await _db.isar.customers
+              .filter()
+              .nameEqualTo(nameVal.trim(), caseSensitive: false)
+              .and()
+              .mobileNumber1EqualTo(mobileVal.trim())
+              .findFirst();
+        }
+
         if (existing == null || updatedAt.isAfter(existing.updatedAt)) {
           final cust = existing ?? Customer();
-          cust.uuid = uuid;
-          cust.customerId = json['customerId'] as String?;
+          cust.uuid = uuid; // Unify system UUID across sync nodes
+          cust.customerId = customerIdVal;
           cust.name = json['name'] as String;
           cust.fatherName = json['fatherName'] as String?;
           cust.dateOfBirth = json['dateOfBirth'] != null ? DateTime.parse(json['dateOfBirth'] as String) : null;
@@ -828,6 +848,27 @@ class SyncService extends ChangeNotifier {
             ..attachedPhotos = (v['attachedPhotos'] as List?)?.map((e) => e as String).toList() ?? []).toList();
 
           await _db.isar.marketingLeads.put(lead);
+        }
+      }
+
+      // 5. Automatic Deduplication Sweep: purge any duplicate customer clones
+      final allCusts = await _db.isar.customers.where().findAll();
+      final Map<String, List<Customer>> custIdMap = {};
+      for (final c in allCusts) {
+        final key = (c.customerId != null && c.customerId!.trim().isNotEmpty)
+            ? 'id_${c.customerId!.trim()}'
+            : 'uuid_${c.uuid}';
+        custIdMap.putIfAbsent(key, () => []).add(c);
+      }
+
+      for (final list in custIdMap.values) {
+        if (list.length > 1) {
+          // Sort by updatedAt descending (newest update first)
+          list.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+          // Keep newest (list[0]), delete older duplicates
+          for (int i = 1; i < list.length; i++) {
+            await _db.isar.customers.delete(list[i].id);
+          }
         }
       }
     });

@@ -135,7 +135,7 @@ class DatabaseService {
       await isar.writeTxn(() async {
         for (int i = 1; i <= 15; i++) {
           final company = Company()
-            ..uuid = _uuid.v4()
+            ..uuid = 'seed_company_uuid_$i'
             ..name = 'Company $i'
             ..referenceNumber = 'REF-${100 + i}'
             ..updatedAt = DateTime.now()
@@ -370,7 +370,7 @@ class DatabaseService {
 
       // 2. Seed Customers with rich, comprehensive field population
       final c1 = Customer()
-        ..uuid = _uuid.v4()
+        ..uuid = 'seed_cust_001'
         ..customerId = 'CUST-001'
         ..familyId = 'FAM-101'
         ..name = 'Amit Sharma'
@@ -515,7 +515,7 @@ class DatabaseService {
         ..assignedCompanyId = company1Id;
 
       final c2 = Customer()
-        ..uuid = _uuid.v4()
+        ..uuid = 'seed_cust_002'
         ..customerId = 'CUST-002'
         ..familyId = 'FAM-101'
         ..name = 'Priya Patel'
@@ -590,7 +590,7 @@ class DatabaseService {
         ..assignedCompanyId = company2Id;
 
       final c3 = Customer()
-        ..uuid = _uuid.v4()
+        ..uuid = 'seed_cust_003'
         ..customerId = 'CUST-003'
         ..familyId = 'FAM-102'
         ..name = 'Rohan Desai'
@@ -653,7 +653,7 @@ class DatabaseService {
         ..isDeleted = false;
 
       final c4 = Customer()
-        ..uuid = _uuid.v4()
+        ..uuid = 'seed_cust_004'
         ..customerId = 'CUST-004'
         ..familyId = 'FAM-102'
         ..name = 'Sneha Reddy'
@@ -717,7 +717,7 @@ class DatabaseService {
         ..isDeleted = false;
 
       final c5 = Customer()
-        ..uuid = _uuid.v4()
+        ..uuid = 'seed_cust_005'
         ..customerId = 'CUST-005'
         ..familyId = 'FAM-103'
         ..name = 'Vikram Singh'
