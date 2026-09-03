@@ -62,7 +62,7 @@ class DashboardExportService {
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
                           pw.Text(
-                            'INSURANCE CRM',
+                            'JJ CRM',
                             style: pw.TextStyle(
                               fontSize: 18,
                               fontWeight: pw.FontWeight.bold,
@@ -71,7 +71,7 @@ class DashboardExportService {
                           ),
                           pw.SizedBox(height: 2),
                           pw.Text(
-                            'Today\'s Event & Follow-up Summary Report',
+                            'Tomorrow\'s Work & Event Summary Report',
                             style: pw.TextStyle(
                               fontSize: 12,
                               fontWeight: pw.FontWeight.bold,
@@ -199,7 +199,7 @@ class DashboardExportService {
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
-                  'Confidential - Insurance CRM Offline Vault Report',
+                  'Confidential - JJ CRM Offline Vault Report',
                   style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
                 ),
                 pw.Text(
@@ -246,7 +246,7 @@ class DashboardExportService {
 
         await Share.shareXFiles(
           [XFile(file.path)],
-          text: 'Today\'s Insurance CRM Event Summary Snapshot (${DateFormat('dd MMM yyyy').format(DateTime.now())})',
+          text: 'Today\'s JJ CRM Event Summary Snapshot (${DateFormat('dd MMM yyyy').format(DateTime.now())})',
         );
         return file.path;
       } catch (e) {
@@ -361,7 +361,7 @@ class DashboardExportService {
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
                           pw.Text(
-                            'INSURANCE CRM - CUSTOMER PROFILE',
+                            'JJ CRM - CUSTOMER PROFILE',
                             style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900),
                           ),
                           pw.SizedBox(height: 2),
@@ -544,7 +544,7 @@ class DashboardExportService {
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                pw.Text('Confidential Customer Profile - Insurance CRM', style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
+                pw.Text('Confidential Customer Profile - JJ CRM', style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
                 pw.Text('Page 1 of 1', style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600)),
               ],
             ),

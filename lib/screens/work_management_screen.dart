@@ -96,46 +96,49 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                                   color: isSelected ? AppColors.skyBlue.withOpacity(0.3) : Colors.transparent,
                                 ),
                               ),
-                              child: ListTile(
-                                dense: true,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                                leading: CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor: isSelected ? avatarColor : avatarColor.withOpacity(0.15),
-                                  child: Text(
-                                    company.name.isNotEmpty ? company.name[0].toUpperCase() : 'C',
-                                    style: TextStyle(
-                                      color: isSelected ? Colors.white : avatarColor,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
+                              child: Material(
+                                color: Colors.transparent,
+                                child: ListTile(
+                                  dense: true,
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                                  leading: CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor: isSelected ? avatarColor : avatarColor.withOpacity(0.15),
+                                    child: Text(
+                                      company.name.isNotEmpty ? company.name[0].toUpperCase() : 'C',
+                                      style: TextStyle(
+                                        color: isSelected ? Colors.white : avatarColor,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                title: Text(
-                                  company.name,
-                                  style: TextStyle(
-                                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                                    fontSize: 13,
-                                    color: isSelected ? AppColors.badgeBlueText : AppColors.headingText,
+                                  title: Text(
+                                    company.name,
+                                    style: TextStyle(
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                      fontSize: 13,
+                                      color: isSelected ? AppColors.badgeBlueText : AppColors.headingText,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  overflow: TextOverflow.ellipsis,
+                                  subtitle: company.referenceNumber != null && company.referenceNumber!.isNotEmpty
+                                      ? Text(
+                                          company.referenceNumber!,
+                                          style: const TextStyle(fontSize: 10, color: AppColors.mutedText),
+                                          overflow: TextOverflow.ellipsis,
+                                        )
+                                      : null,
+                                  trailing: IconButton(
+                                    icon: const Icon(Icons.edit_outlined, size: 14, color: AppColors.mutedText),
+                                    onPressed: () => _showEditCompanyDialog(company),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                  ),
+                                  onTap: () {
+                                    ref.read(selectedCompanyIdProvider.notifier).state = company.id;
+                                  },
                                 ),
-                                subtitle: company.referenceNumber != null && company.referenceNumber!.isNotEmpty
-                                    ? Text(
-                                        company.referenceNumber!,
-                                        style: const TextStyle(fontSize: 10, color: AppColors.mutedText),
-                                        overflow: TextOverflow.ellipsis,
-                                      )
-                                    : null,
-                                trailing: IconButton(
-                                  icon: const Icon(Icons.edit_outlined, size: 14, color: AppColors.mutedText),
-                                  onPressed: () => _showEditCompanyDialog(company),
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                ),
-                                onTap: () {
-                                  ref.read(selectedCompanyIdProvider.notifier).state = company.id;
-                                },
                               ),
                             ),
                           );
@@ -302,8 +305,11 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
         side: BorderSide(color: Colors.grey[200]!),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          onTap: () => _showAddTaskDialog(task.companyId ?? 0, task),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         leading: Icon(statusIcon, color: statusColor, size: 28),
         title: Text(
           task.description,
@@ -370,7 +376,8 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildBadge(String label, Color color) {
@@ -424,21 +431,21 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
     );
   }
 
-  void _showAddTaskDialog(int companyId) {
-    final descController = TextEditingController();
-    final toController = TextEditingController();
-    final remarkController = TextEditingController();
-    final reasonController = TextEditingController();
+  void _showAddTaskDialog(int companyId, [WorkTask? existingTask]) {
+    final descController = TextEditingController(text: existingTask?.description ?? '');
+    final toController = TextEditingController(text: existingTask?.assignedTo ?? '');
+    final remarkController = TextEditingController(text: existingTask?.remarks ?? '');
+    final reasonController = TextEditingController(text: existingTask?.carryForwardReason ?? '');
     
-    String status = 'Pending';
-    String priority = 'Normal';
-    String method = 'WhatsApp';
-    bool carryForward = true;
+    String status = existingTask?.status ?? 'Pending';
+    String priority = existingTask?.priority ?? 'Normal';
+    String method = existingTask?.communicationMethod ?? 'WhatsApp';
+    bool carryForward = existingTask?.carryForwardRequired ?? true;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('New Work Task Entry'),
+        title: Text(existingTask == null ? 'New Work Task Entry' : 'Edit Work Task Entry'),
         content: StatefulBuilder(
           builder: (context, setDialogState) {
             return SingleChildScrollView(
@@ -447,6 +454,10 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                 children: [
                   TextField(
                     controller: descController,
+                    minLines: 2,
+                    maxLines: 5,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.newline,
                     decoration: const InputDecoration(labelText: 'Task Description *', border: OutlineInputBorder()),
                   ),
                   const SizedBox(height: 12),
@@ -490,6 +501,10 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                   const SizedBox(height: 12),
                   TextField(
                     controller: remarkController,
+                    minLines: 2,
+                    maxLines: 5,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.newline,
                     decoration: const InputDecoration(labelText: 'Additional Remarks', border: OutlineInputBorder()),
                   ),
                   const SizedBox(height: 8),
@@ -506,6 +521,10 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                     const SizedBox(height: 8),
                     TextField(
                       controller: reasonController,
+                      minLines: 2,
+                      maxLines: 5,
+                      keyboardType: TextInputType.multiline,
+                      textInputAction: TextInputAction.newline,
                       decoration: const InputDecoration(
                         labelText: 'Reason for Carry Forward',
                         border: OutlineInputBorder(),
@@ -524,12 +543,12 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
             onPressed: () async {
               if (descController.text.trim().isNotEmpty) {
                 final db = ref.read(databaseServiceProvider);
-                final task = WorkTask()
-                  ..uuid = ''
+                final task = existingTask ?? WorkTask();
+                task
                   ..companyId = companyId
                   ..description = descController.text.trim()
-                  ..workDate = ref.read(selectedDateProvider)
-                  ..assignedDate = DateTime.now()
+                  ..workDate = existingTask?.workDate ?? ref.read(selectedDateProvider)
+                  ..assignedDate = existingTask?.assignedDate ?? DateTime.now()
                   ..priority = priority
                   ..assignedTo = toController.text.trim().isEmpty ? null : toController.text.trim()
                   ..communicationMethod = method

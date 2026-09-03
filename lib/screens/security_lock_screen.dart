@@ -220,7 +220,7 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                             letterSpacing: 1.5,
                           ),
                           children: [
-                            TextSpan(text: 'INSURANCE ', style: TextStyle(color: AppColors.headingText)),
+                            TextSpan(text: 'JJ ', style: TextStyle(color: AppColors.headingText)),
                             TextSpan(text: 'CRM', style: TextStyle(color: AppColors.skyBlue)),
                           ],
                         ),

@@ -490,9 +490,11 @@ class SyncService extends ChangeNotifier {
         sendCustomers.add({
           'uuid': c.uuid,
           'customerId': c.customerId,
+          'familyId': c.familyId,
           'name': c.name,
           'fatherName': c.fatherName,
           'dateOfBirth': c.dateOfBirth?.toIso8601String(),
+          'age': c.age,
           'maritalStatus': c.maritalStatus,
           'spouseName': c.spouseName,
           'nationality': c.nationality,
@@ -502,6 +504,9 @@ class SyncService extends ChangeNotifier {
           'weight': c.weight,
           'numberOfChildren': c.numberOfChildren,
           'childrenDOBs': c.childrenDOBs?.map((d) => d.toIso8601String()).toList(),
+          'fatherDOB': c.fatherDOB?.toIso8601String(),
+          'motherDOB': c.motherDOB?.toIso8601String(),
+          'spouseDOB': c.spouseDOB?.toIso8601String(),
           'fatherAge': c.fatherAge,
           'motherAge': c.motherAge,
           'spouseAge': c.spouseAge,
@@ -528,6 +533,10 @@ class SyncService extends ChangeNotifier {
           'nomineeMobile1': c.nomineeMobile1,
           'nomineeMobile2': c.nomineeMobile2,
           'nomineeEmail': c.nomineeEmail,
+          'appointeeName': c.appointeeName,
+          'appointeeDOB': c.appointeeDOB?.toIso8601String(),
+          'appointeeRelationship': c.appointeeRelationship,
+          'appointeeOtherRelationship': c.appointeeOtherRelationship,
           'selfPolicyNumber': c.selfPolicyNumber,
           'selfAadhaarNumber': c.selfAadhaarNumber,
           'selfSumAssured1': c.selfSumAssured1,
@@ -542,10 +551,18 @@ class SyncService extends ChangeNotifier {
           'spouseCompany': c.spouseCompany,
           'childrenPolicyNumber': c.childrenPolicyNumber,
           'childrenCompany': c.childrenCompany,
+          'childrenPolicyNumbers': c.childrenPolicyNumbers,
+          'childrenCompanies': c.childrenCompanies,
+          'hasExistingPolicy': c.hasExistingPolicy,
+          'existingSelfCompany': c.existingSelfCompany,
+          'existingPolicyNumber': c.existingPolicyNumber,
+          'existingDocDate': c.existingDocDate?.toIso8601String(),
           'healthProblems': c.healthProblems,
           'lifestyleHabits': c.lifestyleHabits,
           'pregnancyDetails': c.pregnancyDetails,
           'healthRemarks': c.healthRemarks,
+          'hasPersonalAccident': c.hasPersonalAccident,
+          'personalAccidentDate': c.personalAccidentDate?.toIso8601String(),
           'communicationAddress': c.communicationAddress,
           'permanentAddress': c.permanentAddress,
           'productName': c.productName,
@@ -563,6 +580,12 @@ class SyncService extends ChangeNotifier {
           'reminderNote1': c.reminderNote1,
           'reminderDate2': c.reminderDate2?.toIso8601String(),
           'reminderNote2': c.reminderNote2,
+          'reminderDate3': c.reminderDate3?.toIso8601String(),
+          'reminderNote3': c.reminderNote3,
+          'reminderDate4': c.reminderDate4?.toIso8601String(),
+          'reminderNote4': c.reminderNote4,
+          'reminderDate5': c.reminderDate5?.toIso8601String(),
+          'reminderNote5': c.reminderNote5,
           'referenceFriendName': c.referenceFriendName,
           'referenceMobile': c.referenceMobile,
           'referenceAge': c.referenceAge,
@@ -570,6 +593,19 @@ class SyncService extends ChangeNotifier {
           'updatedAt': c.updatedAt.toIso8601String(),
           'isDeleted': c.isDeleted,
           'assignedCompanyId': c.assignedCompanyId,
+          'plans': c.plans.map((p) => {
+            'productName': p.productName,
+            'premium': p.premium,
+            'mode': p.mode,
+            'planSumAssured': p.planSumAssured,
+            'rider': p.rider,
+            'planDate': p.planDate?.toIso8601String(),
+          }).toList(),
+          'references': c.references.map((r) => {
+            'name': r.name,
+            'mobile': r.mobile,
+            'age': r.age,
+          }).toList(),
           'documents': c.documents.map((d) => {'documentName': d.documentName, 'fileName': d.fileName}).toList(),
         });
       }
@@ -704,9 +740,11 @@ class SyncService extends ChangeNotifier {
           final cust = existing ?? Customer();
           cust.uuid = uuid; // Unify system UUID across sync nodes
           cust.customerId = customerIdVal;
+          cust.familyId = json['familyId'] as String?;
           cust.name = json['name'] as String;
           cust.fatherName = json['fatherName'] as String?;
           cust.dateOfBirth = json['dateOfBirth'] != null ? DateTime.parse(json['dateOfBirth'] as String) : null;
+          cust.age = json['age'] as String?;
           cust.maritalStatus = json['maritalStatus'] as String?;
           cust.spouseName = json['spouseName'] as String?;
           cust.nationality = json['nationality'] as String?;
@@ -716,6 +754,9 @@ class SyncService extends ChangeNotifier {
           cust.weight = json['weight'] as String?;
           cust.numberOfChildren = json['numberOfChildren'] as int?;
           cust.childrenDOBs = (json['childrenDOBs'] as List?)?.map((d) => DateTime.parse(d as String)).toList();
+          cust.fatherDOB = json['fatherDOB'] != null ? DateTime.parse(json['fatherDOB'] as String) : null;
+          cust.motherDOB = json['motherDOB'] != null ? DateTime.parse(json['motherDOB'] as String) : null;
+          cust.spouseDOB = json['spouseDOB'] != null ? DateTime.parse(json['spouseDOB'] as String) : null;
           cust.fatherAge = json['fatherAge'] as String?;
           cust.motherAge = json['motherAge'] as String?;
           cust.spouseAge = json['spouseAge'] as String?;
@@ -742,6 +783,10 @@ class SyncService extends ChangeNotifier {
           cust.nomineeMobile1 = json['nomineeMobile1'] as String?;
           cust.nomineeMobile2 = json['nomineeMobile2'] as String?;
           cust.nomineeEmail = json['nomineeEmail'] as String?;
+          cust.appointeeName = json['appointeeName'] as String?;
+          cust.appointeeDOB = json['appointeeDOB'] != null ? DateTime.parse(json['appointeeDOB'] as String) : null;
+          cust.appointeeRelationship = json['appointeeRelationship'] as String?;
+          cust.appointeeOtherRelationship = json['appointeeOtherRelationship'] as String?;
           cust.selfPolicyNumber = json['selfPolicyNumber'] as String?;
           cust.selfAadhaarNumber = json['selfAadhaarNumber'] as String?;
           cust.selfSumAssured1 = json['selfSumAssured1'] as String?;
@@ -756,10 +801,18 @@ class SyncService extends ChangeNotifier {
           cust.spouseCompany = json['spouseCompany'] as String?;
           cust.childrenPolicyNumber = json['childrenPolicyNumber'] as String?;
           cust.childrenCompany = json['childrenCompany'] as String?;
+          cust.childrenPolicyNumbers = (json['childrenPolicyNumbers'] as List?)?.map((e) => e as String).toList();
+          cust.childrenCompanies = (json['childrenCompanies'] as List?)?.map((e) => e as String).toList();
+          cust.hasExistingPolicy = json['hasExistingPolicy'] as String?;
+          cust.existingSelfCompany = json['existingSelfCompany'] as String?;
+          cust.existingPolicyNumber = json['existingPolicyNumber'] as String?;
+          cust.existingDocDate = json['existingDocDate'] != null ? DateTime.parse(json['existingDocDate'] as String) : null;
           cust.healthProblems = json['healthProblems'] as String?;
           cust.lifestyleHabits = json['lifestyleHabits'] as String?;
           cust.pregnancyDetails = json['pregnancyDetails'] as String?;
           cust.healthRemarks = json['healthRemarks'] as String?;
+          cust.hasPersonalAccident = json['hasPersonalAccident'] as String?;
+          cust.personalAccidentDate = json['personalAccidentDate'] != null ? DateTime.parse(json['personalAccidentDate'] as String) : null;
           cust.communicationAddress = json['communicationAddress'] as String?;
           cust.permanentAddress = json['permanentAddress'] as String?;
           cust.productName = json['productName'] as String?;
@@ -777,6 +830,12 @@ class SyncService extends ChangeNotifier {
           cust.reminderNote1 = json['reminderNote1'] as String?;
           cust.reminderDate2 = json['reminderDate2'] != null ? DateTime.parse(json['reminderDate2'] as String) : null;
           cust.reminderNote2 = json['reminderNote2'] as String?;
+          cust.reminderDate3 = json['reminderDate3'] != null ? DateTime.parse(json['reminderDate3'] as String) : null;
+          cust.reminderNote3 = json['reminderNote3'] as String?;
+          cust.reminderDate4 = json['reminderDate4'] != null ? DateTime.parse(json['reminderDate4'] as String) : null;
+          cust.reminderNote4 = json['reminderNote4'] as String?;
+          cust.reminderDate5 = json['reminderDate5'] != null ? DateTime.parse(json['reminderDate5'] as String) : null;
+          cust.reminderNote5 = json['reminderNote5'] as String?;
           cust.referenceFriendName = json['referenceFriendName'] as String?;
           cust.referenceMobile = json['referenceMobile'] as String?;
           cust.referenceAge = json['referenceAge'] as String?;
@@ -784,6 +843,23 @@ class SyncService extends ChangeNotifier {
           cust.updatedAt = updatedAt;
           cust.isDeleted = json['isDeleted'] as bool? ?? false;
           cust.assignedCompanyId = json['assignedCompanyId'] as int?;
+
+          // Map plans
+          final List<dynamic> plansJson = json['plans'] ?? [];
+          cust.plans = plansJson.map((p) => CustomerPlanItem()
+            ..productName = p['productName'] as String?
+            ..premium = p['premium'] as String?
+            ..mode = p['mode'] as String?
+            ..planSumAssured = p['planSumAssured'] as String?
+            ..rider = p['rider'] as String?
+            ..planDate = p['planDate'] != null ? DateTime.parse(p['planDate'] as String) : null).toList();
+
+          // Map references
+          final List<dynamic> refsJson = json['references'] ?? [];
+          cust.references = refsJson.map((r) => CustomerReferenceItem()
+            ..name = r['name'] as String?
+            ..mobile = r['mobile'] as String?
+            ..age = r['age'] as String?).toList();
 
           // Map documents
           final List<dynamic> docsJson = json['documents'] ?? [];

@@ -176,6 +176,7 @@ class BackupService {
       'name': c.name,
       'fatherName': c.fatherName,
       'dateOfBirth': c.dateOfBirth?.toIso8601String(),
+      'age': c.age,
       'maritalStatus': c.maritalStatus,
       'spouseName': c.spouseName,
       'nationality': c.nationality,
@@ -206,6 +207,7 @@ class BackupService {
       'nomineeName': c.nomineeName,
       'nomineeRelationship': c.nomineeRelationship,
       'nomineeDOB': c.nomineeDOB?.toIso8601String(),
+      'nomineeAge': c.nomineeAge,
       'nomineeFatherName': c.nomineeFatherName,
       'nomineePan': c.nomineePan,
       'nomineeMobile1': c.nomineeMobile1,
@@ -225,6 +227,8 @@ class BackupService {
       'spouseCompany': c.spouseCompany,
       'childrenPolicyNumber': c.childrenPolicyNumber,
       'childrenCompany': c.childrenCompany,
+      'childrenPolicyNumbers': c.childrenPolicyNumbers,
+      'childrenCompanies': c.childrenCompanies,
       'hasExistingPolicy': c.hasExistingPolicy,
       'existingSelfCompany': c.existingSelfCompany,
       'existingPolicyNumber': c.existingPolicyNumber,
@@ -266,6 +270,7 @@ class BackupService {
         'mode': p.mode,
         'planSumAssured': p.planSumAssured,
         'rider': p.rider,
+        'planDate': p.planDate?.toIso8601String(),
       }).toList(),
       'references': c.references.map((r) => {
         'name': r.name,
@@ -282,6 +287,7 @@ class BackupService {
     c.name = json['name'] as String;
     c.fatherName = json['fatherName'] as String?;
     c.dateOfBirth = json['dateOfBirth'] != null ? DateTime.parse(json['dateOfBirth'] as String) : null;
+    c.age = json['age'] as String?;
     c.maritalStatus = json['maritalStatus'] as String?;
     c.spouseName = json['spouseName'] as String?;
     c.nationality = json['nationality'] as String?;
@@ -312,6 +318,7 @@ class BackupService {
     c.nomineeName = json['nomineeName'] as String?;
     c.nomineeRelationship = json['nomineeRelationship'] as String?;
     c.nomineeDOB = json['nomineeDOB'] != null ? DateTime.parse(json['nomineeDOB'] as String) : null;
+    c.nomineeAge = json['nomineeAge'] as String?;
     c.nomineeFatherName = json['nomineeFatherName'] as String?;
     c.nomineePan = json['nomineePan'] as String?;
     c.nomineeMobile1 = json['nomineeMobile1'] as String?;
@@ -331,6 +338,8 @@ class BackupService {
     c.spouseCompany = json['spouseCompany'] as String?;
     c.childrenPolicyNumber = json['childrenPolicyNumber'] as String?;
     c.childrenCompany = json['childrenCompany'] as String?;
+    c.childrenPolicyNumbers = (json['childrenPolicyNumbers'] as List?)?.map((e) => e as String).toList();
+    c.childrenCompanies = (json['childrenCompanies'] as List?)?.map((e) => e as String).toList();
     c.hasExistingPolicy = json['hasExistingPolicy'] as String?;
     c.existingSelfCompany = json['existingSelfCompany'] as String?;
     c.existingPolicyNumber = json['existingPolicyNumber'] as String?;
@@ -379,7 +388,8 @@ class BackupService {
             ..premium = p['premium'] as String?
             ..mode = p['mode'] as String?
             ..planSumAssured = p['planSumAssured'] as String?
-            ..rider = p['rider'] as String?)
+            ..rider = p['rider'] as String?
+            ..planDate = p['planDate'] != null ? DateTime.parse(p['planDate'] as String) : null)
           .toList();
     }
     if (json['references'] != null) {

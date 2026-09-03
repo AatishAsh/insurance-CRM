@@ -15,6 +15,7 @@ class CustomerPlanItem {
   String? mode;
   String? planSumAssured;
   String? rider;
+  DateTime? planDate;
 }
 
 @embedded
@@ -43,6 +44,7 @@ class Customer {
   // Personal
   String? fatherName;
   DateTime? dateOfBirth;
+  String? age;
   String? maritalStatus;
   String? spouseName;
   String? nationality;
@@ -88,6 +90,7 @@ class Customer {
   String? nomineeName;
   String? nomineeRelationship;
   DateTime? nomineeDOB;
+  String? nomineeAge;
   String? nomineeFatherName;
   String? nomineePan;
   String? nomineeMobile1;
@@ -97,6 +100,7 @@ class Customer {
   // Appointee (when Nominee is minor)
   String? appointeeName;
   DateTime? appointeeDOB;
+  String? appointeeAge;
   String? appointeeRelationship;
   String? appointeeOtherRelationship;
 
@@ -116,6 +120,8 @@ class Customer {
   String? spouseCompany;
   String? childrenPolicyNumber;
   String? childrenCompany;
+  List<String>? childrenPolicyNumbers;
+  List<String>? childrenCompanies;
 
   // Existing Insurance Policy
   String? hasExistingPolicy; // 'Yes' / 'No'

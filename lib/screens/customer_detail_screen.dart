@@ -9,6 +9,7 @@ import '../services/dashboard_export_service.dart';
 import 'customer_form_screen.dart';
 import '../providers/customer_provider.dart';
 import '../providers/events_provider.dart';
+import '../providers/settings_provider.dart';
 import '../theme/app_colors.dart';
 import '../widgets/color_badge.dart';
 import '../widgets/brand_background.dart';
@@ -80,7 +81,8 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
 
   Widget _buildDateRow(String label, DateTime? date) {
     if (date == null) return const SizedBox.shrink();
-    return _buildDetailRow(label, DateFormat('dd MMM yyyy').format(date));
+    final activePattern = ref.watch(dateFormatPatternProvider);
+    return _buildDetailRow(label, DateFormat(activePattern).format(date));
   }
 
   String? _calculateAgeText(DateTime? dob) {
@@ -97,7 +99,8 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
     if (dob == null && (manualAge == null || manualAge.trim().isEmpty)) {
       return const SizedBox.shrink();
     }
-    final dobStr = dob != null ? DateFormat('dd MMM yyyy').format(dob) : null;
+    final activePattern = ref.watch(dateFormatPatternProvider);
+    final dobStr = dob != null ? DateFormat(activePattern).format(dob) : null;
     final calcAge = _calculateAgeText(dob);
     final displayAge = calcAge ?? (manualAge != null && manualAge.trim().isNotEmpty ? '$manualAge years' : null);
 
@@ -125,12 +128,15 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
         side: const BorderSide(color: AppColors.cardBorder),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: ExpansionTile(
-        leading: Icon(icon, color: AppColors.skyBlue),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.headingText)),
-        initiallyExpanded: false, // ALL COLLAPSED AS REQUESTED
-        childrenPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        children: validRows,
+      child: Material(
+        color: Colors.transparent,
+        child: ExpansionTile(
+          leading: Icon(icon, color: AppColors.skyBlue),
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.headingText)),
+          initiallyExpanded: false, // ALL COLLAPSED AS REQUESTED
+          childrenPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          children: validRows,
+        ),
       ),
     );
   }
@@ -410,7 +416,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
             _buildAccordionSection('Nominee Details', Icons.badge_outlined, [
               _buildDetailRow("Nominee Name", c.nomineeName),
               _buildDetailRow("Relationship", c.nomineeRelationship),
-              _buildDateRow("Nominee DOB", c.nomineeDOB),
+              _buildDobAndAgeRow("Nominee DOB & Age", c.nomineeDOB, c.nomineeAge),
               _buildDetailRow("Nominee Father's Name", c.nomineeFatherName),
               _buildDetailRow("Nominee PAN", c.nomineePan),
               _buildDetailRow("Nominee Mobile 1", c.nomineeMobile1),
@@ -418,7 +424,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
               _buildDetailRow("Nominee Email", c.nomineeEmail),
               if (c.appointeeName != null && c.appointeeName!.isNotEmpty) ...[
                 _buildDetailRow("Appointee Name", c.appointeeName),
-                _buildDateRow("Appointee DOB", c.appointeeDOB),
+                _buildDobAndAgeRow("Appointee DOB & Age", c.appointeeDOB, c.appointeeAge),
                 _buildDetailRow(
                   "Appointee Relationship",
                   (c.appointeeRelationship ?? '').toLowerCase() == 'other' && c.appointeeOtherRelationship != null && c.appointeeOtherRelationship!.isNotEmpty
@@ -438,7 +444,16 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
               _buildDetailRow("Father Policy", c.fatherPolicyNumber != null && c.fatherPolicyNumber!.isNotEmpty ? '${c.fatherPolicyNumber} (${c.fatherCompany ?? "N/A"})' : null),
               _buildDetailRow("Mother Policy", c.motherPolicyNumber != null && c.motherPolicyNumber!.isNotEmpty ? '${c.motherPolicyNumber} (${c.motherCompany ?? "N/A"})' : null),
               _buildDetailRow("Spouse Policy", c.spousePolicyNumber != null && c.spousePolicyNumber!.isNotEmpty ? '${c.spousePolicyNumber} (${c.spouseCompany ?? "N/A"})' : null),
-              _buildDetailRow("Children Policy", c.childrenPolicyNumber != null && c.childrenPolicyNumber!.isNotEmpty ? '${c.childrenPolicyNumber} (${c.childrenCompany ?? "N/A"})' : null),
+              if (c.childrenPolicyNumbers != null && c.childrenPolicyNumbers!.isNotEmpty) ...[
+                for (int i = 0; i < c.childrenPolicyNumbers!.length; i++)
+                  if (c.childrenPolicyNumbers![i].isNotEmpty)
+                    _buildDetailRow(
+                      c.childrenPolicyNumbers!.length > 1 ? "Child ${i + 1} Policy" : "Child 1 Policy",
+                      '${c.childrenPolicyNumbers![i]} (${(c.childrenCompanies != null && i < c.childrenCompanies!.length && c.childrenCompanies![i].isNotEmpty) ? c.childrenCompanies![i] : "N/A"})',
+                    ),
+              ] else ...[
+                _buildDetailRow("Children Policy", c.childrenPolicyNumber != null && c.childrenPolicyNumber!.isNotEmpty ? '${c.childrenPolicyNumber} (${c.childrenCompany ?? "N/A"})' : null),
+              ],
               _buildDetailRow("Existing Insurance Policy", c.hasExistingPolicy),
               if ((c.hasExistingPolicy ?? '').toLowerCase() == 'yes') ...[
                 _buildDetailRow("Existing Self-Assigned Company", c.existingSelfCompany),
@@ -473,6 +488,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                   _buildDetailRow("Mode", c.plans[i].mode),
                   _buildDetailRow("Plan Sum Assured", c.plans[i].planSumAssured),
                   _buildDetailRow("Riders Configured", c.plans[i].rider),
+                  _buildDateRow("Plan Date / DOC", c.plans[i].planDate),
                 ]
               else ...[
                 _buildDetailRow("Product Name", c.productName),
@@ -525,20 +541,26 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                   side: BorderSide(color: Colors.grey[200]!),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: ExpansionTile(
-                  leading: const Icon(Icons.attach_file_outlined, color: Colors.blueAccent),
-                  title: const Text('Document Attachments', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  initiallyExpanded: false,
-                  childrenPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  children: c.documents.map((doc) {
-                    return ListTile(
-                      leading: const Icon(Icons.description, color: Colors.blue),
-                      title: Text(doc.documentName ?? 'Unnamed Document'),
-                      subtitle: Text(doc.fileName ?? ''),
-                      trailing: const Icon(Icons.visibility, size: 20),
-                      onTap: () => _previewDocument(doc),
-                    );
-                  }).toList(),
+                child: Material(
+                  color: Colors.transparent,
+                  child: ExpansionTile(
+                    leading: const Icon(Icons.attach_file_outlined, color: Colors.blueAccent),
+                    title: const Text('Document Attachments', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    initiallyExpanded: false,
+                    childrenPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    children: c.documents.map((doc) {
+                      return Material(
+                        color: Colors.transparent,
+                        child: ListTile(
+                          leading: const Icon(Icons.description, color: Colors.blue),
+                          title: Text(doc.documentName ?? 'Unnamed Document'),
+                          subtitle: Text(doc.fileName ?? ''),
+                          trailing: const Icon(Icons.visibility, size: 20),
+                          onTap: () => _previewDocument(doc),
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
 
@@ -777,7 +799,10 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: noteController,
-                  maxLines: 2,
+                  minLines: 2,
+                  maxLines: 5,
+                  keyboardType: TextInputType.multiline,
+                  textInputAction: TextInputAction.newline,
                   decoration: const InputDecoration(
                     labelText: 'Reminder Note / Description',
                     border: OutlineInputBorder(),
@@ -836,7 +861,8 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
   }
 
   Widget _buildPersonalDetailsSection(Customer c) {
-    final dateFormat = DateFormat('dd MMM yyyy');
+    final activePattern = ref.watch(dateFormatPatternProvider);
+    final dateFormat = DateFormat(activePattern);
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -874,6 +900,13 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                       Icons.cake_outlined,
                       'Date of Birth',
                       c.dateOfBirth != null ? dateFormat.format(c.dateOfBirth!) : 'Not Specified',
+                    ),
+                    _buildGridDetailItem(
+                      Icons.numbers_outlined,
+                      'Age',
+                      (c.age != null && c.age!.isNotEmpty)
+                          ? '${c.age} years'
+                          : (c.dateOfBirth != null ? '${_calculateAgeText(c.dateOfBirth)}' : 'Not Specified'),
                     ),
                     _buildGridDetailItem(
                       Icons.person_pin_outlined,

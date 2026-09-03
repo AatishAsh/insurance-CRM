@@ -11,6 +11,9 @@ import '../widgets/rename_file_dialog.dart';
 import '../services/app_storage_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/brand_background.dart';
+import '../providers/settings_provider.dart';
+import '../widgets/date_input_formatter.dart';
+import '../widgets/segmented_date_input_field.dart';
 
 class CustomerFormScreen extends ConsumerStatefulWidget {
   final Customer? customer;
@@ -26,6 +29,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
 
   // Text Controllers
   final Map<String, TextEditingController> _controllers = {};
+  final Map<String, TextEditingController> _dateControllers = {};
 
   // Dates
   final Map<String, DateTime?> _dates = {};
@@ -39,8 +43,10 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
   // Configured Insurance Companies (loaded from DB, up to 15 max)
   List<String> _insuranceCompanies = [];
 
-  // Children DOBs list
+  // Children DOBs & Policy lists
   List<DateTime?> _childrenDOBs = [];
+  List<String> _childrenPolicyNumbers = [];
+  List<String> _childrenCompanies = [];
 
   // Multiple Plans list
   List<CustomerPlanItem> _plans = [];
@@ -365,12 +371,12 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     // Fields list to initialize
     final textFields = [
       'name', 'customerId', 'familyId', 'fatherName', 'spouseName', 'nationality', 'aadhaarNumber',
-      'qualification', 'height', 'weight', 'numberOfChildren', 'fatherAge', 'motherAge',
+      'qualification', 'height', 'weight', 'numberOfChildren', 'age', 'fatherAge', 'motherAge',
       'spouseAge', 'brotherAge', 'sisterAge', 'employerBusinessName', 'designation',
       'natureOfBusiness', 'annualIncome', 'officeContactNumber', 'mobileNumber1',
       'mobileNumber2', 'mobileNumber3', 'mobileNumber4', 'emailId', 'panNumber',
-      'nomineeName', 'nomineeFatherName', 'nomineePan',
-      'nomineeMobile1', 'nomineeMobile2', 'nomineeEmail', 'appointeeName', 'appointeeOtherRelationship', 'selfPolicyNumber',
+      'nomineeName', 'nomineeAge', 'nomineeFatherName', 'nomineePan',
+      'nomineeMobile1', 'nomineeMobile2', 'nomineeEmail', 'appointeeName', 'appointeeAge', 'appointeeOtherRelationship', 'selfPolicyNumber',
       'selfSumAssured1', 'selfSumAssured2', 'selfYearOfIssue', 'fatherPolicyNumber',
       'fatherCompany', 'motherPolicyNumber', 'motherCompany', 'spousePolicyNumber',
       'spouseCompany', 'childrenPolicyNumber', 'childrenCompany', 'existingPolicyNumber', 'healthProblems',
@@ -398,9 +404,12 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
       _controllers['height']!.text = c.height ?? '';
       _controllers['weight']!.text = c.weight ?? '';
       _controllers['numberOfChildren']!.text = c.numberOfChildren?.toString() ?? '';
-      _controllers['fatherAge']!.text = c.fatherAge ?? '';
-      _controllers['motherAge']!.text = c.motherAge ?? '';
-      _controllers['spouseAge']!.text = c.spouseAge ?? '';
+      _controllers['age']!.text = (c.age != null && c.age!.isNotEmpty) ? c.age! : _calculateAgeString(c.dateOfBirth);
+      _controllers['fatherAge']!.text = (c.fatherAge != null && c.fatherAge!.isNotEmpty) ? c.fatherAge! : _calculateAgeString(c.fatherDOB);
+      _controllers['motherAge']!.text = (c.motherAge != null && c.motherAge!.isNotEmpty) ? c.motherAge! : _calculateAgeString(c.motherDOB);
+      _controllers['spouseAge']!.text = (c.spouseAge != null && c.spouseAge!.isNotEmpty) ? c.spouseAge! : _calculateAgeString(c.spouseDOB);
+      _controllers['nomineeAge']!.text = (c.nomineeAge != null && c.nomineeAge!.isNotEmpty) ? c.nomineeAge! : _calculateAgeString(c.nomineeDOB);
+      _controllers['appointeeAge']!.text = (c.appointeeAge != null && c.appointeeAge!.isNotEmpty) ? c.appointeeAge! : _calculateAgeString(c.appointeeDOB);
       _controllers['brotherAge']!.text = c.brotherAge ?? '';
       _controllers['sisterAge']!.text = c.sisterAge ?? '';
       _controllers['employerBusinessName']!.text = c.employerBusinessName ?? '';
@@ -480,6 +489,17 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
         _childrenDOBs = List.from(c.childrenDOBs!);
       }
 
+      if (c.childrenPolicyNumbers != null && c.childrenPolicyNumbers!.isNotEmpty) {
+        _childrenPolicyNumbers = List<String>.from(c.childrenPolicyNumbers!);
+        _childrenCompanies = List<String>.from(c.childrenCompanies ?? []);
+      } else if (c.childrenPolicyNumber != null && c.childrenPolicyNumber!.isNotEmpty) {
+        _childrenPolicyNumbers = c.childrenPolicyNumber!.split(',').map((e) => e.trim()).toList();
+        _childrenCompanies = (c.childrenCompany ?? '').split(',').map((e) => e.trim()).toList();
+      } else {
+        _childrenPolicyNumbers = [];
+        _childrenCompanies = [];
+      }
+
       // Dropdown fields
       _dropdowns['maritalStatus'] = c.maritalStatus ?? '';
       _dropdowns['nomineeRelationship'] = c.nomineeRelationship ?? '';
@@ -502,7 +522,8 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
               ..premium = p.premium
               ..mode = p.mode
               ..planSumAssured = p.planSumAssured
-              ..rider = p.rider)
+              ..rider = p.rider
+              ..planDate = p.planDate)
             .toList();
       } else if (c.productName != null || c.planSumAssured != null) {
         _plans = [
@@ -551,7 +572,30 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     for (final controller in _controllers.values) {
       controller.dispose();
     }
+    for (final controller in _dateControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
+  }
+
+  // Helper for Date pickers with separate DD, MM, YYYY boxes
+  Widget _buildDateField(String key, String label, {Function(DateTime)? onDatePicked}) {
+    final activePattern = ref.watch(dateFormatPatternProvider);
+    final value = _dates[key];
+
+    return SegmentedDateInputField(
+      label: label,
+      initialDate: value,
+      pattern: activePattern,
+      onDateChanged: (picked) {
+        setState(() {
+          _dates[key] = picked;
+          if (picked != null && onDatePicked != null) {
+            onDatePicked(picked);
+          }
+        });
+      },
+    );
   }
 
   Future<void> _pickDocument() async {
@@ -717,8 +761,10 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     customer.motherCompany = _controllers['motherCompany']!.text;
     customer.spousePolicyNumber = _controllers['spousePolicyNumber']!.text;
     customer.spouseCompany = _controllers['spouseCompany']!.text;
-    customer.childrenPolicyNumber = _controllers['childrenPolicyNumber']!.text;
-    customer.childrenCompany = _controllers['childrenCompany']!.text;
+    customer.childrenPolicyNumbers = List<String>.from(_childrenPolicyNumbers);
+    customer.childrenCompanies = List<String>.from(_childrenCompanies);
+    customer.childrenPolicyNumber = _childrenPolicyNumbers.where((s) => s.trim().isNotEmpty).join(', ');
+    customer.childrenCompany = _childrenCompanies.where((s) => s.trim().isNotEmpty).join(', ');
     customer.hasExistingPolicy = _dropdowns['hasExistingPolicy'] ?? 'No';
     if (_dropdowns['hasExistingPolicy'] == 'Yes') {
       customer.existingSelfCompany = _dropdowns['existingSelfCompany']?.isEmpty ?? true ? null : _dropdowns['existingSelfCompany'];
@@ -768,6 +814,9 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
 
     // Date assignments
     customer.dateOfBirth = _dates['dateOfBirth'];
+    customer.age = _controllers['age']?.text.trim().isNotEmpty == true
+        ? _controllers['age']!.text.trim()
+        : _calculateAgeString(_dates['dateOfBirth']);
     customer.fatherDOB = _dates['fatherDOB'];
     customer.motherDOB = _dates['motherDOB'];
     customer.spouseDOB = _dates['spouseDOB'];
@@ -775,7 +824,13 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     customer.familyDOB = null; // Removed in favor of individual DOBs
     customer.weddingAnniversary = _dates['weddingAnniversary'];
     customer.nomineeDOB = _dates['nomineeDOB'];
+    customer.nomineeAge = _controllers['nomineeAge']?.text.trim().isNotEmpty == true
+        ? _controllers['nomineeAge']!.text.trim()
+        : _calculateAgeString(_dates['nomineeDOB']);
     customer.appointeeDOB = _dates['appointeeDOB'];
+    customer.appointeeAge = _controllers['appointeeAge']?.text.trim().isNotEmpty == true
+        ? _controllers['appointeeAge']!.text.trim()
+        : _calculateAgeString(_dates['appointeeDOB']);
     customer.reminderDate1 = _dates['reminderDate1'];
     customer.reminderDate2 = _dates['reminderDate2'];
     customer.reminderDate3 = _dates['reminderDate3'];
@@ -831,45 +886,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     );
   }
 
-  // Helper for Date pickers
-  Widget _buildDateField(String key, String label, {Function(DateTime)? onDatePicked}) {
-    final value = _dates[key];
-    final text = value == null ? '' : DateFormat('dd MMM yyyy').format(value);
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
-      child: InkWell(
-        onTap: () async {
-          final picked = await showDatePicker(
-            context: context,
-            initialDate: value ?? DateTime.now(),
-            firstDate: DateTime(1900),
-            lastDate: DateTime(2100),
-          );
-          if (picked != null) {
-            setState(() {
-              _dates[key] = picked;
-              if (onDatePicked != null) {
-                onDatePicked(picked);
-              }
-            });
-          }
-        },
-        child: InputDecorator(
-          decoration: InputDecoration(
-            labelText: label,
-            border: const OutlineInputBorder(),
-            isDense: true,
-            suffixIcon: const Icon(Icons.calendar_today, size: 20),
-          ),
-          child: Text(
-            text.isEmpty ? 'Select Date' : text,
-            style: TextStyle(color: text.isEmpty ? Colors.grey[600] : Colors.black87),
-          ),
-        ),
-      ),
-    );
-  }
+
 
   // Helper for Dropdowns (safely handles custom or legacy company values)
   Widget _buildDropdownField(String key, String label, List<String> options) {
@@ -923,13 +940,16 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
         side: BorderSide(color: Colors.grey[200]!),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: ExpansionTile(
-        leading: Icon(icon, color: Colors.blueAccent),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        initiallyExpanded: false, // ALL COLLAPSED AS REQUESTED
-        childrenPadding: const EdgeInsets.all(12.0),
-        expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
-        children: children,
+      child: Material(
+        color: Colors.transparent,
+        child: ExpansionTile(
+          leading: Icon(icon, color: Colors.blueAccent),
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          initiallyExpanded: false, // ALL COLLAPSED AS REQUESTED
+          childrenPadding: const EdgeInsets.all(12.0),
+          expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
+          children: children,
+        ),
       ),
     );
   }
@@ -984,7 +1004,10 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
               _buildAccordionSection('Personal Details', Icons.person_outline, [
                 _buildResponsiveRow(isDesktop, [
                   _buildField('fatherName', "Proposer’s Name"),
-                  _buildDateField('dateOfBirth', 'Date of Birth'),
+                  _buildDateField('dateOfBirth', 'Date of Birth', onDatePicked: (picked) {
+                    _controllers['age']!.text = _calculateAgeString(picked);
+                  }),
+                  _buildField('age', 'Age', keyboardType: TextInputType.number),
                 ]),
                 _buildResponsiveRow(isDesktop, [
                   _buildDropdownField('maritalStatus', 'Marital Status', ['Single', 'Married', 'Divorced', 'Widowed']),
@@ -1038,6 +1061,20 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                       if (_childrenDOBs.length > count) {
                         _childrenDOBs = _childrenDOBs.sublist(0, count);
                       }
+
+                      while (_childrenPolicyNumbers.length < count) {
+                        _childrenPolicyNumbers.add('');
+                      }
+                      if (_childrenPolicyNumbers.length > count) {
+                        _childrenPolicyNumbers = _childrenPolicyNumbers.sublist(0, count);
+                      }
+
+                      while (_childrenCompanies.length < count) {
+                        _childrenCompanies.add('');
+                      }
+                      if (_childrenCompanies.length > count) {
+                        _childrenCompanies = _childrenCompanies.sublist(0, count);
+                      }
                     });
                   },
                 ),
@@ -1051,35 +1088,18 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4.0),
                       child: _buildResponsiveRow(isDesktop, [
-                        InkWell(
-                          onTap: () async {
-                            final picked = await showDatePicker(
-                              context: context,
-                              initialDate: childDob ?? DateTime.now(),
-                              firstDate: DateTime(1900),
-                              lastDate: DateTime(2100),
-                            );
-                            if (picked != null) {
-                              setState(() {
-                                while (_childrenDOBs.length <= index) {
-                                  _childrenDOBs.add(null);
-                                }
-                                _childrenDOBs[index] = picked;
-                              });
-                            }
+                        SegmentedDateInputField(
+                          label: 'Child ${index + 1} DOB',
+                          initialDate: childDob,
+                          pattern: ref.watch(dateFormatPatternProvider),
+                          onDateChanged: (picked) {
+                            setState(() {
+                              while (_childrenDOBs.length <= index) {
+                                _childrenDOBs.add(null);
+                              }
+                              _childrenDOBs[index] = picked;
+                            });
                           },
-                          child: InputDecorator(
-                            decoration: InputDecoration(
-                              labelText: 'Child ${index + 1} DOB',
-                              border: const OutlineInputBorder(),
-                              isDense: true,
-                              suffixIcon: const Icon(Icons.calendar_today, size: 20),
-                            ),
-                            child: Text(
-                              dateText.isEmpty ? 'Select Child ${index + 1} DOB' : dateText,
-                              style: TextStyle(color: dateText.isEmpty ? Colors.grey[600] : Colors.black87),
-                            ),
-                          ),
                         ),
                         InputDecorator(
                           decoration: InputDecoration(
@@ -1145,7 +1165,10 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                   ]),
                 ]),
                 _buildResponsiveRow(isDesktop, [
-                  _buildDateField('nomineeDOB', 'Nominee DOB'),
+                  _buildDateField('nomineeDOB', 'Nominee DOB', onDatePicked: (picked) {
+                    _controllers['nomineeAge']!.text = _calculateAgeString(picked);
+                  }),
+                  _buildField('nomineeAge', 'Nominee Age', keyboardType: TextInputType.number),
                   _buildField('nomineeFatherName', "Nominee's Father's Name"),
                 ]),
                 _buildField('nomineePan', 'Nominee PAN'),
@@ -1166,7 +1189,10 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                   ),
                   _buildResponsiveRow(isDesktop, [
                     _buildField('appointeeName', 'Appointee Name'),
-                    _buildDateField('appointeeDOB', 'Appointee DOB'),
+                    _buildDateField('appointeeDOB', 'Appointee DOB', onDatePicked: (picked) {
+                      _controllers['appointeeAge']!.text = _calculateAgeString(picked);
+                    }),
+                    _buildField('appointeeAge', 'Appointee Age', keyboardType: TextInputType.number),
                   ]),
                   _buildDropdownField('appointeeRelationship', 'Appointee Relationship', [
                     'Father', 'Mother', 'Other'
@@ -1232,10 +1258,77 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                   _buildField('spousePolicyNumber', 'Spouse Policy Number'),
                   _buildDropdownField('spouseCompany', 'Spouse Company', _insuranceCompanies),
                 ]),
-                _buildResponsiveRow(isDesktop, [
-                  _buildField('childrenPolicyNumber', 'Children Policy Number'),
-                  _buildDropdownField('childrenCompany', 'Children Company', _insuranceCompanies),
-                ]),
+                Builder(
+                  builder: (context) {
+                    final count = int.tryParse(_controllers['numberOfChildren']?.text ?? '0') ?? 0;
+                    final effectiveCount = count > 0 ? count : 1;
+
+                    while (_childrenPolicyNumbers.length < effectiveCount) {
+                      _childrenPolicyNumbers.add('');
+                    }
+                    while (_childrenCompanies.length < effectiveCount) {
+                      _childrenCompanies.add('');
+                    }
+
+                    return Column(
+                      children: List.generate(effectiveCount, (index) {
+                        final childLabel = count > 1 ? 'Child ${index + 1}' : (count == 1 ? 'Child 1' : 'Children');
+                        final initialPol = index < _childrenPolicyNumbers.length ? _childrenPolicyNumbers[index] : '';
+                        final initialComp = index < _childrenCompanies.length ? _childrenCompanies[index] : '';
+
+                        final effectiveCompOptions = List<String>.from(_insuranceCompanies);
+                        if (initialComp.isNotEmpty && !effectiveCompOptions.contains(initialComp)) {
+                          effectiveCompOptions.insert(0, initialComp);
+                        }
+
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: _buildResponsiveRow(isDesktop, [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
+                              child: TextFormField(
+                                key: ValueKey('child_pol_${index}_$effectiveCount'),
+                                initialValue: initialPol,
+                                decoration: InputDecoration(
+                                  labelText: '$childLabel Policy Number',
+                                  border: const OutlineInputBorder(),
+                                  isDense: true,
+                                ),
+                                onChanged: (val) {
+                                  while (_childrenPolicyNumbers.length <= index) {
+                                    _childrenPolicyNumbers.add('');
+                                  }
+                                  _childrenPolicyNumbers[index] = val;
+                                },
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
+                              child: DropdownButtonFormField<String>(
+                                key: ValueKey('child_comp_${index}_$effectiveCount'),
+                                value: initialComp.isEmpty ? null : initialComp,
+                                items: effectiveCompOptions.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
+                                onChanged: (val) {
+                                  setState(() {
+                                    while (_childrenCompanies.length <= index) {
+                                      _childrenCompanies.add('');
+                                    }
+                                    _childrenCompanies[index] = val ?? '';
+                                  });
+                                },
+                                decoration: InputDecoration(
+                                  labelText: '$childLabel Company',
+                                  border: const OutlineInputBorder(),
+                                  isDense: true,
+                                ),
+                              ),
+                            ),
+                          ]),
+                        );
+                      }),
+                    );
+                  },
+                ),
                 const Divider(height: 24),
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 4.0),
@@ -1361,6 +1454,37 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                                 onChanged: (val) => plan.rider = val,
                               ),
                             ]),
+                            const SizedBox(height: 12),
+                            InkWell(
+                              onTap: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: plan.planDate ?? DateTime.now(),
+                                  firstDate: DateTime(1950),
+                                  lastDate: DateTime(2100),
+                                );
+                                if (picked != null) {
+                                  setState(() {
+                                    plan.planDate = picked;
+                                  });
+                                }
+                              },
+                              child: InputDecorator(
+                                decoration: const InputDecoration(
+                                  labelText: 'Plan Date / Date of Commencement',
+                                  border: OutlineInputBorder(),
+                                  suffixIcon: Icon(Icons.calendar_today, size: 20),
+                                ),
+                                child: Text(
+                                  plan.planDate != null
+                                      ? DateFormat('dd MMM yyyy').format(plan.planDate!)
+                                      : 'Select Plan Date',
+                                  style: TextStyle(
+                                    color: plan.planDate == null ? Colors.grey[600] : Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -1549,17 +1673,20 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                     itemCount: _documents.length,
                     itemBuilder: (context, index) {
                       final doc = _documents[index];
-                      return ListTile(
-                        leading: const Icon(Icons.description, color: Colors.blue),
-                        title: Text(doc.documentName ?? 'Unnamed Document'),
-                        subtitle: Text(doc.fileName ?? '', overflow: TextOverflow.ellipsis),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () {
-                            setState(() {
-                              _documents.removeAt(index);
-                            });
-                          },
+                      return Material(
+                        color: Colors.transparent,
+                        child: ListTile(
+                          leading: const Icon(Icons.description, color: Colors.blue),
+                          title: Text(doc.documentName ?? 'Unnamed Document'),
+                          subtitle: Text(doc.fileName ?? '', overflow: TextOverflow.ellipsis),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () {
+                              setState(() {
+                                _documents.removeAt(index);
+                              });
+                            },
+                          ),
                         ),
                       );
                     },

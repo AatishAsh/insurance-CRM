@@ -21,8 +21,8 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final todaySummaryAsync = ref.watch(todaySummaryEventsProvider);
     final selectedFilter = ref.watch(dashboardFilterCategoryProvider);
-    final now = DateTime.now();
-    final formattedTodayDate = DateFormat('EEEE, dd MMMM yyyy').format(now);
+    final tomorrow = DateTime.now().add(const Duration(days: 1));
+    final formattedTomorrowDate = DateFormat('EEEE, dd MMMM yyyy').format(tomorrow);
     final allItems = todaySummaryAsync.value ?? [];
 
     return Scaffold(
@@ -33,7 +33,7 @@ class DashboardScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Welcome Header & Today Banner
+            // Top Welcome Header & Tomorrow Banner
             BrandCard(
               showTopGradient: true,
               padding: const EdgeInsets.all(20),
@@ -47,7 +47,7 @@ class DashboardScreen extends ConsumerWidget {
                       boxShadow: const [AppColors.buttonShadow],
                     ),
                     child: const Icon(
-                      Icons.today_rounded,
+                      Icons.event_rounded,
                       color: Colors.white,
                       size: 28,
                     ),
@@ -58,7 +58,7 @@ class DashboardScreen extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          "Today's Event Summary",
+                          "Tomorrow's Work & Event Summary",
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -72,7 +72,7 @@ class DashboardScreen extends ConsumerWidget {
                             const Icon(Icons.calendar_month_rounded, size: 14, color: AppColors.skyBlue),
                             const SizedBox(width: 6),
                             Text(
-                              formattedTodayDate,
+                              formattedTomorrowDate,
                               style: const TextStyle(
                                 fontSize: 13,
                                 color: AppColors.bodyText,
@@ -98,7 +98,7 @@ class DashboardScreen extends ConsumerWidget {
                   ),
                     const SizedBox(width: 6),
                     IconButton(
-                      tooltip: 'Refresh Today Data',
+                      tooltip: 'Refresh Tomorrow Data',
                       icon: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
@@ -162,7 +162,7 @@ class DashboardScreen extends ConsumerWidget {
                           physics: const NeverScrollableScrollPhysics(),
                           children: [
                             _buildStatTile(
-                              title: 'Total Today',
+                              title: 'Total Tomorrow',
                               count: allItems.length,
                               icon: Icons.dashboard_customize_rounded,
                               bg: AppColors.badgeBlueBg,
@@ -268,8 +268,8 @@ class DashboardScreen extends ConsumerWidget {
                             const SizedBox(height: 16),
                             Text(
                               selectedFilter == 'All'
-                                  ? 'No events or follow-ups scheduled for today!'
-                                  : 'No $selectedFilter found for today.',
+                                  ? 'No events or follow-ups scheduled for tomorrow!'
+                                  : 'No $selectedFilter found for tomorrow.',
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -279,7 +279,7 @@ class DashboardScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 6),
                             const Text(
-                              'Enjoy your productive day or add new tasks and customer reminders.',
+                              'Enjoy your productive day or add new tasks and customer reminders for tomorrow.',
                               style: TextStyle(fontSize: 13, color: AppColors.mutedText),
                               textAlign: TextAlign.center,
                             ),
@@ -323,7 +323,7 @@ class DashboardScreen extends ConsumerWidget {
               ),
               error: (err, stack) => BrandCard(
                 padding: const EdgeInsets.all(16),
-                child: Text('Error loading today summary: $err', style: const TextStyle(color: AppColors.roseAccent)),
+                child: Text('Error loading tomorrow summary: $err', style: const TextStyle(color: AppColors.roseAccent)),
               ),
             ),
           ],

@@ -47,7 +47,7 @@ class InsuranceApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Customer Management',
+      title: 'JJ CRM',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       scrollBehavior: CurvedOverscrollBehavior(),
@@ -103,7 +103,7 @@ class MainNavigationShell extends ConsumerWidget {
                 ),
                 children: [
                   TextSpan(
-                    text: 'Insurance ',
+                    text: 'JJ ',
                     style: TextStyle(color: AppColors.headingText),
                   ),
                   TextSpan(

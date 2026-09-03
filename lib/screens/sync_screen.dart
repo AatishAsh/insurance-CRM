@@ -11,6 +11,7 @@ import '../providers/events_provider.dart';
 import '../providers/work_provider.dart';
 import '../services/backup_service.dart';
 import '../services/security_service.dart';
+import '../providers/settings_provider.dart';
 import '../theme/app_colors.dart';
 import '../widgets/brand_background.dart';
 
@@ -520,19 +521,22 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
                               side: BorderSide(color: Colors.grey[200]!),
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: ListTile(
-                              dense: true,
-                              leading: const Icon(Icons.computer, color: Colors.blueAccent),
-                              title: Text(device.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                              subtitle: Text('${device.host}:${device.port}'),
-                              trailing: ElevatedButton.icon(
-                                onPressed: syncService.isSyncing
-                                    ? null
-                                    : () => syncService.triggerSyncWith(device),
-                                icon: const Icon(Icons.sync_alt, size: 14),
-                                label: const Text('Sync Now', style: TextStyle(fontSize: 11)),
-                                style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: ListTile(
+                                dense: true,
+                                leading: const Icon(Icons.computer, color: Colors.blueAccent),
+                                title: Text(device.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                subtitle: Text('${device.host}:${device.port}'),
+                                trailing: ElevatedButton.icon(
+                                  onPressed: syncService.isSyncing
+                                      ? null
+                                      : () => syncService.triggerSyncWith(device),
+                                  icon: const Icon(Icons.sync_alt, size: 14),
+                                  label: const Text('Sync Now', style: TextStyle(fontSize: 11)),
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  ),
                                 ),
                               ),
                             ),
@@ -696,6 +700,57 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
             ),
             const SizedBox(height: 16),
 
+            // Global Date Format Preferences Card
+            Card(
+              elevation: 0.5,
+              shape: RoundedRectangleBorder(
+                side: BorderSide(color: Colors.grey[200]!),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.calendar_month_outlined, color: Colors.blueAccent),
+                        SizedBox(width: 12),
+                        Text('Global Date Format Settings', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Choose your preferred date format for manual typing, date pickers, and profile displays across the application.',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      initialValue: ref.watch(dateFormatPatternProvider),
+                      decoration: const InputDecoration(
+                        labelText: 'Active System Date Format',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                        prefixIcon: Icon(Icons.date_range),
+                      ),
+                      items: kDateFormatOptions.map((opt) {
+                        return DropdownMenuItem<String>(
+                          value: opt.pattern,
+                          child: Text(opt.label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+                        );
+                      }).toList(),
+                      onChanged: (newPattern) {
+                        if (newPattern != null) {
+                          ref.read(dateFormatPatternProvider.notifier).setPattern(newPattern);
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
             // Backup & Restore Card
             Card(
               elevation: 0.5,
@@ -775,68 +830,136 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
                       style: TextStyle(color: Colors.grey[600], fontSize: 13),
                     ),
                     const SizedBox(height: 12),
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.playlist_add),
-                      label: const Text('Seed Dummy Data'),
-                      onPressed: () async {
-                        final confirm = await showDialog<bool>(
-                          context: context,
-                          builder: (context) {
-                            return AlertDialog(
-                              icon: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 40),
-                              title: const Text(
-                                'Erase Current Data & Seed Dummy Data?',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                              ),
-                              content: const Text(
-                                'WARNING: This action cannot be undone!\n\nSeeding dummy data will PERMANENTLY ERASE all existing customers, work tasks, and marketing leads, and replace them with sample dummy data.\n\nAre you sure you want to erase your current data?',
-                                style: TextStyle(fontSize: 14, height: 1.4),
-                              ),
-                              actions: [
-                                OutlinedButton(
-                                  onPressed: () => Navigator.pop(context, false),
-                                  child: const Text('Cancel'),
-                                ),
-                                ElevatedButton.icon(
-                                  icon: const Icon(Icons.delete_forever, size: 18),
-                                  label: const Text('Erase & Seed Dummy Data'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red[700],
-                                    foregroundColor: Colors.white,
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        ElevatedButton.icon(
+                          icon: const Icon(Icons.playlist_add),
+                          label: const Text('Seed Dummy Data'),
+                          onPressed: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  icon: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 40),
+                                  title: const Text(
+                                    'Erase Current Data & Seed Dummy Data?',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                                   ),
-                                  onPressed: () => Navigator.pop(context, true),
-                                ),
-                              ],
+                                  content: const Text(
+                                    'WARNING: This action cannot be undone!\n\nSeeding dummy data will PERMANENTLY ERASE all existing customers, work tasks, and marketing leads, and replace them with sample dummy data.\n\nAre you sure you want to erase your current data?',
+                                    style: TextStyle(fontSize: 14, height: 1.4),
+                                  ),
+                                  actions: [
+                                    OutlinedButton(
+                                      onPressed: () => Navigator.pop(context, false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    ElevatedButton.icon(
+                                      icon: const Icon(Icons.delete_forever, size: 18),
+                                      label: const Text('Erase & Seed Dummy Data'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red[700],
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      onPressed: () => Navigator.pop(context, true),
+                                    ),
+                                  ],
+                                );
+                              },
                             );
+
+                            if (confirm != true) return;
+
+                            final db = ref.read(databaseServiceProvider);
+                            await db.seedDummyData();
+                            
+                            // Force all lists to reload immediately
+                            ref.invalidate(customerListProvider);
+                            ref.invalidate(upcomingEventsProvider);
+                            ref.invalidate(companiesProvider);
+                            ref.invalidate(taskListProvider);
+                            ref.invalidate(todayTasksProvider);
+                            
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Database reset: 5 customers, work tasks, and marketing leads seeded successfully!'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            }
                           },
-                        );
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blueAccent,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                        OutlinedButton.icon(
+                          icon: const Icon(Icons.delete_sweep, color: Colors.redAccent),
+                          label: const Text('Clear All Data', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                          onPressed: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  icon: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 40),
+                                  title: const Text(
+                                    'Clear All Application Data?',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                  ),
+                                  content: const Text(
+                                    'WARNING: This action cannot be undone!\n\nThis will PERMANENTLY ERASE all customer profiles, work tasks, marketing leads, performance records, and local document attachments from this device.\n\nAre you sure you want to clear all data?',
+                                    style: TextStyle(fontSize: 14, height: 1.4),
+                                  ),
+                                  actions: [
+                                    OutlinedButton(
+                                      onPressed: () => Navigator.pop(context, false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    ElevatedButton.icon(
+                                      icon: const Icon(Icons.delete_forever, size: 18),
+                                      label: const Text('Clear Everything'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red[700],
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      onPressed: () => Navigator.pop(context, true),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
 
-                        if (confirm != true) return;
+                            if (confirm != true) return;
 
-                        final db = ref.read(databaseServiceProvider);
-                        await db.seedDummyData();
-                        
-                        // Force all lists to reload immediately
-                        ref.invalidate(customerListProvider);
-                        ref.invalidate(upcomingEventsProvider);
-                        ref.invalidate(companiesProvider);
-                        ref.invalidate(taskListProvider);
-                        ref.invalidate(todayTasksProvider);
-                        
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Database reset: 5 customers, work tasks, and marketing leads seeded successfully!'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
-                        foregroundColor: Colors.white,
-                      ),
+                            final db = ref.read(databaseServiceProvider);
+                            await db.clearAllData();
+                            
+                            // Force all list providers to refresh
+                            ref.invalidate(customerListProvider);
+                            ref.invalidate(upcomingEventsProvider);
+                            ref.invalidate(companiesProvider);
+                            ref.invalidate(taskListProvider);
+                            ref.invalidate(todayTasksProvider);
+                            
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('All database records and document attachments cleared successfully!'),
+                                  backgroundColor: Colors.redAccent,
+                                ),
+                              );
+                            }
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: Colors.redAccent),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -849,7 +972,7 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
                   const ShineCraftBrandingFooter(fontSize: 14, logoHeight: 64),
                   const SizedBox(height: 4),
                   Text(
-                    'Offline Customer Detail Management System v1.0.0',
+                    'JJ CRM - Offline Customer Detail Management System v2.0.1',
                     style: TextStyle(fontSize: 11, color: Colors.grey[500]),
                   ),
                 ],

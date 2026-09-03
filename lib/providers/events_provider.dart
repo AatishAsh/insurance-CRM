@@ -6,6 +6,7 @@ import '../models/work_task.dart';
 import 'customer_provider.dart';
 import 'marketing_provider.dart';
 import 'work_provider.dart';
+import '../services/database_service.dart';
 
 class UpcomingEvent {
   final String title;
@@ -215,31 +216,34 @@ class TodayEventSummaryItem {
 final todaySummaryEventsProvider = FutureProvider<List<TodayEventSummaryItem>>((ref) async {
   final customers = await ref.watch(customerListProvider.future);
   final marketingLeads = await ref.watch(marketingListProvider.future);
-  final todayTasksAsync = ref.watch(todayTasksProvider);
-  final tasks = todayTasksAsync.value ?? [];
+  final db = ref.watch(databaseServiceProvider);
+  
+  // Target tomorrow's date for Dashboard work & event summary
+  final targetDate = DateTime.now().add(const Duration(days: 1));
+  await db.carryForwardIncompleteTasks(targetDate);
+  final tasks = await db.getTasksForDate(targetDate);
 
   final List<TodayEventSummaryItem> items = [];
-  final today = DateTime.now();
 
   bool isSameDayAndMonth(DateTime d) {
     final ld = d.toLocal();
-    return ld.month == today.month && ld.day == today.day;
+    return ld.month == targetDate.month && ld.day == targetDate.day;
   }
 
   bool isSameDate(DateTime d) {
     final ld = d.toLocal();
-    return ld.year == today.year && ld.month == today.month && ld.day == today.day;
+    return ld.year == targetDate.year && ld.month == targetDate.month && ld.day == targetDate.day;
   }
 
   // 1. Customer Birthdays & Anniversaries & Reminders
   for (final customer in customers) {
     // DOB
     if (customer.dateOfBirth != null && isSameDayAndMonth(customer.dateOfBirth!)) {
-      final age = today.year - customer.dateOfBirth!.toLocal().year;
+      final age = targetDate.year - customer.dateOfBirth!.toLocal().year;
       items.add(TodayEventSummaryItem(
         id: 'dob_${customer.id}',
         title: "${customer.name}'s Birthday",
-        subtitle: 'Turning $age years old today! ID: ${customer.customerId ?? 'N/A'}',
+        subtitle: 'Turning $age years old tomorrow! ID: ${customer.customerId ?? 'N/A'}',
         categoryLabel: 'Birthday',
         type: TodayEventType.birthday,
         customer: customer,
@@ -251,11 +255,11 @@ final todaySummaryEventsProvider = FutureProvider<List<TodayEventSummaryItem>>((
       for (int i = 0; i < customer.childrenDOBs!.length; i++) {
         final childDob = customer.childrenDOBs![i];
         if (isSameDayAndMonth(childDob)) {
-          final age = today.year - childDob.toLocal().year;
+          final age = targetDate.year - childDob.toLocal().year;
           items.add(TodayEventSummaryItem(
             id: 'child_dob_${customer.id}_$i',
             title: "${customer.name}'s Child Birthday",
-            subtitle: 'Child #${i + 1} turning $age years old today',
+            subtitle: 'Child #${i + 1} turning $age years old tomorrow',
             categoryLabel: 'Birthday',
             type: TodayEventType.birthday,
             customer: customer,
@@ -266,11 +270,11 @@ final todaySummaryEventsProvider = FutureProvider<List<TodayEventSummaryItem>>((
 
     // Wedding Anniversary
     if (customer.weddingAnniversary != null && isSameDayAndMonth(customer.weddingAnniversary!)) {
-      final years = today.year - customer.weddingAnniversary!.toLocal().year;
+      final years = targetDate.year - customer.weddingAnniversary!.toLocal().year;
       items.add(TodayEventSummaryItem(
         id: 'anniversary_${customer.id}',
         title: "${customer.name}'s Wedding Anniversary",
-        subtitle: 'Celebrating $years years of marriage today',
+        subtitle: 'Celebrating $years years of marriage tomorrow',
         categoryLabel: 'Anniversary',
         type: TodayEventType.anniversary,
         customer: customer,
@@ -283,7 +287,7 @@ final todaySummaryEventsProvider = FutureProvider<List<TodayEventSummaryItem>>((
 
     if (paDate != null && (isSameDayAndMonth(paDate) || isSameDate(paDate))) {
       final localPaDate = paDate.toLocal();
-      final years = today.year - localPaDate.year;
+      final years = targetDate.year - localPaDate.year;
       final yearsText = years > 0 ? ' ($years Yr Anniversary)' : '';
       items.add(TodayEventSummaryItem(
         id: 'pa_${customer.id}',
@@ -295,7 +299,7 @@ final todaySummaryEventsProvider = FutureProvider<List<TodayEventSummaryItem>>((
       ));
     } else if (isPASelected && paDate != null) {
       final localPaDate = paDate.toLocal();
-      final years = today.year - localPaDate.year;
+      final years = targetDate.year - localPaDate.year;
       final yearsText = years > 0 ? ' ($years Yr Anniversary)' : '';
       items.add(TodayEventSummaryItem(
         id: 'pa_${customer.id}',

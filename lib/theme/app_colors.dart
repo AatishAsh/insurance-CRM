@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Centralized brand colors and color tokens for Insurance CRM application.
+/// Centralized brand colors and color tokens for JJ CRM application.
 class AppColors {
   // Brand Base Colors
   static const Color limeGreen = Color(0xFF74C043);

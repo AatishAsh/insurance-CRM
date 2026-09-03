@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
+import 'app_storage_service.dart';
 import '../models/customer.dart';
 import '../models/company.dart';
 import '../models/insurance_company.dart';
@@ -351,6 +353,34 @@ class DatabaseService {
     });
 
     return carriedCount;
+  }
+
+  /// Completely clears all database collections and physical attachment files from local storage.
+  Future<void> clearAllData() async {
+    await isar.writeTxn(() async {
+      await isar.customers.clear();
+      await isar.companys.clear();
+      await isar.workTasks.clear();
+      await isar.marketingLeads.clear();
+      await isar.performanceRecords.clear();
+      await isar.insuranceCompanys.clear();
+    });
+
+    // Clean up physical document files
+    try {
+      final docsDir = await AppStorageService.getCustomerDocumentsDirectory();
+      if (await docsDir.exists()) {
+        final List<FileSystemEntity> files = docsDir.listSync();
+        for (final file in files) {
+          if (file is File) {
+            await file.delete();
+          }
+        }
+      }
+    } catch (_) {}
+
+    // Re-seed default 15 companies so app structure remains ready for use
+    await _seedCompaniesIfNeeded();
   }
 
   Future<void> seedDummyData() async {

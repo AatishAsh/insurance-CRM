@@ -1772,12 +1772,15 @@ class _AddEditMarketingLeadDialogState extends ConsumerState<AddEditMarketingLea
                                   const SizedBox(height: 12),
                                   TextFormField(
                                     controller: _visitNoteControllers[index],
+                                    minLines: 2,
+                                    maxLines: 5,
+                                    keyboardType: TextInputType.multiline,
+                                    textInputAction: TextInputAction.newline,
                                     decoration: const InputDecoration(
-                                      labelText: 'Visit Note',
+                                      labelText: 'Visit Note / Remarks',
                                       alignLabelWithHint: true,
                                       border: OutlineInputBorder(),
                                     ),
-                                    maxLines: 2,
                                   ),
                                   const SizedBox(height: 12),
                                   Column(
