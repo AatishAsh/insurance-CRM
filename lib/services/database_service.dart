@@ -480,6 +480,7 @@ class DatabaseService {
       await isar.customers.clear();
       await isar.workTasks.clear();
       await isar.marketingLeads.clear();
+      await isar.performanceRecords.clear();
 
       // 1. Seed Companies (already done by init, but let's retrieve their IDs)
       final companies = await isar.companys.where().findAll();
@@ -909,45 +910,222 @@ class DatabaseService {
 
       await isar.customers.putAll([c1, c2, c3, c4, c5]);
 
-      // 3. Seed Work Tasks
-      final t1 = WorkTask()
-        ..uuid = _uuid.v4()
-        ..companyId = company1Id
-        ..description = 'Carry Forward Test: Policy renewal follow-up with Amit'
-        ..workDate = yesterday
-        ..assignedDate = yesterday
-        ..priority = 'Urgent'
-        ..status = 'Pending' // Incomplete! Should carry forward!
-        ..carryForwardRequired = true
-        ..carryForwardReason = 'Client asked to call back next day'
-        ..updatedAt = yesterday
-        ..isDeleted = false;
+      // 3. Seed Work Tasks (for Tab 1, Tab 2, and Tab 3 companies)
+      final tab1Companies = companies.where((c) => c.tabIndex == 0).toList();
+      final tab2Companies = companies.where((c) => c.tabIndex == 1).toList();
+      final tab3Companies = companies.where((c) => c.tabIndex == 2).toList();
+      final tomorrow = today.add(const Duration(days: 1));
 
-      final t2 = WorkTask()
-        ..uuid = _uuid.v4()
-        ..companyId = company2Id
-        ..description = 'Signature collection from Priya'
-        ..workDate = yesterday
-        ..assignedDate = yesterday
-        ..priority = 'Normal'
-        ..status = 'Completed' // Completed! Should NOT carry forward!
-        ..carryForwardRequired = true
-        ..updatedAt = yesterday
-        ..isDeleted = false;
+      final workTasksToSeed = <WorkTask>[];
 
-      final t3 = WorkTask()
-        ..uuid = _uuid.v4()
-        ..companyId = company1Id
-        ..description = "Verify Sneha's bank details for child policy"
-        ..workDate = today
-        ..assignedDate = today
-        ..priority = 'Important'
-        ..status = 'Pending'
-        ..carryForwardRequired = true
-        ..updatedAt = today
-        ..isDeleted = false;
+      // Tasks for Tab 1 Companies
+      if (tab1Companies.isNotEmpty) {
+        workTasksToSeed.add(WorkTask()
+          ..uuid = _uuid.v4()
+          ..companyId = tab1Companies[0].id
+          ..description = 'Carry Forward Test: Policy renewal follow-up with Amit'
+          ..workDate = yesterday
+          ..assignedDate = yesterday
+          ..createdAt = yesterday
+          ..priority = 'Urgent'
+          ..assignedTo = 'Rajesh'
+          ..communicationMethod = 'Call'
+          ..status = 'Pending'
+          ..carryForwardRequired = true
+          ..carryForwardReason = 'Client asked to call back next day'
+          ..remarks = 'Amit requested callback after 5 PM'
+          ..updatedAt = yesterday
+          ..isDeleted = false);
 
-      await isar.workTasks.putAll([t1, t2, t3]);
+        workTasksToSeed.add(WorkTask()
+          ..uuid = _uuid.v4()
+          ..companyId = tab1Companies[0].id
+          ..description = 'Collect KYC documents and cancelled cheque'
+          ..workDate = today
+          ..assignedDate = today
+          ..createdAt = today
+          ..priority = 'Important'
+          ..assignedTo = 'Kiran'
+          ..communicationMethod = 'In Person'
+          ..status = 'Pending'
+          ..carryForwardRequired = true
+          ..remarks = 'Collect Aadhaar copy and PAN copy'
+          ..updatedAt = today
+          ..isDeleted = false);
+      }
+
+      if (tab1Companies.length > 1) {
+        workTasksToSeed.add(WorkTask()
+          ..uuid = _uuid.v4()
+          ..companyId = tab1Companies[1].id
+          ..description = 'Dispatch physical policy bond via courier'
+          ..workDate = today
+          ..assignedDate = today
+          ..createdAt = today
+          ..priority = 'Normal'
+          ..assignedTo = 'Courier Ops'
+          ..communicationMethod = 'WhatsApp'
+          ..status = 'Completed'
+          ..remarks = 'Tracking ID: DTDC99887766'
+          ..updatedAt = today
+          ..isDeleted = false);
+      }
+
+      if (tab1Companies.length > 2) {
+        workTasksToSeed.add(WorkTask()
+          ..uuid = _uuid.v4()
+          ..companyId = tab1Companies[2].id
+          ..description = 'Medical check-up scheduling for term plan'
+          ..workDate = today
+          ..assignedDate = today
+          ..createdAt = today
+          ..priority = 'Urgent'
+          ..assignedTo = 'Health Team'
+          ..communicationMethod = 'Call'
+          ..status = 'Under Process'
+          ..remarks = 'Diagnostic lab appointment fixed for 8 AM'
+          ..updatedAt = today
+          ..isDeleted = false);
+      }
+
+      if (tab1Companies.length > 3) {
+        workTasksToSeed.add(WorkTask()
+          ..uuid = _uuid.v4()
+          ..companyId = tab1Companies[3].id
+          ..description = 'Address proof verification and biometric setup'
+          ..workDate = tomorrow
+          ..assignedDate = today
+          ..createdAt = today
+          ..priority = 'Normal'
+          ..assignedTo = 'Field Agent'
+          ..communicationMethod = 'In Person'
+          ..status = 'Pending'
+          ..remarks = 'Visit client residence in evening'
+          ..updatedAt = today
+          ..isDeleted = false);
+      }
+
+      // Tasks for Tab 2 Companies
+      if (tab2Companies.isNotEmpty) {
+        workTasksToSeed.add(WorkTask()
+          ..uuid = _uuid.v4()
+          ..companyId = tab2Companies[0].id
+          ..description = 'Signature collection from Priya Verma'
+          ..workDate = yesterday
+          ..assignedDate = yesterday
+          ..createdAt = yesterday
+          ..priority = 'Normal'
+          ..assignedTo = 'Sunil'
+          ..communicationMethod = 'In Person'
+          ..status = 'Completed'
+          ..remarks = 'Signed proposal form received'
+          ..updatedAt = yesterday
+          ..isDeleted = false);
+
+        workTasksToSeed.add(WorkTask()
+          ..uuid = _uuid.v4()
+          ..companyId = tab2Companies[0].id
+          ..description = 'Group health policy endorsement review'
+          ..workDate = today
+          ..assignedDate = today
+          ..createdAt = today
+          ..priority = 'Urgent'
+          ..assignedTo = 'Corporate Desk'
+          ..communicationMethod = 'Email'
+          ..status = 'Pending'
+          ..carryForwardRequired = true
+          ..carryForwardReason = 'Awaiting HR list verification'
+          ..remarks = 'Check member list of 45 employees'
+          ..updatedAt = today
+          ..isDeleted = false);
+      }
+
+      if (tab2Companies.length > 1) {
+        workTasksToSeed.add(WorkTask()
+          ..uuid = _uuid.v4()
+          ..companyId = tab2Companies[1].id
+          ..description = 'Premium calculation for tax saving pension plan'
+          ..workDate = today
+          ..assignedDate = today
+          ..createdAt = today
+          ..priority = 'Important'
+          ..assignedTo = 'Anil'
+          ..communicationMethod = 'WhatsApp'
+          ..status = 'Completed'
+          ..remarks = 'Illustration sent via PDF'
+          ..updatedAt = today
+          ..isDeleted = false);
+      }
+
+      if (tab2Companies.length > 2) {
+        workTasksToSeed.add(WorkTask()
+          ..uuid = _uuid.v4()
+          ..companyId = tab2Companies[2].id
+          ..description = 'Claim settlement document audit'
+          ..workDate = tomorrow
+          ..assignedDate = today
+          ..createdAt = today
+          ..priority = 'Important'
+          ..assignedTo = 'Claims Team'
+          ..communicationMethod = 'Email'
+          ..status = 'Pending'
+          ..remarks = 'Discharge summary and hospital bills required'
+          ..updatedAt = today
+          ..isDeleted = false);
+      }
+
+      // Tasks for Tab 3 Companies
+      if (tab3Companies.isNotEmpty) {
+        workTasksToSeed.add(WorkTask()
+          ..uuid = _uuid.v4()
+          ..companyId = tab3Companies[0].id
+          ..description = "Verify Sneha's bank details for child policy"
+          ..workDate = today
+          ..assignedDate = today
+          ..createdAt = today
+          ..priority = 'Important'
+          ..assignedTo = 'Sneha Desk'
+          ..communicationMethod = 'Call'
+          ..status = 'Pending'
+          ..carryForwardRequired = true
+          ..remarks = 'Verify IFSC code and branch details'
+          ..updatedAt = today
+          ..isDeleted = false);
+
+        workTasksToSeed.add(WorkTask()
+          ..uuid = _uuid.v4()
+          ..companyId = tab3Companies[0].id
+          ..description = 'Corporate presentation preparation for group insurance'
+          ..workDate = today
+          ..assignedDate = today
+          ..createdAt = today
+          ..priority = 'Urgent'
+          ..assignedTo = 'Sales Lead'
+          ..communicationMethod = 'Email'
+          ..status = 'Under Process'
+          ..remarks = 'Slide deck ready, custom pricing pending'
+          ..updatedAt = today
+          ..isDeleted = false);
+      }
+
+      if (tab3Companies.length > 1) {
+        workTasksToSeed.add(WorkTask()
+          ..uuid = _uuid.v4()
+          ..companyId = tab3Companies[1].id
+          ..description = 'Annual portfolio review meeting with Vikram Singh'
+          ..workDate = tomorrow
+          ..assignedDate = today
+          ..createdAt = today
+          ..priority = 'Important'
+          ..assignedTo = 'Account Manager'
+          ..communicationMethod = 'In Person'
+          ..status = 'Pending'
+          ..remarks = 'Meeting scheduled at CA office'
+          ..updatedAt = today
+          ..isDeleted = false);
+      }
+
+      await isar.workTasks.putAll(workTasksToSeed);
 
       // 4. Seed Marketing Leads
       final ml1 = MarketingLead()
@@ -997,6 +1175,158 @@ class DatabaseService {
         ..isDeleted = false;
 
       await isar.marketingLeads.putAll([ml1, ml2, ml3]);
+
+      // 5. Seed Performance Records (Current Month & Previous Month)
+      final universalTopicHeaders = [
+        'Calls Made',
+        'Meetings Scheduled',
+        'Proposals Sent',
+        'Closures',
+        'Referrals',
+        'Policy Audits',
+        'Renewals',
+        'Group Claims',
+        'KYC Updates',
+        'Financial Plans',
+        'Health Quotes',
+        'MDRT Progress',
+        'Notes'
+      ];
+      final universalBox3ColHeaders = [
+        'JJ workway',
+        'Target',
+        'YY',
+        'ZZ',
+        'Percentage',
+        'Achieved %',
+        'Status'
+      ];
+      final universalBox3RowHeaders = [
+        'Life Insurance',
+        'Health & PA',
+        'Mutual Funds',
+        'Commercial Policy'
+      ];
+
+      // Current Month Performance Record
+      final perfCurrent = PerformanceRecord()
+        ..year = today.year
+        ..month = today.month
+        ..urgent = '5'
+        ..newBusiness = '12'
+        ..life = '₹ 8,50,000'
+        ..fireHealthPa = '₹ 3,20,000'
+        ..earned = '₹ 1,45,000'
+        ..box2Row1Days = '18'
+        ..box2EarningsOnWorkedDays = '₹ 1,45,000'
+        ..box2Row2Days = '4'
+        ..box2TotalWorkingDay = '22'
+        ..box3JjWorkwayCol1 = '15,00,000'
+        ..box3JjWorkwayCol2 = '12,00,000'
+        ..box3JjWorkwayCol3 = '18,00,000'
+        ..box3JjWorkwayCol4 = '20,00,000'
+        ..box3TargetCol1 = '20,00,000'
+        ..box3TargetCol2 = '15,00,000'
+        ..box3TargetCol3 = '22,00,000'
+        ..box3TargetCol4 = '25,00,000'
+        ..box3YyCol1 = '2026'
+        ..box3YyCol2 = '2026'
+        ..box3YyCol3 = '2026'
+        ..box3YyCol4 = '2026'
+        ..box3ZzCol1 = 'Q3'
+        ..box3ZzCol2 = 'Q3'
+        ..box3ZzCol3 = 'Q3'
+        ..box3ZzCol4 = 'Q3'
+        ..box3PercentageCol1 = '75%'
+        ..box3PercentageCol2 = '80%'
+        ..box3PercentageCol3 = '81.8%'
+        ..box3PercentageCol4 = '80%'
+        ..box3Col6Col1 = '75%'
+        ..box3Col6Col2 = '80%'
+        ..box3Col6Col3 = '82%'
+        ..box3Col6Col4 = '80%'
+        ..box3Col7Col1 = 'On Track'
+        ..box3Col7Col2 = 'Exceeded'
+        ..box3Col7Col3 = 'On Track'
+        ..box3Col7Col4 = 'On Track'
+        ..box3ColHeaders = universalBox3ColHeaders
+        ..box3RowHeaders = universalBox3RowHeaders
+        ..box4Balance = '₹ 12,50,000'
+        ..box4Target = '₹ 35,00,000'
+        ..box4Achieved = '₹ 22,50,000'
+        ..topicHeaders = universalTopicHeaders
+        ..topicRows = [
+          TopicTableRow()
+            ..dateStr = '02/${today.month.toString().padLeft(2, '0')}/${today.year}'
+            ..values = ['25', '8', '5', '2', '3', '4', '6', '1', '2', '2', '3', 'On Track', 'Good initial push'],
+          TopicTableRow()
+            ..dateStr = '08/${today.month.toString().padLeft(2, '0')}/${today.year}'
+            ..values = ['30', '10', '7', '3', '4', '5', '8', '2', '3', '3', '4', 'Ahead', 'Corporate client closed'],
+          TopicTableRow()
+            ..dateStr = '15/${today.month.toString().padLeft(2, '0')}/${today.year}'
+            ..values = ['20', '6', '4', '1', '2', '3', '5', '0', '1', '1', '2', 'On Track', 'Follow-up done'],
+        ]
+        ..updatedAt = DateTime.now();
+
+      // Previous Month Performance Record
+      final prevMonthDate = DateTime(today.year, today.month - 1, 1);
+      final perfPrev = PerformanceRecord()
+        ..year = prevMonthDate.year
+        ..month = prevMonthDate.month
+        ..urgent = '3'
+        ..newBusiness = '10'
+        ..life = '₹ 7,20,000'
+        ..fireHealthPa = '₹ 2,80,000'
+        ..earned = '₹ 1,20,000'
+        ..box2Row1Days = '20'
+        ..box2EarningsOnWorkedDays = '₹ 1,20,000'
+        ..box2Row2Days = '2'
+        ..box2TotalWorkingDay = '22'
+        ..box3JjWorkwayCol1 = '14,00,000'
+        ..box3JjWorkwayCol2 = '10,00,000'
+        ..box3JjWorkwayCol3 = '15,00,000'
+        ..box3JjWorkwayCol4 = '18,00,000'
+        ..box3TargetCol1 = '18,00,000'
+        ..box3TargetCol2 = '12,00,000'
+        ..box3TargetCol3 = '20,00,000'
+        ..box3TargetCol4 = '22,00,000'
+        ..box3YyCol1 = '2026'
+        ..box3YyCol2 = '2026'
+        ..box3YyCol3 = '2026'
+        ..box3YyCol4 = '2026'
+        ..box3ZzCol1 = 'Q2'
+        ..box3ZzCol2 = 'Q2'
+        ..box3ZzCol3 = 'Q2'
+        ..box3ZzCol4 = 'Q2'
+        ..box3PercentageCol1 = '77.7%'
+        ..box3PercentageCol2 = '83.3%'
+        ..box3PercentageCol3 = '75%'
+        ..box3PercentageCol4 = '81.8%'
+        ..box3Col6Col1 = '78%'
+        ..box3Col6Col2 = '83%'
+        ..box3Col6Col3 = '75%'
+        ..box3Col6Col4 = '82%'
+        ..box3Col7Col1 = 'Completed'
+        ..box3Col7Col2 = 'Exceeded'
+        ..box3Col7Col3 = 'Completed'
+        ..box3Col7Col4 = 'Completed'
+        ..box3ColHeaders = universalBox3ColHeaders
+        ..box3RowHeaders = universalBox3RowHeaders
+        ..box4Balance = '₹ 15,00,000'
+        ..box4Target = '₹ 30,00,000'
+        ..box4Achieved = '₹ 18,00,000'
+        ..topicHeaders = universalTopicHeaders
+        ..topicRows = [
+          TopicTableRow()
+            ..dateStr = '05/${prevMonthDate.month.toString().padLeft(2, '0')}/${prevMonthDate.year}'
+            ..values = ['28', '9', '6', '2', '3', '4', '7', '1', '2', '2', '3', 'On Target', 'Month-start drive'],
+          TopicTableRow()
+            ..dateStr = '20/${prevMonthDate.month.toString().padLeft(2, '0')}/${prevMonthDate.year}'
+            ..values = ['32', '11', '8', '4', '5', '6', '9', '2', '4', '4', '5', 'Completed', 'MDRT month target hit'],
+        ]
+        ..updatedAt = prevMonthDate;
+
+      await isar.performanceRecords.putAll([perfCurrent, perfPrev]);
     });
   }
 

@@ -16,6 +16,9 @@ class WorkTask {
   late DateTime workDate;
   DateTime? assignedDate;
   
+  @Index()
+  DateTime? createdAt;
+  
   // Urgent, Important, Normal
   late String priority; 
   

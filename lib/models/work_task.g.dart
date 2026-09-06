@@ -52,43 +52,48 @@ const WorkTaskSchema = CollectionSchema(
       name: r'companyId',
       type: IsarType.long,
     ),
-    r'description': PropertySchema(
+    r'createdAt': PropertySchema(
       id: 7,
+      name: r'createdAt',
+      type: IsarType.dateTime,
+    ),
+    r'description': PropertySchema(
+      id: 8,
       name: r'description',
       type: IsarType.string,
     ),
     r'isDeleted': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'isDeleted',
       type: IsarType.bool,
     ),
     r'priority': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'priority',
       type: IsarType.string,
     ),
     r'remarks': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'remarks',
       type: IsarType.string,
     ),
     r'status': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'status',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'uuid': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'uuid',
       type: IsarType.string,
     ),
     r'workDate': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'workDate',
       type: IsarType.dateTime,
     )
@@ -109,6 +114,19 @@ const WorkTaskSchema = CollectionSchema(
           name: r'uuid',
           type: IndexType.hash,
           caseSensitive: true,
+        )
+      ],
+    ),
+    r'createdAt': IndexSchema(
+      id: -3433535483987302584,
+      name: r'createdAt',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'createdAt',
+          type: IndexType.value,
+          caseSensitive: false,
         )
       ],
     ),
@@ -184,14 +202,15 @@ void _workTaskSerialize(
   writer.writeBool(offsets[4], object.carryForwardRequired);
   writer.writeString(offsets[5], object.communicationMethod);
   writer.writeLong(offsets[6], object.companyId);
-  writer.writeString(offsets[7], object.description);
-  writer.writeBool(offsets[8], object.isDeleted);
-  writer.writeString(offsets[9], object.priority);
-  writer.writeString(offsets[10], object.remarks);
-  writer.writeString(offsets[11], object.status);
-  writer.writeDateTime(offsets[12], object.updatedAt);
-  writer.writeString(offsets[13], object.uuid);
-  writer.writeDateTime(offsets[14], object.workDate);
+  writer.writeDateTime(offsets[7], object.createdAt);
+  writer.writeString(offsets[8], object.description);
+  writer.writeBool(offsets[9], object.isDeleted);
+  writer.writeString(offsets[10], object.priority);
+  writer.writeString(offsets[11], object.remarks);
+  writer.writeString(offsets[12], object.status);
+  writer.writeDateTime(offsets[13], object.updatedAt);
+  writer.writeString(offsets[14], object.uuid);
+  writer.writeDateTime(offsets[15], object.workDate);
 }
 
 WorkTask _workTaskDeserialize(
@@ -208,15 +227,16 @@ WorkTask _workTaskDeserialize(
   object.carryForwardRequired = reader.readBool(offsets[4]);
   object.communicationMethod = reader.readStringOrNull(offsets[5]);
   object.companyId = reader.readLongOrNull(offsets[6]);
-  object.description = reader.readString(offsets[7]);
+  object.createdAt = reader.readDateTimeOrNull(offsets[7]);
+  object.description = reader.readString(offsets[8]);
   object.id = id;
-  object.isDeleted = reader.readBool(offsets[8]);
-  object.priority = reader.readString(offsets[9]);
-  object.remarks = reader.readStringOrNull(offsets[10]);
-  object.status = reader.readString(offsets[11]);
-  object.updatedAt = reader.readDateTime(offsets[12]);
-  object.uuid = reader.readString(offsets[13]);
-  object.workDate = reader.readDateTime(offsets[14]);
+  object.isDeleted = reader.readBool(offsets[9]);
+  object.priority = reader.readString(offsets[10]);
+  object.remarks = reader.readStringOrNull(offsets[11]);
+  object.status = reader.readString(offsets[12]);
+  object.updatedAt = reader.readDateTime(offsets[13]);
+  object.uuid = reader.readString(offsets[14]);
+  object.workDate = reader.readDateTime(offsets[15]);
   return object;
 }
 
@@ -242,20 +262,22 @@ P _workTaskDeserializeProp<P>(
     case 6:
       return (reader.readLongOrNull(offset)) as P;
     case 7:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 8:
-      return (reader.readBool(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 9:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 10:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 11:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 12:
-      return (reader.readDateTime(offset)) as P;
-    case 13:
       return (reader.readString(offset)) as P;
+    case 13:
+      return (reader.readDateTime(offset)) as P;
     case 14:
+      return (reader.readString(offset)) as P;
+    case 15:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -332,6 +354,14 @@ extension WorkTaskQueryWhereSort on QueryBuilder<WorkTask, WorkTask, QWhere> {
   QueryBuilder<WorkTask, WorkTask, QAfterWhere> anyId() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(const IdWhereClause.any());
+    });
+  }
+
+  QueryBuilder<WorkTask, WorkTask, QAfterWhere> anyCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'createdAt'),
+      );
     });
   }
 
@@ -451,6 +481,116 @@ extension WorkTaskQueryWhere on QueryBuilder<WorkTask, WorkTask, QWhereClause> {
               includeUpper: false,
             ));
       }
+    });
+  }
+
+  QueryBuilder<WorkTask, WorkTask, QAfterWhereClause> createdAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'createdAt',
+        value: [null],
+      ));
+    });
+  }
+
+  QueryBuilder<WorkTask, WorkTask, QAfterWhereClause> createdAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'createdAt',
+        lower: [null],
+        includeLower: false,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<WorkTask, WorkTask, QAfterWhereClause> createdAtEqualTo(
+      DateTime? createdAt) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'createdAt',
+        value: [createdAt],
+      ));
+    });
+  }
+
+  QueryBuilder<WorkTask, WorkTask, QAfterWhereClause> createdAtNotEqualTo(
+      DateTime? createdAt) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'createdAt',
+              lower: [],
+              upper: [createdAt],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'createdAt',
+              lower: [createdAt],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'createdAt',
+              lower: [createdAt],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'createdAt',
+              lower: [],
+              upper: [createdAt],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<WorkTask, WorkTask, QAfterWhereClause> createdAtGreaterThan(
+    DateTime? createdAt, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'createdAt',
+        lower: [createdAt],
+        includeLower: include,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<WorkTask, WorkTask, QAfterWhereClause> createdAtLessThan(
+    DateTime? createdAt, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'createdAt',
+        lower: [],
+        upper: [createdAt],
+        includeUpper: include,
+      ));
+    });
+  }
+
+  QueryBuilder<WorkTask, WorkTask, QAfterWhereClause> createdAtBetween(
+    DateTime? lowerCreatedAt,
+    DateTime? upperCreatedAt, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'createdAt',
+        lower: [lowerCreatedAt],
+        includeLower: includeLower,
+        upper: [upperCreatedAt],
+        includeUpper: includeUpper,
+      ));
     });
   }
 
@@ -1219,6 +1359,75 @@ extension WorkTaskQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
         property: r'companyId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<WorkTask, WorkTask, QAfterFilterCondition> createdAtIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'createdAt',
+      ));
+    });
+  }
+
+  QueryBuilder<WorkTask, WorkTask, QAfterFilterCondition> createdAtIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'createdAt',
+      ));
+    });
+  }
+
+  QueryBuilder<WorkTask, WorkTask, QAfterFilterCondition> createdAtEqualTo(
+      DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'createdAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<WorkTask, WorkTask, QAfterFilterCondition> createdAtGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'createdAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<WorkTask, WorkTask, QAfterFilterCondition> createdAtLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'createdAt',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<WorkTask, WorkTask, QAfterFilterCondition> createdAtBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'createdAt',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -2158,6 +2367,18 @@ extension WorkTaskQuerySortBy on QueryBuilder<WorkTask, WorkTask, QSortBy> {
     });
   }
 
+  QueryBuilder<WorkTask, WorkTask, QAfterSortBy> sortByCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<WorkTask, WorkTask, QAfterSortBy> sortByCreatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.desc);
+    });
+  }
+
   QueryBuilder<WorkTask, WorkTask, QAfterSortBy> sortByDescription() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'description', Sort.asc);
@@ -2344,6 +2565,18 @@ extension WorkTaskQuerySortThenBy
     });
   }
 
+  QueryBuilder<WorkTask, WorkTask, QAfterSortBy> thenByCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<WorkTask, WorkTask, QAfterSortBy> thenByCreatedAtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'createdAt', Sort.desc);
+    });
+  }
+
   QueryBuilder<WorkTask, WorkTask, QAfterSortBy> thenByDescription() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'description', Sort.asc);
@@ -2502,6 +2735,12 @@ extension WorkTaskQueryWhereDistinct
     });
   }
 
+  QueryBuilder<WorkTask, WorkTask, QDistinct> distinctByCreatedAt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'createdAt');
+    });
+  }
+
   QueryBuilder<WorkTask, WorkTask, QDistinct> distinctByDescription(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -2607,6 +2846,12 @@ extension WorkTaskQueryProperty
   QueryBuilder<WorkTask, int?, QQueryOperations> companyIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'companyId');
+    });
+  }
+
+  QueryBuilder<WorkTask, DateTime?, QQueryOperations> createdAtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'createdAt');
     });
   }
 

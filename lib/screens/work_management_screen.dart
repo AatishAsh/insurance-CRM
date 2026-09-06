@@ -531,6 +531,9 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
     if (task.priority == 'Urgent') priorityColor = Colors.red;
     if (task.priority == 'Important') priorityColor = Colors.orange;
 
+    final createdDate = task.createdAt ?? task.assignedDate ?? task.workDate;
+    final createdStr = DateFormat('dd MMM yyyy').format(createdDate);
+
     return Card(
       elevation: 0.5,
       margin: const EdgeInsets.only(bottom: 12),
@@ -561,6 +564,7 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                   spacing: 6,
                   runSpacing: 4,
                   children: [
+                    _buildBadge('Created: $createdStr', Colors.teal),
                     _buildBadge('Priority: ${task.priority}', priorityColor),
                     _buildBadge('Method: ${task.communicationMethod ?? "N/A"}', Colors.blueGrey),
                     if (task.assignedTo != null && task.assignedTo!.isNotEmpty)
@@ -671,6 +675,7 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
     final remarkController = TextEditingController(text: existingTask?.remarks ?? '');
     final reasonController = TextEditingController(text: existingTask?.carryForwardReason ?? '');
     
+    DateTime createdDate = existingTask?.createdAt ?? existingTask?.assignedDate ?? DateTime.now();
     String status = existingTask?.status ?? 'Pending';
     String priority = existingTask?.priority ?? 'Normal';
     String method = existingTask?.communicationMethod ?? 'WhatsApp';
@@ -679,97 +684,134 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(existingTask == null ? 'New Work Task Entry' : 'Edit Work Task Entry'),
-        content: StatefulBuilder(
-          builder: (context, setDialogState) {
-            return SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: descController,
-                    minLines: 2,
-                    maxLines: 5,
-                    keyboardType: TextInputType.multiline,
-                    textInputAction: TextInputAction.newline,
-                    decoration: const InputDecoration(labelText: 'Task Description *', border: OutlineInputBorder()),
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    value: status,
-                    decoration: const InputDecoration(labelText: 'Initial Status', border: OutlineInputBorder()),
-                    items: ['Pending', 'Completed', 'Under Process', 'No Response']
-                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                        .toList(),
-                    onChanged: (val) {
-                      if (val != null) setDialogState(() => status = val);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    value: priority,
-                    decoration: const InputDecoration(labelText: 'Priority Level', border: OutlineInputBorder()),
-                    items: ['Normal', 'Important', 'Urgent']
-                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                        .toList(),
-                    onChanged: (val) {
-                      if (val != null) setDialogState(() => priority = val);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  DropdownButtonFormField<String>(
-                    value: method,
-                    decoration: const InputDecoration(labelText: 'Communication Channel', border: OutlineInputBorder()),
-                    items: ['In Person', 'WhatsApp', 'Email', 'Call']
-                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                        .toList(),
-                    onChanged: (val) {
-                      if (val != null) setDialogState(() => method = val);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: toController,
-                    decoration: const InputDecoration(labelText: 'Assign To / Contact Person', border: OutlineInputBorder()),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: remarkController,
-                    minLines: 2,
-                    maxLines: 5,
-                    keyboardType: TextInputType.multiline,
-                    textInputAction: TextInputAction.newline,
-                    decoration: const InputDecoration(labelText: 'Additional Remarks', border: OutlineInputBorder()),
-                  ),
-                  const SizedBox(height: 8),
-                  CheckboxListTile(
-                    title: const Text('Carry Forward if incomplete?', style: TextStyle(fontSize: 14)),
-                    subtitle: const Text('Clones task to next day if not completed', style: TextStyle(fontSize: 11)),
-                    value: carryForward,
-                    onChanged: (val) {
-                      if (val != null) setDialogState(() => carryForward = val);
-                    },
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                  if (carryForward) ...[
-                    const SizedBox(height: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          existingTask == null ? 'New Work Task Entry' : 'Edit Work Task Entry',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+        content: SizedBox(
+          width: 500,
+          child: StatefulBuilder(
+            builder: (context, setDialogState) {
+              return SingleChildScrollView(
+                padding: const EdgeInsets.only(top: 8, bottom: 8, left: 2, right: 2),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    InkWell(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: createdDate,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2100),
+                        );
+                        if (picked != null) {
+                          setDialogState(() => createdDate = picked);
+                        }
+                      },
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Work Created Date',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                          suffixIcon: Icon(Icons.calendar_today, size: 18, color: Colors.blueAccent),
+                        ),
+                        child: Text(
+                          DateFormat('dd MMM yyyy').format(createdDate),
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
                     TextField(
-                      controller: reasonController,
+                      controller: descController,
                       minLines: 2,
                       maxLines: 5,
                       keyboardType: TextInputType.multiline,
                       textInputAction: TextInputAction.newline,
-                      decoration: const InputDecoration(
-                        labelText: 'Reason for Carry Forward',
-                        border: OutlineInputBorder(),
-                        hintText: 'e.g. Awaiting client documents',
-                      ),
+                      decoration: const InputDecoration(labelText: 'Task Description *', border: OutlineInputBorder()),
                     ),
-                  ]
-                ],
-              ),
-            );
-          },
+                    const SizedBox(height: 14),
+                    DropdownButtonFormField<String>(
+                      value: status,
+                      decoration: const InputDecoration(labelText: 'Initial Status', border: OutlineInputBorder()),
+                      items: ['Pending', 'Completed', 'Under Process', 'No Response']
+                          .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                          .toList(),
+                      onChanged: (val) {
+                        if (val != null) setDialogState(() => status = val);
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    DropdownButtonFormField<String>(
+                      value: priority,
+                      decoration: const InputDecoration(labelText: 'Priority Level', border: OutlineInputBorder()),
+                      items: ['Normal', 'Important', 'Urgent']
+                          .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                          .toList(),
+                      onChanged: (val) {
+                        if (val != null) setDialogState(() => priority = val);
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    DropdownButtonFormField<String>(
+                      value: method,
+                      decoration: const InputDecoration(labelText: 'Communication Channel', border: OutlineInputBorder()),
+                      items: ['In Person', 'WhatsApp', 'Email', 'Call']
+                          .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                          .toList(),
+                      onChanged: (val) {
+                        if (val != null) setDialogState(() => method = val);
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: toController,
+                      decoration: const InputDecoration(labelText: 'Assign To / Contact Person', border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: remarkController,
+                      minLines: 2,
+                      maxLines: 5,
+                      keyboardType: TextInputType.multiline,
+                      textInputAction: TextInputAction.newline,
+                      decoration: const InputDecoration(labelText: 'Additional Remarks', border: OutlineInputBorder()),
+                    ),
+                    const SizedBox(height: 10),
+                    CheckboxListTile(
+                      title: const Text('Carry Forward if incomplete?', style: TextStyle(fontSize: 14)),
+                      subtitle: const Text('Clones task to next day if not completed', style: TextStyle(fontSize: 11)),
+                      value: carryForward,
+                      onChanged: (val) {
+                        if (val != null) setDialogState(() => carryForward = val);
+                      },
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    if (carryForward) ...[
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: reasonController,
+                        minLines: 2,
+                        maxLines: 5,
+                        keyboardType: TextInputType.multiline,
+                        textInputAction: TextInputAction.newline,
+                        decoration: const InputDecoration(
+                          labelText: 'Reason for Carry Forward',
+                          border: OutlineInputBorder(),
+                          hintText: 'e.g. Awaiting client documents',
+                        ),
+                      ),
+                    ]
+                  ],
+                ),
+              );
+            },
+          ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
@@ -782,7 +824,8 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                   ..companyId = companyId
                   ..description = descController.text.trim()
                   ..workDate = existingTask?.workDate ?? ref.read(selectedDateProvider)
-                  ..assignedDate = existingTask?.assignedDate ?? DateTime.now()
+                  ..createdAt = createdDate
+                  ..assignedDate = createdDate
                   ..priority = priority
                   ..assignedTo = toController.text.trim().isEmpty ? null : toController.text.trim()
                   ..communicationMethod = method

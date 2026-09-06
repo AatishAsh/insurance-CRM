@@ -886,7 +886,7 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Database reset: 5 customers, work tasks, and marketing leads seeded successfully!'),
+                                  content: Text('Database reset: 5 customers, work tasks, marketing leads, and performance records seeded successfully!'),
                                   backgroundColor: Colors.green,
                                 ),
                               );

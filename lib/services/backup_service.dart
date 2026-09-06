@@ -447,6 +447,7 @@ class BackupService {
       'description': t.description,
       'workDate': t.workDate.toIso8601String(),
       'assignedDate': t.assignedDate?.toIso8601String(),
+      'createdAt': t.createdAt?.toIso8601String() ?? t.assignedDate?.toIso8601String(),
       'priority': t.priority,
       'assignedTo': t.assignedTo,
       'communicationMethod': t.communicationMethod,
@@ -467,6 +468,7 @@ class BackupService {
     t.description = json['description'] as String;
     t.workDate = DateTime.parse(json['workDate'] as String);
     t.assignedDate = json['assignedDate'] != null ? DateTime.parse(json['assignedDate'] as String) : null;
+    t.createdAt = json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : (t.assignedDate ?? t.workDate);
     t.priority = json['priority'] as String;
     t.assignedTo = json['assignedTo'] as String?;
     t.communicationMethod = json['communicationMethod'] as String?;
