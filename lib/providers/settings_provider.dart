@@ -75,7 +75,10 @@ DateTime? parseDateString(String input, String pattern) {
       year = int.parse(digits.substring(4, 8));
     }
     if (month >= 1 && month <= 12 && day >= 1 && day <= 31 && year >= 1900 && year <= 2100) {
-      return DateTime(year, month, day);
+      final dt = DateTime(year, month, day);
+      if (dt.month == month && dt.day == day) {
+        return dt;
+      }
     }
   } catch (_) {}
   return null;

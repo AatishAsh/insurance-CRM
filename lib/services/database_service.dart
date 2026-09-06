@@ -132,19 +132,80 @@ class DatabaseService {
   // --- COMPANY OPERATIONS ---
 
   Future<void> _seedCompaniesIfNeeded() async {
-    final count = await isar.companys.count();
-    if (count == 0) {
+    final existingCompanies = await isar.companys.filter().isDeletedEqualTo(false).findAll();
+
+    if (existingCompanies.isEmpty) {
       await isar.writeTxn(() async {
+        // Tab 1 (Index 0): 15 Companies
         for (int i = 1; i <= 15; i++) {
           final company = Company()
-            ..uuid = 'seed_company_uuid_$i'
+            ..uuid = 'seed_company_uuid_tab1_$i'
             ..name = 'Company $i'
             ..referenceNumber = 'REF-${100 + i}'
+            ..tabIndex = 0
+            ..updatedAt = DateTime.now()
+            ..isDeleted = false;
+          await isar.companys.put(company);
+        }
+        // Tab 2 (Index 1): 10 Companies
+        for (int i = 1; i <= 10; i++) {
+          final company = Company()
+            ..uuid = 'seed_company_uuid_tab2_$i'
+            ..name = 'Company ${15 + i}'
+            ..referenceNumber = 'REF-${115 + i}'
+            ..tabIndex = 1
+            ..updatedAt = DateTime.now()
+            ..isDeleted = false;
+          await isar.companys.put(company);
+        }
+        // Tab 3 (Index 2): 5 Companies
+        for (int i = 1; i <= 5; i++) {
+          final company = Company()
+            ..uuid = 'seed_company_uuid_tab3_$i'
+            ..name = 'Company ${25 + i}'
+            ..referenceNumber = 'REF-${125 + i}'
+            ..tabIndex = 2
             ..updatedAt = DateTime.now()
             ..isDeleted = false;
           await isar.companys.put(company);
         }
       });
+    } else {
+      // Re-save existing companies to ensure new tabIndex field is persisted on disk
+      await isar.writeTxn(() async {
+        for (final c in existingCompanies) {
+          await isar.companys.put(c);
+        }
+      });
+
+      // Migration: Ensure Tab 2 and Tab 3 have initial seed data if upgrading from previous single-tab version
+      final tab2Count = existingCompanies.where((c) => c.tabIndex == 1).length;
+      final tab3Count = existingCompanies.where((c) => c.tabIndex == 2).length;
+
+      if (tab2Count == 0 && tab3Count == 0) {
+        await isar.writeTxn(() async {
+          for (int i = 1; i <= 10; i++) {
+            final company = Company()
+              ..uuid = 'seed_company_uuid_tab2_$i'
+              ..name = 'Company ${15 + i}'
+              ..referenceNumber = 'REF-${115 + i}'
+              ..tabIndex = 1
+              ..updatedAt = DateTime.now()
+              ..isDeleted = false;
+            await isar.companys.put(company);
+          }
+          for (int i = 1; i <= 5; i++) {
+            final company = Company()
+              ..uuid = 'seed_company_uuid_tab3_$i'
+              ..name = 'Company ${25 + i}'
+              ..referenceNumber = 'REF-${125 + i}'
+              ..tabIndex = 2
+              ..updatedAt = DateTime.now()
+              ..isDeleted = false;
+            await isar.companys.put(company);
+          }
+        });
+      }
     }
   }
 
@@ -152,8 +213,35 @@ class DatabaseService {
     return await isar.companys.filter().isDeletedEqualTo(false).findAll();
   }
 
+  Future<List<Company>> getCompaniesForTab(int tabIndex) async {
+    final all = await isar.companys.filter().isDeletedEqualTo(false).findAll();
+    return all.where((c) => c.tabIndex == tabIndex).toList();
+  }
+
   Future<Company?> getCompanyById(int id) async {
     return await isar.companys.get(id);
+  }
+
+  Future<void> addCompanyToTab(String name, int tabIndex, {String? referenceNumber}) async {
+    final cleanName = name.trim();
+    if (cleanName.isEmpty) return;
+
+    final activeInTab = await getCompaniesForTab(tabIndex);
+    if (activeInTab.length >= 15) {
+      throw Exception('Maximum limit of 15 companies reached for this tab.');
+    }
+
+    final company = Company()
+      ..uuid = _uuid.v4()
+      ..name = cleanName
+      ..referenceNumber = referenceNumber?.trim().isNotEmpty == true ? referenceNumber!.trim() : null
+      ..tabIndex = tabIndex
+      ..updatedAt = DateTime.now()
+      ..isDeleted = false;
+
+    await isar.writeTxn(() async {
+      await isar.companys.put(company);
+    });
   }
 
   Future<void> saveCompany(Company company) async {
@@ -965,5 +1053,71 @@ class DatabaseService {
       record.id = id;
     });
   }
+
+  Future<Map<String, List<String>>?> getLatestPerformanceHeaders() async {
+    final records = await isar.performanceRecords.where().findAll();
+    if (records.isEmpty) return null;
+
+    List<String>? topicHeaders;
+    List<String>? box3ColHeaders;
+    List<String>? box3RowHeaders;
+
+    for (final r in records.reversed) {
+      if (topicHeaders == null && r.topicHeaders.isNotEmpty) {
+        topicHeaders = r.topicHeaders;
+      }
+      if (box3ColHeaders == null && r.box3ColHeaders.isNotEmpty) {
+        box3ColHeaders = r.box3ColHeaders;
+      }
+      if (box3RowHeaders == null && r.box3RowHeaders.isNotEmpty) {
+        box3RowHeaders = r.box3RowHeaders;
+      }
+      if (topicHeaders != null && box3ColHeaders != null && box3RowHeaders != null) {
+        break;
+      }
+    }
+
+    if (topicHeaders == null && box3ColHeaders == null && box3RowHeaders == null) {
+      return null;
+    }
+
+    return {
+      if (topicHeaders != null) 'topicHeaders': topicHeaders,
+      if (box3ColHeaders != null) 'box3ColHeaders': box3ColHeaders,
+      if (box3RowHeaders != null) 'box3RowHeaders': box3RowHeaders,
+    };
+  }
+
+  Future<void> updateAllPerformanceHeaders({
+    List<String>? topicHeaders,
+    List<String>? box3ColHeaders,
+    List<String>? box3RowHeaders,
+  }) async {
+    final allRecords = await isar.performanceRecords.where().findAll();
+    if (allRecords.isEmpty) return;
+
+    await isar.writeTxn(() async {
+      for (final record in allRecords) {
+        bool changed = false;
+        if (topicHeaders != null) {
+          record.topicHeaders = List<String>.from(topicHeaders);
+          changed = true;
+        }
+        if (box3ColHeaders != null) {
+          record.box3ColHeaders = List<String>.from(box3ColHeaders);
+          changed = true;
+        }
+        if (box3RowHeaders != null) {
+          record.box3RowHeaders = List<String>.from(box3RowHeaders);
+          changed = true;
+        }
+        if (changed) {
+          record.updatedAt = DateTime.now();
+          await isar.performanceRecords.put(record);
+        }
+      }
+    });
+  }
 }
+
 

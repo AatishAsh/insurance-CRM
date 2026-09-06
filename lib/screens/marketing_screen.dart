@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
@@ -1668,13 +1669,27 @@ class _AddEditMarketingLeadDialogState extends ConsumerState<AddEditMarketingLea
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _mobileController,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(10),
+                        ],
                         decoration: const InputDecoration(
                           labelText: 'Mobile *',
+                          hintText: 'e.g. 9876543210',
                           prefixIcon: Icon(Icons.phone_outlined),
                           border: OutlineInputBorder(),
                         ),
-                        keyboardType: TextInputType.phone,
-                        validator: (value) => value == null || value.trim().isEmpty ? 'Mobile is required' : null,
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Mobile is required';
+                          }
+                          final digits = value.trim().replaceAll(RegExp(r'\D'), '');
+                          if (digits.length != 10) {
+                            return 'Mobile must be 10 digits';
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(

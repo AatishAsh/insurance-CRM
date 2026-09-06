@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
@@ -14,6 +15,7 @@ import '../widgets/brand_background.dart';
 import '../providers/settings_provider.dart';
 import '../widgets/date_input_formatter.dart';
 import '../widgets/segmented_date_input_field.dart';
+import '../widgets/aadhaar_number_formatter.dart';
 
 class CustomerFormScreen extends ConsumerStatefulWidget {
   final Customer? customer;
@@ -53,6 +55,9 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
 
   // Multiple References list
   List<CustomerReferenceItem> _references = [];
+
+  // Dynamic Reminders list
+  List<CustomerReminderItem> _reminders = [];
 
   String _calculateAgeString(DateTime? dob) {
     if (dob == null) return '';
@@ -523,7 +528,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
               ..mode = p.mode
               ..planSumAssured = p.planSumAssured
               ..rider = p.rider
-              ..planDate = p.planDate)
+              ..planDate = p.planDate ?? DateTime.now())
             .toList();
       } else if (c.productName != null || c.planSumAssured != null) {
         _plans = [
@@ -533,9 +538,10 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
             ..mode = c.premiumMode
             ..planSumAssured = c.planSumAssured
             ..rider = c.rider
+            ..planDate = DateTime.now()
         ];
       } else {
-        _plans = [CustomerPlanItem()];
+        _plans = [CustomerPlanItem()..planDate = DateTime.now()];
       }
 
       // References
@@ -556,9 +562,40 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
       } else {
         _references = [CustomerReferenceItem()];
       }
+
+      // Reminders
+      if (c.reminders.isNotEmpty) {
+        _reminders = c.reminders
+            .map((r) => CustomerReminderItem()
+              ..reminderTitle = r.reminderTitle
+              ..reminderDate = r.reminderDate ?? DateTime.now()
+              ..note = r.note)
+            .toList();
+      } else {
+        _reminders = [];
+        if (c.reminderDate1 != null || c.reminderNote1 != null) {
+          _reminders.add(CustomerReminderItem()..reminderDate = c.reminderDate1 ?? DateTime.now()..note = c.reminderNote1);
+        }
+        if (c.reminderDate2 != null || c.reminderNote2 != null) {
+          _reminders.add(CustomerReminderItem()..reminderDate = c.reminderDate2 ?? DateTime.now()..note = c.reminderNote2);
+        }
+        if (c.reminderDate3 != null || c.reminderNote3 != null) {
+          _reminders.add(CustomerReminderItem()..reminderDate = c.reminderDate3 ?? DateTime.now()..note = c.reminderNote3);
+        }
+        if (c.reminderDate4 != null || c.reminderNote4 != null) {
+          _reminders.add(CustomerReminderItem()..reminderDate = c.reminderDate4 ?? DateTime.now()..note = c.reminderNote4);
+        }
+        if (c.reminderDate5 != null || c.reminderNote5 != null) {
+          _reminders.add(CustomerReminderItem()..reminderDate = c.reminderDate5 ?? DateTime.now()..note = c.reminderNote5);
+        }
+        if (_reminders.isEmpty) {
+          _reminders = [CustomerReminderItem()..reminderDate = DateTime.now()];
+        }
+      }
     } else {
-      _plans = [CustomerPlanItem()];
+      _plans = [CustomerPlanItem()..planDate = DateTime.now()];
       _references = [CustomerReferenceItem()];
+      _reminders = [CustomerReminderItem()..reminderDate = DateTime.now()];
     }
   }
 
@@ -805,11 +842,17 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
       customer.referenceMobile = _references.first.mobile;
       customer.referenceAge = _references.first.age;
     }
-    customer.reminderNote1 = _controllers['reminderNote1']!.text;
-    customer.reminderNote2 = _controllers['reminderNote2']!.text;
-    customer.reminderNote3 = _controllers['reminderNote3']!.text;
-    customer.reminderNote4 = _controllers['reminderNote4']!.text;
-    customer.reminderNote5 = _controllers['reminderNote5']!.text;
+    customer.reminders = _reminders;
+    customer.reminderDate1 = _reminders.isNotEmpty ? _reminders[0].reminderDate : null;
+    customer.reminderNote1 = _reminders.isNotEmpty ? _reminders[0].note : null;
+    customer.reminderDate2 = _reminders.length > 1 ? _reminders[1].reminderDate : null;
+    customer.reminderNote2 = _reminders.length > 1 ? _reminders[1].note : null;
+    customer.reminderDate3 = _reminders.length > 2 ? _reminders[2].reminderDate : null;
+    customer.reminderNote3 = _reminders.length > 2 ? _reminders[2].note : null;
+    customer.reminderDate4 = _reminders.length > 3 ? _reminders[3].reminderDate : null;
+    customer.reminderNote4 = _reminders.length > 3 ? _reminders[3].note : null;
+    customer.reminderDate5 = _reminders.length > 4 ? _reminders[4].reminderDate : null;
+    customer.reminderNote5 = _reminders.length > 4 ? _reminders[4].note : null;
     customer.notes = _controllers['notes']!.text;
 
     // Date assignments
@@ -860,18 +903,40 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     int maxLines = 1,
     bool required = false,
     Function(String)? onChanged,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? customValidator,
   }) {
     final isMultiLine = maxLines > 1;
+    final isMobileKey = key.toLowerCase().contains('mobile');
+    final effectiveFormatters = inputFormatters ??
+        (key == 'aadhaarNumber'
+            ? [AadhaarNumberFormatter()]
+            : isMobileKey
+                ? [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)]
+                : null);
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
       child: TextFormField(
         controller: _controllers[key],
-        keyboardType: isMultiLine ? TextInputType.multiline : keyboardType,
+        keyboardType: isMultiLine
+            ? TextInputType.multiline
+            : (key == 'aadhaarNumber'
+                ? TextInputType.number
+                : isMobileKey
+                    ? TextInputType.number
+                    : keyboardType),
         maxLines: maxLines,
+        inputFormatters: effectiveFormatters,
         textInputAction: isMultiLine ? TextInputAction.newline : TextInputAction.next,
         onChanged: onChanged,
         decoration: InputDecoration(
           labelText: label,
+          hintText: key == 'aadhaarNumber'
+              ? '1234 5678 9012'
+              : isMobileKey
+                  ? 'e.g. 9876543210'
+                  : null,
           border: const OutlineInputBorder(),
           isDense: true,
           errorStyle: const TextStyle(height: 0.8),
@@ -879,6 +944,21 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
         validator: (value) {
           if (required && (value == null || value.trim().isEmpty)) {
             return '$label is required';
+          }
+          if (key == 'aadhaarNumber' && value != null && value.trim().isNotEmpty) {
+            final digits = value.trim().replaceAll(RegExp(r'\D'), '');
+            if (digits.length != 12) {
+              return 'Aadhaar Number must be exactly 12 digits';
+            }
+          }
+          if (isMobileKey && value != null && value.trim().isNotEmpty) {
+            final digits = value.trim().replaceAll(RegExp(r'\D'), '');
+            if (digits.length != 10) {
+              return '$label must be 10 digits';
+            }
+          }
+          if (customValidator != null) {
+            return customValidator(value);
           }
           return null;
         },
@@ -1385,14 +1465,23 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  'Plan #${index + 1}',
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.blueAccent),
+                                Expanded(
+                                  child: TextFormField(
+                                    initialValue: plan.planTitle ?? 'Plan #${index + 1}',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.blueAccent),
+                                    decoration: const InputDecoration(
+                                      isDense: true,
+                                      border: InputBorder.none,
+                                      hintText: 'Type Plan Title...',
+                                      suffixIcon: Icon(Icons.edit_outlined, size: 16, color: Colors.blueAccent),
+                                    ),
+                                    onChanged: (val) => plan.planTitle = val,
+                                  ),
                                 ),
                                 if (_plans.length > 1)
                                   IconButton(
                                     icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                                    tooltip: 'Remove Plan #${index + 1}',
+                                    tooltip: 'Remove Plan',
                                     onPressed: () {
                                       setState(() {
                                         _plans.removeAt(index);
@@ -1401,7 +1490,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                                   ),
                               ],
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 8),
                             TextFormField(
                               initialValue: plan.productName,
                               decoration: const InputDecoration(
@@ -1455,35 +1544,15 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                               ),
                             ]),
                             const SizedBox(height: 12),
-                            InkWell(
-                              onTap: () async {
-                                final picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: plan.planDate ?? DateTime.now(),
-                                  firstDate: DateTime(1950),
-                                  lastDate: DateTime(2100),
-                                );
-                                if (picked != null) {
-                                  setState(() {
-                                    plan.planDate = picked;
-                                  });
-                                }
+                            SegmentedDateInputField(
+                              label: 'Plan Date',
+                              initialDate: plan.planDate ??= DateTime.now(),
+                              pattern: ref.watch(dateFormatPatternProvider),
+                              onDateChanged: (picked) {
+                                setState(() {
+                                  plan.planDate = picked;
+                                });
                               },
-                              child: InputDecorator(
-                                decoration: const InputDecoration(
-                                  labelText: 'Plan Date / Date of Commencement',
-                                  border: OutlineInputBorder(),
-                                  suffixIcon: Icon(Icons.calendar_today, size: 20),
-                                ),
-                                child: Text(
-                                  plan.planDate != null
-                                      ? DateFormat('dd MMM yyyy').format(plan.planDate!)
-                                      : 'Select Plan Date',
-                                  style: TextStyle(
-                                    color: plan.planDate == null ? Colors.grey[600] : Colors.black87,
-                                  ),
-                                ),
-                              ),
                             ),
                           ],
                         ),
@@ -1495,7 +1564,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                 ElevatedButton.icon(
                   onPressed: () {
                     setState(() {
-                      _plans.add(CustomerPlanItem());
+                      _plans.add(CustomerPlanItem()..planDate = DateTime.now());
                     });
                   },
                   icon: const Icon(Icons.add),
@@ -1509,7 +1578,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
 
               // Accordion 10: Plan & Mutual Funds
               _buildAccordionSection('Plan & Mutual Funds', Icons.account_balance_outlined, [
-                _buildField('panNumber', 'Plan Number'),
+                _buildField('panNumber', 'Plan Name'),
                 _buildResponsiveRow(isDesktop, [
                   _buildField('riskCover', 'Risk Cover'),
                   _buildField('pensionPlan', 'Pension Plan'),
@@ -1525,47 +1594,98 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                 _buildField('childrenEducationPlan', "Children's Education Plan"),
               ]),
 
-              // Accordion 11: Reminders (5 Reminders)
-              _buildAccordionSection('Reminders (up to 5)', Icons.alarm_outlined, [
-                _buildResponsiveRow(isDesktop, [
-                  Column(
-                    children: [
-                      _buildDateField('reminderDate1', 'Reminder Date 1'),
-                      _buildField('reminderNote1', 'Reminder 1 Note', maxLines: 2),
-                    ],
+              // Accordion 11: Reminders
+              _buildAccordionSection('Reminders', Icons.alarm_outlined, [
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: _reminders.length,
+                  itemBuilder: (context, index) {
+                    final reminder = _reminders[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      elevation: 1,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: Colors.orangeAccent.withOpacity(0.3)),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    initialValue: reminder.reminderTitle ?? 'Reminder #${index + 1}',
+                                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.orangeAccent),
+                                    decoration: const InputDecoration(
+                                      isDense: true,
+                                      border: InputBorder.none,
+                                      hintText: 'Type Reminder Title...',
+                                      suffixIcon: Icon(Icons.edit_outlined, size: 16, color: Colors.orangeAccent),
+                                    ),
+                                    onChanged: (val) => reminder.reminderTitle = val,
+                                  ),
+                                ),
+                                if (_reminders.length > 1)
+                                  IconButton(
+                                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                                    tooltip: 'Remove Reminder',
+                                    onPressed: () {
+                                      setState(() {
+                                        _reminders.removeAt(index);
+                                      });
+                                    },
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            SegmentedDateInputField(
+                              label: 'Reminder Date',
+                              initialDate: reminder.reminderDate ??= DateTime.now(),
+                              pattern: ref.watch(dateFormatPatternProvider),
+                              onDateChanged: (picked) {
+                                setState(() {
+                                  reminder.reminderDate = picked;
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            TextFormField(
+                              initialValue: reminder.note,
+                              maxLines: 3,
+                              keyboardType: TextInputType.multiline,
+                              textInputAction: TextInputAction.newline,
+                              decoration: const InputDecoration(
+                                labelText: 'Reminder Remarks / Details',
+                                hintText: 'Enter reminder details...',
+                                border: OutlineInputBorder(),
+                              ),
+                              onChanged: (val) => reminder.note = val,
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _reminders.add(CustomerReminderItem()..reminderDate = DateTime.now());
+                    });
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Reminder'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                  Column(
-                    children: [
-                      _buildDateField('reminderDate2', 'Reminder Date 2'),
-                      _buildField('reminderNote2', 'Reminder 2 Note', maxLines: 2),
-                    ],
-                  ),
-                ]),
-                const SizedBox(height: 12),
-                _buildResponsiveRow(isDesktop, [
-                  Column(
-                    children: [
-                      _buildDateField('reminderDate3', 'Reminder Date 3'),
-                      _buildField('reminderNote3', 'Reminder 3 Note', maxLines: 2),
-                    ],
-                  ),
-                  Column(
-                    children: [
-                      _buildDateField('reminderDate4', 'Reminder Date 4'),
-                      _buildField('reminderNote4', 'Reminder 4 Note', maxLines: 2),
-                    ],
-                  ),
-                ]),
-                const SizedBox(height: 12),
-                _buildResponsiveRow(isDesktop, [
-                  Column(
-                    children: [
-                      _buildDateField('reminderDate5', 'Reminder Date 5'),
-                      _buildField('reminderNote5', 'Reminder 5 Note', maxLines: 2),
-                    ],
-                  ),
-                  const SizedBox(),
-                ]),
+                ),
               ]),
 
               // Accordion 12: Reference Details
@@ -1620,11 +1740,25 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                             _buildResponsiveRow(isDesktop, [
                               TextFormField(
                                 initialValue: refItem.mobile,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                  LengthLimitingTextInputFormatter(10),
+                                ],
                                 decoration: const InputDecoration(
                                   labelText: 'Mobile Number',
+                                  hintText: 'e.g. 9876543210',
                                   border: OutlineInputBorder(),
                                 ),
-                                keyboardType: TextInputType.phone,
+                                keyboardType: TextInputType.number,
+                                validator: (val) {
+                                  if (val != null && val.trim().isNotEmpty) {
+                                    final digits = val.trim().replaceAll(RegExp(r'\D'), '');
+                                    if (digits.length != 10) {
+                                      return 'Mobile Number must be 10 digits';
+                                    }
+                                  }
+                                  return null;
+                                },
                                 onChanged: (val) => refItem.mobile = val,
                               ),
                               TextFormField(

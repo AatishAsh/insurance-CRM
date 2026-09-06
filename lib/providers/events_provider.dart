@@ -143,11 +143,18 @@ final upcomingEventsProvider = FutureProvider<List<UpcomingEvent>>((ref) async {
       }
     }
 
-    addReminder(customer.reminderDate1, customer.reminderNote1, '1');
-    addReminder(customer.reminderDate2, customer.reminderNote2, '2');
-    addReminder(customer.reminderDate3, customer.reminderNote3, '3');
-    addReminder(customer.reminderDate4, customer.reminderNote4, '4');
-    addReminder(customer.reminderDate5, customer.reminderNote5, '5');
+    if (customer.reminders.isNotEmpty) {
+      for (int i = 0; i < customer.reminders.length; i++) {
+        final rem = customer.reminders[i];
+        addReminder(rem.reminderDate, rem.note, '${i + 1}');
+      }
+    } else {
+      addReminder(customer.reminderDate1, customer.reminderNote1, '1');
+      addReminder(customer.reminderDate2, customer.reminderNote2, '2');
+      addReminder(customer.reminderDate3, customer.reminderNote3, '3');
+      addReminder(customer.reminderDate4, customer.reminderNote4, '4');
+      addReminder(customer.reminderDate5, customer.reminderNote5, '5');
+    }
   }
 
   // 2. Marketing Visits
@@ -337,11 +344,18 @@ final todaySummaryEventsProvider = FutureProvider<List<TodayEventSummaryItem>>((
       }
     }
 
-    addTodayReminder(customer.reminderDate1, customer.reminderNote1, '1');
-    addTodayReminder(customer.reminderDate2, customer.reminderNote2, '2');
-    addTodayReminder(customer.reminderDate3, customer.reminderNote3, '3');
-    addTodayReminder(customer.reminderDate4, customer.reminderNote4, '4');
-    addTodayReminder(customer.reminderDate5, customer.reminderNote5, '5');
+    if (customer.reminders.isNotEmpty) {
+      for (int i = 0; i < customer.reminders.length; i++) {
+        final rem = customer.reminders[i];
+        addTodayReminder(rem.reminderDate, rem.note, '${i + 1}');
+      }
+    } else {
+      addTodayReminder(customer.reminderDate1, customer.reminderNote1, '1');
+      addTodayReminder(customer.reminderDate2, customer.reminderNote2, '2');
+      addTodayReminder(customer.reminderDate3, customer.reminderNote3, '3');
+      addTodayReminder(customer.reminderDate4, customer.reminderNote4, '4');
+      addTodayReminder(customer.reminderDate5, customer.reminderNote5, '5');
+    }
   }
 
   // 2. Work Tasks Due Today

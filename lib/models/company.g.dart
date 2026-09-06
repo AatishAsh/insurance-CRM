@@ -32,13 +32,18 @@ const CompanySchema = CollectionSchema(
       name: r'referenceNumber',
       type: IsarType.string,
     ),
-    r'updatedAt': PropertySchema(
+    r'tabIndex': PropertySchema(
       id: 3,
+      name: r'tabIndex',
+      type: IsarType.long,
+    ),
+    r'updatedAt': PropertySchema(
+      id: 4,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'uuid': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'uuid',
       type: IsarType.string,
     )
@@ -97,8 +102,9 @@ void _companySerialize(
   writer.writeBool(offsets[0], object.isDeleted);
   writer.writeString(offsets[1], object.name);
   writer.writeString(offsets[2], object.referenceNumber);
-  writer.writeDateTime(offsets[3], object.updatedAt);
-  writer.writeString(offsets[4], object.uuid);
+  writer.writeLong(offsets[3], object.tabIndex);
+  writer.writeDateTime(offsets[4], object.updatedAt);
+  writer.writeString(offsets[5], object.uuid);
 }
 
 Company _companyDeserialize(
@@ -112,8 +118,9 @@ Company _companyDeserialize(
   object.isDeleted = reader.readBool(offsets[0]);
   object.name = reader.readString(offsets[1]);
   object.referenceNumber = reader.readStringOrNull(offsets[2]);
-  object.updatedAt = reader.readDateTime(offsets[3]);
-  object.uuid = reader.readString(offsets[4]);
+  object.tabIndex = reader.readLong(offsets[3]);
+  object.updatedAt = reader.readDateTime(offsets[4]);
+  object.uuid = reader.readString(offsets[5]);
   return object;
 }
 
@@ -131,8 +138,10 @@ P _companyDeserializeProp<P>(
     case 2:
       return (reader.readStringOrNull(offset)) as P;
     case 3:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 4:
+      return (reader.readDateTime(offset)) as P;
+    case 5:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -670,6 +679,59 @@ extension CompanyQueryFilter
     });
   }
 
+  QueryBuilder<Company, Company, QAfterFilterCondition> tabIndexEqualTo(
+      int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'tabIndex',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Company, Company, QAfterFilterCondition> tabIndexGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'tabIndex',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Company, Company, QAfterFilterCondition> tabIndexLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'tabIndex',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Company, Company, QAfterFilterCondition> tabIndexBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'tabIndex',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
   QueryBuilder<Company, Company, QAfterFilterCondition> updatedAtEqualTo(
       DateTime value) {
     return QueryBuilder.apply(this, (query) {
@@ -897,6 +959,18 @@ extension CompanyQuerySortBy on QueryBuilder<Company, Company, QSortBy> {
     });
   }
 
+  QueryBuilder<Company, Company, QAfterSortBy> sortByTabIndex() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'tabIndex', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Company, Company, QAfterSortBy> sortByTabIndexDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'tabIndex', Sort.desc);
+    });
+  }
+
   QueryBuilder<Company, Company, QAfterSortBy> sortByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'updatedAt', Sort.asc);
@@ -972,6 +1046,18 @@ extension CompanyQuerySortThenBy
     });
   }
 
+  QueryBuilder<Company, Company, QAfterSortBy> thenByTabIndex() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'tabIndex', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Company, Company, QAfterSortBy> thenByTabIndexDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'tabIndex', Sort.desc);
+    });
+  }
+
   QueryBuilder<Company, Company, QAfterSortBy> thenByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'updatedAt', Sort.asc);
@@ -1020,6 +1106,12 @@ extension CompanyQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Company, Company, QDistinct> distinctByTabIndex() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'tabIndex');
+    });
+  }
+
   QueryBuilder<Company, Company, QDistinct> distinctByUpdatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'updatedAt');
@@ -1057,6 +1149,12 @@ extension CompanyQueryProperty
   QueryBuilder<Company, String?, QQueryOperations> referenceNumberProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'referenceNumber');
+    });
+  }
+
+  QueryBuilder<Company, int, QQueryOperations> tabIndexProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'tabIndex');
     });
   }
 

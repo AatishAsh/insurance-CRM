@@ -28,6 +28,8 @@ class _SegmentedDateInputFieldState extends State<SegmentedDateInputField> {
   late FocusNode _monthFocus;
   late FocusNode _yearFocus;
 
+  String? _errorText;
+
   @override
   void initState() {
     super.initState();
@@ -55,11 +57,13 @@ class _SegmentedDateInputFieldState extends State<SegmentedDateInputField> {
       _dayCtrl.clear();
       _monthCtrl.clear();
       _yearCtrl.clear();
+      _errorText = null;
       return;
     }
     _dayCtrl.text = date.day.toString().padLeft(2, '0');
     _monthCtrl.text = date.month.toString().padLeft(2, '0');
     _yearCtrl.text = date.year.toString();
+    _errorText = null;
   }
 
   @override
@@ -79,24 +83,54 @@ class _SegmentedDateInputFieldState extends State<SegmentedDateInputField> {
     final monthStr = _monthCtrl.text.trim();
     final yearStr = _yearCtrl.text.trim();
 
-    if (dayStr.isNotEmpty && monthStr.isNotEmpty && yearStr.length == 4) {
+    String? err;
+
+    if (monthStr.isNotEmpty) {
+      final m = int.tryParse(monthStr);
+      if (m != null && (m < 1 || m > 12)) {
+        err = 'Invalid month "$monthStr" (must be 1 to 12)';
+      }
+    }
+
+    if (err == null && dayStr.isNotEmpty) {
+      final d = int.tryParse(dayStr);
+      if (d != null && (d < 1 || d > 31)) {
+        err = 'Invalid day "$dayStr" (must be 1 to 31)';
+      }
+    }
+
+    if (err == null && yearStr.length == 4) {
+      final y = int.tryParse(yearStr);
+      if (y != null && (y < 1900 || y > 2100)) {
+        err = 'Invalid year "$yearStr" (1900 - 2100)';
+      }
+    }
+
+    if (err == null && dayStr.isNotEmpty && monthStr.isNotEmpty && yearStr.length == 4) {
       final day = int.tryParse(dayStr);
       final month = int.tryParse(monthStr);
       final year = int.tryParse(yearStr);
 
       if (day != null && month != null && year != null) {
         if (month >= 1 && month <= 12 && day >= 1 && day <= 31 && year >= 1900 && year <= 2100) {
-          try {
-            return DateTime(year, month, day);
-          } catch (_) {}
+          final dt = DateTime(year, month, day);
+          if (dt.month == month && dt.day == day) {
+            _errorText = null;
+            return dt;
+          } else {
+            err = 'Invalid date for month $monthStr';
+          }
         }
       }
     }
+
+    _errorText = err;
     return null;
   }
 
   void _checkAndEmitDate() {
     final parsed = _parseCurrentDate();
+    setState(() {});
     if (parsed != null) {
       widget.onDateChanged(parsed);
     } else if (_dayCtrl.text.isEmpty && _monthCtrl.text.isEmpty && _yearCtrl.text.isEmpty) {
@@ -127,20 +161,30 @@ class _SegmentedDateInputFieldState extends State<SegmentedDateInputField> {
               focusNode: _dayFocus,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: _errorText != null && _dayCtrl.text.isNotEmpty && (int.tryParse(_dayCtrl.text) ?? 0) > 31 ? Colors.red : Colors.black,
+              ),
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,
                 LengthLimitingTextInputFormatter(2),
               ],
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'DD',
                 hintText: 'DD',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
+                enabledBorder: _errorText != null && _dayCtrl.text.isNotEmpty && (int.tryParse(_dayCtrl.text) ?? 0) > 31
+                    ? const OutlineInputBorder(borderSide: BorderSide(color: Colors.redAccent, width: 1.5))
+                    : const OutlineInputBorder(),
+                focusedBorder: _errorText != null && _dayCtrl.text.isNotEmpty && (int.tryParse(_dayCtrl.text) ?? 0) > 31
+                    ? const OutlineInputBorder(borderSide: BorderSide(color: Colors.redAccent, width: 2.0))
+                    : const OutlineInputBorder(),
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
               ),
               onChanged: (val) {
-                if (val.length == 2) {
+                if (val.length == 2 && (int.tryParse(val) ?? 0) <= 31) {
                   if (isMdy) {
                     _yearFocus.requestFocus();
                   } else {
@@ -173,20 +217,30 @@ class _SegmentedDateInputFieldState extends State<SegmentedDateInputField> {
               focusNode: _monthFocus,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: _errorText != null && _monthCtrl.text.isNotEmpty && ((int.tryParse(_monthCtrl.text) ?? 0) > 12 || (int.tryParse(_monthCtrl.text) ?? 1) < 1) ? Colors.red : Colors.black,
+              ),
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,
                 LengthLimitingTextInputFormatter(2),
               ],
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'MM',
                 hintText: 'MM',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
+                enabledBorder: _errorText != null && _monthCtrl.text.isNotEmpty && ((int.tryParse(_monthCtrl.text) ?? 0) > 12 || (int.tryParse(_monthCtrl.text) ?? 1) < 1)
+                    ? const OutlineInputBorder(borderSide: BorderSide(color: Colors.redAccent, width: 1.5))
+                    : const OutlineInputBorder(),
+                focusedBorder: _errorText != null && _monthCtrl.text.isNotEmpty && ((int.tryParse(_monthCtrl.text) ?? 0) > 12 || (int.tryParse(_monthCtrl.text) ?? 1) < 1)
+                    ? const OutlineInputBorder(borderSide: BorderSide(color: Colors.redAccent, width: 2.0))
+                    : const OutlineInputBorder(),
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
               ),
               onChanged: (val) {
-                if (val.length == 2) {
+                if (val.length == 2 && (int.tryParse(val) ?? 0) >= 1 && (int.tryParse(val) ?? 0) <= 12) {
                   if (isYmd) {
                     _dayFocus.requestFocus();
                   } else {
@@ -251,7 +305,7 @@ class _SegmentedDateInputFieldState extends State<SegmentedDateInputField> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade400),
+          border: Border.all(color: _errorText != null ? Colors.redAccent : Colors.grey.shade400, width: _errorText != null ? 1.5 : 1.0),
           borderRadius: BorderRadius.circular(8),
           color: Colors.white,
         ),
@@ -264,7 +318,7 @@ class _SegmentedDateInputFieldState extends State<SegmentedDateInputField> {
                 padding: const EdgeInsets.only(bottom: 6.0),
                 child: Text(
                   widget.label,
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey[800]),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: _errorText != null ? Colors.redAccent : Colors.grey[800]),
                 ),
               ),
             Row(
@@ -300,6 +354,14 @@ class _SegmentedDateInputFieldState extends State<SegmentedDateInputField> {
                 ),
               ],
             ),
+            if (_errorText != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Text(
+                  _errorText!,
+                  style: const TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.w500),
+                ),
+              ),
           ],
         ),
       ),

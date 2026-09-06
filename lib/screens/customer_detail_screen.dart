@@ -10,6 +10,7 @@ import 'customer_form_screen.dart';
 import '../providers/customer_provider.dart';
 import '../providers/events_provider.dart';
 import '../providers/settings_provider.dart';
+import '../widgets/segmented_date_input_field.dart';
 import '../theme/app_colors.dart';
 import '../widgets/color_badge.dart';
 import '../widgets/brand_background.dart';
@@ -52,6 +53,237 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
       _customer = cust;
       _isLoading = false;
     });
+  }
+
+  void _showAddPlanDialog(Customer c) {
+    final planTitleCtrl = TextEditingController(text: 'Plan #${c.plans.length + 1}');
+    final productNameCtrl = TextEditingController();
+    final premiumCtrl = TextEditingController();
+    final sumAssuredCtrl = TextEditingController();
+    final riderCtrl = TextEditingController();
+    String mode = 'Yearly';
+    DateTime selectedPlanDate = DateTime.now();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final activePattern = ref.watch(dateFormatPatternProvider);
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Row(
+                children: [
+                  const Icon(Icons.add_card, color: Colors.blueAccent),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Add New Plan for ${c.name}',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: planTitleCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Plan Header Title',
+                        hintText: 'e.g. Plan #1 or Jeevan Anand',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: productNameCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Product Name',
+                        hintText: 'e.g. LIC Jeevan Labh',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: premiumCtrl,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'Premium',
+                              hintText: 'e.g. ₹ 15,000',
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            value: mode,
+                            decoration: const InputDecoration(
+                              labelText: 'Mode',
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                            items: ['Yearly', 'Half-Yearly', 'Quarterly', 'Monthly', 'Single', 'Other']
+                                .map((m) => DropdownMenuItem(value: m, child: Text(m, style: const TextStyle(fontSize: 13))))
+                                .toList(),
+                            onChanged: (val) {
+                              if (val != null) {
+                                setDialogState(() => mode = val);
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: sumAssuredCtrl,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'Plan Sum Assured',
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: riderCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'Riders Configured',
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    SegmentedDateInputField(
+                      label: 'Plan Date',
+                      initialDate: selectedPlanDate,
+                      pattern: activePattern,
+                      onDateChanged: (picked) {
+                        if (picked != null) {
+                          setDialogState(() => selectedPlanDate = picked);
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.check, size: 18),
+                  label: const Text('Save New Plan'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () async {
+                    final newPlan = CustomerPlanItem()
+                      ..planTitle = planTitleCtrl.text.trim().isNotEmpty ? planTitleCtrl.text.trim() : null
+                      ..productName = productNameCtrl.text.trim().isNotEmpty ? productNameCtrl.text.trim() : null
+                      ..premium = premiumCtrl.text.trim().isNotEmpty ? premiumCtrl.text.trim() : null
+                      ..mode = mode
+                      ..planSumAssured = sumAssuredCtrl.text.trim().isNotEmpty ? sumAssuredCtrl.text.trim() : null
+                      ..rider = riderCtrl.text.trim().isNotEmpty ? riderCtrl.text.trim() : null
+                      ..planDate = selectedPlanDate;
+
+                    final updatedPlans = List<CustomerPlanItem>.from(c.plans)..add(newPlan);
+                    c.plans = updatedPlans;
+                    c.updatedAt = DateTime.now();
+
+                    final db = ref.read(databaseServiceProvider);
+                    await db.saveCustomer(c);
+                    ref.invalidate(customerListProvider);
+
+                    if (mounted) {
+                      Navigator.pop(context);
+                      _loadCustomerData();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('New Plan added to customer profile!')),
+                      );
+                    }
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _confirmDeletePlan(Customer c, int index) {
+    final planName = (index >= 0 && index < c.plans.length && c.plans[index].planTitle != null && c.plans[index].planTitle!.isNotEmpty)
+        ? c.plans[index].planTitle!
+        : (c.productName != null && c.productName!.isNotEmpty ? c.productName! : 'Plan #${index >= 0 ? index + 1 : 1}');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
+            SizedBox(width: 8),
+            Text('Delete Plan'),
+          ],
+        ),
+        content: Text('Are you sure you want to delete "$planName"?'),
+        actions: [
+          OutlinedButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+            onPressed: () async {
+              if (c.plans.isNotEmpty && index >= 0 && index < c.plans.length) {
+                c.plans = List<CustomerPlanItem>.from(c.plans)..removeAt(index);
+              }
+              if (c.plans.isEmpty) {
+                c.productName = null;
+                c.premiumMode = null;
+                c.planSumAssured = null;
+                c.rider = null;
+              }
+              c.updatedAt = DateTime.now();
+
+              final db = ref.read(databaseServiceProvider);
+              await db.saveCustomer(c);
+              ref.invalidate(customerListProvider);
+
+              if (mounted) {
+                Navigator.pop(context);
+                _loadCustomerData();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('"$planName" has been deleted.')),
+                );
+              }
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildDetailRow(String label, String? value) {
@@ -476,30 +708,65 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
               if (c.plans.isNotEmpty)
                 for (int i = 0; i < c.plans.length; i++) ...[
                   if (i > 0) const Divider(height: 24),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 4.0),
-                    child: Text(
-                      'Plan #${i + 1}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.blueAccent),
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        (c.plans[i].planTitle != null && c.plans[i].planTitle!.isNotEmpty)
+                            ? c.plans[i].planTitle!
+                            : 'Plan #${i + 1}',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.blueAccent),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, size: 20, color: Colors.redAccent),
+                        tooltip: 'Delete Plan',
+                        onPressed: () => _confirmDeletePlan(c, i),
+                      ),
+                    ],
                   ),
                   _buildDetailRow("Product Name", c.plans[i].productName),
                   _buildDetailRow("Premium", c.plans[i].premium),
                   _buildDetailRow("Mode", c.plans[i].mode),
                   _buildDetailRow("Plan Sum Assured", c.plans[i].planSumAssured),
                   _buildDetailRow("Riders Configured", c.plans[i].rider),
-                  _buildDateRow("Plan Date / DOC", c.plans[i].planDate),
+                  _buildDateRow("Plan Date", c.plans[i].planDate),
                 ]
-              else ...[
+              else if (c.productName != null || c.planSumAssured != null) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      c.productName != null && c.productName!.isNotEmpty ? c.productName! : 'Plan #1',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.blueAccent),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, size: 20, color: Colors.redAccent),
+                      tooltip: 'Delete Plan',
+                      onPressed: () => _confirmDeletePlan(c, -1),
+                    ),
+                  ],
+                ),
                 _buildDetailRow("Product Name", c.productName),
                 _buildDetailRow("Premium Mode", c.premiumMode),
                 _buildDetailRow("Plan Sum Assured", c.planSumAssured),
                 _buildDetailRow("Riders Configured", c.rider),
               ],
+              const SizedBox(height: 12),
+              ElevatedButton.icon(
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Add New Plan'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: () => _showAddPlanDialog(c),
+              ),
             ]),
 
             _buildAccordionSection('Plan & Mutual Funds', Icons.account_balance_outlined, [
-              _buildDetailRow("Plan Number", c.panNumber),
+              _buildDetailRow("Plan Name", c.panNumber),
               _buildDetailRow("Risk Cover", c.riskCover),
               _buildDetailRow("Pension Plan", c.pensionPlan),
               _buildDetailRow("Investment Plan", c.investmentPlan),
@@ -589,15 +856,26 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
     );
   }
   Widget _buildQuickRemindersPanel(Customer c) {
-    final reminders = [
-      (slot: 1, date: c.reminderDate1, note: c.reminderNote1),
-      (slot: 2, date: c.reminderDate2, note: c.reminderNote2),
-      (slot: 3, date: c.reminderDate3, note: c.reminderNote3),
-      (slot: 4, date: c.reminderDate4, note: c.reminderNote4),
-      (slot: 5, date: c.reminderDate5, note: c.reminderNote5),
-    ];
-    final activeReminders = reminders.where((r) => r.date != null).toList();
-    final emptyReminders = reminders.where((r) => r.date == null).toList();
+    List<CustomerReminderItem> remList = [];
+    if (c.reminders.isNotEmpty) {
+      remList = c.reminders;
+    } else {
+      if (c.reminderDate1 != null || c.reminderNote1 != null) {
+        remList.add(CustomerReminderItem()..reminderDate = c.reminderDate1..note = c.reminderNote1..reminderTitle = 'Reminder #1');
+      }
+      if (c.reminderDate2 != null || c.reminderNote2 != null) {
+        remList.add(CustomerReminderItem()..reminderDate = c.reminderDate2..note = c.reminderNote2..reminderTitle = 'Reminder #2');
+      }
+      if (c.reminderDate3 != null || c.reminderNote3 != null) {
+        remList.add(CustomerReminderItem()..reminderDate = c.reminderDate3..note = c.reminderNote3..reminderTitle = 'Reminder #3');
+      }
+      if (c.reminderDate4 != null || c.reminderNote4 != null) {
+        remList.add(CustomerReminderItem()..reminderDate = c.reminderDate4..note = c.reminderNote4..reminderTitle = 'Reminder #4');
+      }
+      if (c.reminderDate5 != null || c.reminderNote5 != null) {
+        remList.add(CustomerReminderItem()..reminderDate = c.reminderDate5..note = c.reminderNote5..reminderTitle = 'Reminder #5');
+      }
+    }
 
     return Card(
       elevation: 0,
@@ -619,24 +897,23 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                     const Icon(Icons.alarm, color: Colors.blueAccent, size: 20),
                     const SizedBox(width: 8),
                     Text(
-                      'Reminders & Follow-ups (${activeReminders.length}/5)',
+                      'Reminders & Follow-ups (${remList.length})',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.blue[900]),
                     ),
                   ],
                 ),
-                if (emptyReminders.isNotEmpty)
-                  TextButton.icon(
-                    onPressed: () {
-                      _showAddReminderDialog(emptyReminders.first.slot);
-                    },
-                    icon: const Icon(Icons.add, size: 16),
-                    label: const Text('Add', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                    style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
-                  ),
+                TextButton.icon(
+                  onPressed: () {
+                    _showAddReminderDialog(c);
+                  },
+                  icon: const Icon(Icons.add, size: 16),
+                  label: const Text('Add', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                  style: TextButton.styleFrom(visualDensity: VisualDensity.compact),
+                ),
               ],
             ),
             const Divider(height: 16),
-            if (activeReminders.isEmpty)
+            if (remList.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 8.0),
                 child: Text(
@@ -647,9 +924,9 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
             else
               Column(
                 children: [
-                  for (int i = 0; i < activeReminders.length; i++) ...[
+                  for (int i = 0; i < remList.length; i++) ...[
                     if (i > 0) const SizedBox(height: 8),
-                    _buildReminderTile(activeReminders[i].slot, activeReminders[i].date!, activeReminders[i].note),
+                    _buildReminderTile(c, i, remList[i]),
                   ]
                 ],
               ),
@@ -659,8 +936,11 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
     );
   }
 
-  Widget _buildReminderTile(int slot, DateTime date, String? note) {
-    final dateFormat = DateFormat('dd MMM yyyy');
+  Widget _buildReminderTile(Customer c, int index, CustomerReminderItem rem) {
+    final activePattern = ref.watch(dateFormatPatternProvider);
+    final dateFormat = DateFormat(activePattern);
+    final titleText = rem.reminderTitle?.isNotEmpty == true ? rem.reminderTitle! : 'Reminder #${index + 1}';
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -677,13 +957,13 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Reminder $slot: ${dateFormat.format(date)}',
+                  '$titleText: ${rem.reminderDate != null ? dateFormat.format(rem.reminderDate!) : "No date"}',
                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87),
                 ),
-                if (note != null && note.trim().isNotEmpty) ...[
+                if (rem.note != null && rem.note!.trim().isNotEmpty) ...[
                   const SizedBox(height: 2),
                   Text(
-                    note,
+                    rem.note!,
                     style: TextStyle(color: Colors.grey[600], fontSize: 12),
                   ),
                 ],
@@ -692,14 +972,14 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.grey),
-            onPressed: () => _showAddReminderDialog(slot, initialDate: date, initialNote: note),
+            onPressed: () => _showAddReminderDialog(c, index: index),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),
           const SizedBox(width: 12),
           IconButton(
             icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
-            onPressed: () => _deleteReminder(slot),
+            onPressed: () => _deleteReminder(c, index),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),
@@ -708,152 +988,217 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
     );
   }
 
-  void _deleteReminder(int slot) async {
+  void _deleteReminder(Customer c, int index) async {
+    List<CustomerReminderItem> currentList = List.from(c.reminders);
+    if (currentList.isEmpty) {
+      if (c.reminderDate1 != null || c.reminderNote1 != null) {
+        currentList.add(CustomerReminderItem()..reminderDate = c.reminderDate1..note = c.reminderNote1..reminderTitle = 'Reminder #1');
+      }
+      if (c.reminderDate2 != null || c.reminderNote2 != null) {
+        currentList.add(CustomerReminderItem()..reminderDate = c.reminderDate2..note = c.reminderNote2..reminderTitle = 'Reminder #2');
+      }
+      if (c.reminderDate3 != null || c.reminderNote3 != null) {
+        currentList.add(CustomerReminderItem()..reminderDate = c.reminderDate3..note = c.reminderNote3..reminderTitle = 'Reminder #3');
+      }
+      if (c.reminderDate4 != null || c.reminderNote4 != null) {
+        currentList.add(CustomerReminderItem()..reminderDate = c.reminderDate4..note = c.reminderNote4..reminderTitle = 'Reminder #4');
+      }
+      if (c.reminderDate5 != null || c.reminderNote5 != null) {
+        currentList.add(CustomerReminderItem()..reminderDate = c.reminderDate5..note = c.reminderNote5..reminderTitle = 'Reminder #5');
+      }
+    }
+
+    final remTitle = (index >= 0 && index < currentList.length && currentList[index].reminderTitle != null && currentList[index].reminderTitle!.isNotEmpty)
+        ? currentList[index].reminderTitle!
+        : 'Reminder #${index + 1}';
+
     final check = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Reminder?'),
-        content: Text('Are you sure you want to delete Reminder $slot?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
+            SizedBox(width: 8),
+            Text('Delete Reminder'),
+          ],
+        ),
+        content: Text('Are you sure you want to delete "$remTitle"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(
+          OutlinedButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text('Delete'),
           ),
         ],
       ),
     );
 
-    if (check == true && _customer != null) {
-      final db = ref.read(databaseServiceProvider);
-      if (slot == 1) {
-        _customer!.reminderDate1 = null;
-        _customer!.reminderNote1 = null;
-      } else if (slot == 2) {
-        _customer!.reminderDate2 = null;
-        _customer!.reminderNote2 = null;
-      } else if (slot == 3) {
-        _customer!.reminderDate3 = null;
-        _customer!.reminderNote3 = null;
-      } else if (slot == 4) {
-        _customer!.reminderDate4 = null;
-        _customer!.reminderNote4 = null;
-      } else if (slot == 5) {
-        _customer!.reminderDate5 = null;
-        _customer!.reminderNote5 = null;
+    if (check == true) {
+      if (index >= 0 && index < currentList.length) {
+        currentList.removeAt(index);
       }
-      await db.saveCustomer(_customer!);
+      c.reminders = currentList;
+      c.reminderDate1 = currentList.isNotEmpty ? currentList[0].reminderDate : null;
+      c.reminderNote1 = currentList.isNotEmpty ? currentList[0].note : null;
+      c.reminderDate2 = currentList.length > 1 ? currentList[1].reminderDate : null;
+      c.reminderNote2 = currentList.length > 1 ? currentList[1].note : null;
+      c.reminderDate3 = currentList.length > 2 ? currentList[2].reminderDate : null;
+      c.reminderNote3 = currentList.length > 2 ? currentList[2].note : null;
+      c.reminderDate4 = currentList.length > 3 ? currentList[3].reminderDate : null;
+      c.reminderNote4 = currentList.length > 3 ? currentList[3].note : null;
+      c.reminderDate5 = currentList.length > 4 ? currentList[4].reminderDate : null;
+      c.reminderNote5 = currentList.length > 4 ? currentList[4].note : null;
+      c.updatedAt = DateTime.now();
+
+      final db = ref.read(databaseServiceProvider);
+      await db.saveCustomer(c);
       ref.invalidate(customerListProvider);
       ref.invalidate(upcomingEventsProvider);
       _loadCustomerData();
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Reminder $slot deleted')),
+          SnackBar(content: Text('"$remTitle" deleted.')),
         );
       }
     }
   }
 
-  void _showAddReminderDialog(int slot, {DateTime? initialDate, String? initialNote}) {
-    DateTime? selectedDate = initialDate;
-    final noteController = TextEditingController(text: initialNote);
+  void _showAddReminderDialog(Customer c, {int? index}) {
+    List<CustomerReminderItem> currentList = List.from(c.reminders);
+    if (currentList.isEmpty) {
+      if (c.reminderDate1 != null || c.reminderNote1 != null) {
+        currentList.add(CustomerReminderItem()..reminderDate = c.reminderDate1..note = c.reminderNote1..reminderTitle = 'Reminder #1');
+      }
+      if (c.reminderDate2 != null || c.reminderNote2 != null) {
+        currentList.add(CustomerReminderItem()..reminderDate = c.reminderDate2..note = c.reminderNote2..reminderTitle = 'Reminder #2');
+      }
+      if (c.reminderDate3 != null || c.reminderNote3 != null) {
+        currentList.add(CustomerReminderItem()..reminderDate = c.reminderDate3..note = c.reminderNote3..reminderTitle = 'Reminder #3');
+      }
+      if (c.reminderDate4 != null || c.reminderNote4 != null) {
+        currentList.add(CustomerReminderItem()..reminderDate = c.reminderDate4..note = c.reminderNote4..reminderTitle = 'Reminder #4');
+      }
+      if (c.reminderDate5 != null || c.reminderNote5 != null) {
+        currentList.add(CustomerReminderItem()..reminderDate = c.reminderDate5..note = c.reminderNote5..reminderTitle = 'Reminder #5');
+      }
+    }
+
+    final isEditing = index != null && index >= 0 && index < currentList.length;
+    final existing = isEditing ? currentList[index] : null;
+
+    final titleController = TextEditingController(text: existing?.reminderTitle ?? 'Reminder #${isEditing ? index + 1 : currentList.length + 1}');
+    final noteController = TextEditingController(text: existing?.note);
+    DateTime selectedDate = existing?.reminderDate ?? DateTime.now();
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(initialDate == null ? 'Add Reminder $slot' : 'Edit Reminder $slot'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.alarm_add, color: Colors.blueAccent),
+            const SizedBox(width: 8),
+            Text(isEditing ? 'Edit Reminder' : 'Add New Reminder'),
+          ],
+        ),
         content: StatefulBuilder(
           builder: (context, setDialogState) {
-            final dateText = selectedDate == null ? 'Select Date' : DateFormat('dd MMM yyyy').format(selectedDate!);
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                InkWell(
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: selectedDate ?? DateTime.now(),
-                      firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                      lastDate: DateTime(2100),
-                    );
-                    if (picked != null) {
-                      setDialogState(() {
-                        selectedDate = picked;
-                      });
-                    }
-                  },
-                  child: InputDecorator(
+            final activePattern = ref.watch(dateFormatPatternProvider);
+            return SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextField(
+                    controller: titleController,
                     decoration: const InputDecoration(
-                      labelText: 'Reminder Date *',
+                      labelText: 'Reminder Title',
+                      hintText: 'e.g. Premium Due / Follow-up',
                       border: OutlineInputBorder(),
                       isDense: true,
-                      suffixIcon: Icon(Icons.calendar_today, size: 20),
-                    ),
-                    child: Text(
-                      dateText,
-                      style: TextStyle(color: selectedDate == null ? Colors.grey[600] : Colors.black87),
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: noteController,
-                  minLines: 2,
-                  maxLines: 5,
-                  keyboardType: TextInputType.multiline,
-                  textInputAction: TextInputAction.newline,
-                  decoration: const InputDecoration(
-                    labelText: 'Reminder Note / Description',
-                    border: OutlineInputBorder(),
-                    isDense: true,
+                  const SizedBox(height: 12),
+                  SegmentedDateInputField(
+                    label: 'Reminder Date',
+                    initialDate: selectedDate,
+                    pattern: activePattern,
+                    onDateChanged: (picked) {
+                      if (picked != null) {
+                        setDialogState(() {
+                          selectedDate = picked;
+                        });
+                      }
+                    },
                   ),
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: noteController,
+                    minLines: 2,
+                    maxLines: 5,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.newline,
+                    decoration: const InputDecoration(
+                      labelText: 'Reminder Remarks / Details',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
+                  ),
+                ],
+              ),
             );
           },
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(
+          OutlinedButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.check, size: 18),
+            label: Text(isEditing ? 'Save Changes' : 'Add Reminder'),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent, foregroundColor: Colors.white),
             onPressed: () async {
-              if (selectedDate == null) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please select a reminder date')),
-                );
-                return;
+              final newRem = CustomerReminderItem()
+                ..reminderTitle = titleController.text.trim().isNotEmpty ? titleController.text.trim() : null
+                ..reminderDate = selectedDate
+                ..note = noteController.text.trim().isNotEmpty ? noteController.text.trim() : null;
+
+              if (isEditing) {
+                currentList[index] = newRem;
+              } else {
+                currentList.add(newRem);
               }
-              if (_customer != null) {
-                final db = ref.read(databaseServiceProvider);
-                if (slot == 1) {
-                  _customer!.reminderDate1 = selectedDate;
-                  _customer!.reminderNote1 = noteController.text.trim();
-                } else if (slot == 2) {
-                  _customer!.reminderDate2 = selectedDate;
-                  _customer!.reminderNote2 = noteController.text.trim();
-                } else if (slot == 3) {
-                  _customer!.reminderDate3 = selectedDate;
-                  _customer!.reminderNote3 = noteController.text.trim();
-                } else if (slot == 4) {
-                  _customer!.reminderDate4 = selectedDate;
-                  _customer!.reminderNote4 = noteController.text.trim();
-                } else if (slot == 5) {
-                  _customer!.reminderDate5 = selectedDate;
-                  _customer!.reminderNote5 = noteController.text.trim();
-                }
-                await db.saveCustomer(_customer!);
-                ref.invalidate(customerListProvider);
-                ref.invalidate(upcomingEventsProvider);
+
+              c.reminders = currentList;
+              c.reminderDate1 = currentList.isNotEmpty ? currentList[0].reminderDate : null;
+              c.reminderNote1 = currentList.isNotEmpty ? currentList[0].note : null;
+              c.reminderDate2 = currentList.length > 1 ? currentList[1].reminderDate : null;
+              c.reminderNote2 = currentList.length > 1 ? currentList[1].note : null;
+              c.reminderDate3 = currentList.length > 2 ? currentList[2].reminderDate : null;
+              c.reminderNote3 = currentList.length > 2 ? currentList[2].note : null;
+              c.reminderDate4 = currentList.length > 3 ? currentList[3].reminderDate : null;
+              c.reminderNote4 = currentList.length > 3 ? currentList[3].note : null;
+              c.reminderDate5 = currentList.length > 4 ? currentList[4].reminderDate : null;
+              c.reminderNote5 = currentList.length > 4 ? currentList[4].note : null;
+              c.updatedAt = DateTime.now();
+
+              final db = ref.read(databaseServiceProvider);
+              await db.saveCustomer(c);
+              ref.invalidate(customerListProvider);
+              ref.invalidate(upcomingEventsProvider);
+
+              if (mounted) {
+                Navigator.pop(context);
                 _loadCustomerData();
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Reminder $slot saved successfully')),
-                  );
-                }
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(isEditing ? 'Reminder updated!' : 'New reminder added!')),
+                );
               }
             },
-            child: const Text('Save'),
           ),
         ],
       ),

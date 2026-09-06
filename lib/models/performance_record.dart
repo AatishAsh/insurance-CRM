@@ -56,6 +56,19 @@ class PerformanceRecord {
   String box3PercentageCol3 = '';
   String box3PercentageCol4 = '';
 
+  String box3Col6Col1 = '';
+  String box3Col6Col2 = '';
+  String box3Col6Col3 = '';
+  String box3Col6Col4 = '';
+
+  String box3Col7Col1 = '';
+  String box3Col7Col2 = '';
+  String box3Col7Col3 = '';
+  String box3Col7Col4 = '';
+
+  List<String> box3ColHeaders = [];
+  List<String> box3RowHeaders = [];
+
   // Box 4 Fields (For MDRT)
   String box4Balance = '';
   String box4Target = '';

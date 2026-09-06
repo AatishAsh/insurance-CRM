@@ -594,6 +594,7 @@ class SyncService extends ChangeNotifier {
           'isDeleted': c.isDeleted,
           'assignedCompanyId': c.assignedCompanyId,
           'plans': c.plans.map((p) => {
+            'planTitle': p.planTitle,
             'productName': p.productName,
             'premium': p.premium,
             'mode': p.mode,
@@ -605,6 +606,11 @@ class SyncService extends ChangeNotifier {
             'name': r.name,
             'mobile': r.mobile,
             'age': r.age,
+          }).toList(),
+          'reminders': c.reminders.map((rem) => {
+            'reminderTitle': rem.reminderTitle,
+            'reminderDate': rem.reminderDate?.toIso8601String(),
+            'note': rem.note,
           }).toList(),
           'documents': c.documents.map((d) => {'documentName': d.documentName, 'fileName': d.fileName}).toList(),
         });
@@ -847,6 +853,7 @@ class SyncService extends ChangeNotifier {
           // Map plans
           final List<dynamic> plansJson = json['plans'] ?? [];
           cust.plans = plansJson.map((p) => CustomerPlanItem()
+            ..planTitle = p['planTitle'] as String?
             ..productName = p['productName'] as String?
             ..premium = p['premium'] as String?
             ..mode = p['mode'] as String?
@@ -860,6 +867,13 @@ class SyncService extends ChangeNotifier {
             ..name = r['name'] as String?
             ..mobile = r['mobile'] as String?
             ..age = r['age'] as String?).toList();
+
+          // Map reminders
+          final List<dynamic> remsJson = json['reminders'] ?? [];
+          cust.reminders = remsJson.map((rem) => CustomerReminderItem()
+            ..reminderTitle = rem['reminderTitle'] as String?
+            ..reminderDate = rem['reminderDate'] != null ? DateTime.parse(rem['reminderDate'] as String) : null
+            ..note = rem['note'] as String?).toList();
 
           // Map documents
           final List<dynamic> docsJson = json['documents'] ?? [];

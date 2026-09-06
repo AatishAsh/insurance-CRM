@@ -10,6 +10,7 @@ class CustomerDocument {
 
 @embedded
 class CustomerPlanItem {
+  String? planTitle;
   String? productName;
   String? premium;
   String? mode;
@@ -23,6 +24,13 @@ class CustomerReferenceItem {
   String? name;
   String? mobile;
   String? age;
+}
+
+@embedded
+class CustomerReminderItem {
+  String? reminderTitle;
+  DateTime? reminderDate;
+  String? note;
 }
 
 @collection
@@ -157,7 +165,8 @@ class Customer {
   String? moneyBackPolicy;
   String? childrenEducationPlan;
 
-  // Reminders (1 to 5)
+  // Reminders
+  List<CustomerReminderItem> reminders = [];
   DateTime? reminderDate1;
   String? reminderNote1;
   DateTime? reminderDate2;

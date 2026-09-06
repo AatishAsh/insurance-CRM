@@ -13,6 +13,8 @@ class Company {
   
   String? referenceNumber;
 
+  int tabIndex = 0;
+
   late DateTime updatedAt;
   
   bool isDeleted = false;

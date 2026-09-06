@@ -37,169 +37,219 @@ const PerformanceRecordSchema = CollectionSchema(
       name: r'box2TotalWorkingDay',
       type: IsarType.string,
     ),
-    r'box3JjWorkwayCol1': PropertySchema(
+    r'box3Col6Col1': PropertySchema(
       id: 4,
+      name: r'box3Col6Col1',
+      type: IsarType.string,
+    ),
+    r'box3Col6Col2': PropertySchema(
+      id: 5,
+      name: r'box3Col6Col2',
+      type: IsarType.string,
+    ),
+    r'box3Col6Col3': PropertySchema(
+      id: 6,
+      name: r'box3Col6Col3',
+      type: IsarType.string,
+    ),
+    r'box3Col6Col4': PropertySchema(
+      id: 7,
+      name: r'box3Col6Col4',
+      type: IsarType.string,
+    ),
+    r'box3Col7Col1': PropertySchema(
+      id: 8,
+      name: r'box3Col7Col1',
+      type: IsarType.string,
+    ),
+    r'box3Col7Col2': PropertySchema(
+      id: 9,
+      name: r'box3Col7Col2',
+      type: IsarType.string,
+    ),
+    r'box3Col7Col3': PropertySchema(
+      id: 10,
+      name: r'box3Col7Col3',
+      type: IsarType.string,
+    ),
+    r'box3Col7Col4': PropertySchema(
+      id: 11,
+      name: r'box3Col7Col4',
+      type: IsarType.string,
+    ),
+    r'box3ColHeaders': PropertySchema(
+      id: 12,
+      name: r'box3ColHeaders',
+      type: IsarType.stringList,
+    ),
+    r'box3JjWorkwayCol1': PropertySchema(
+      id: 13,
       name: r'box3JjWorkwayCol1',
       type: IsarType.string,
     ),
     r'box3JjWorkwayCol2': PropertySchema(
-      id: 5,
+      id: 14,
       name: r'box3JjWorkwayCol2',
       type: IsarType.string,
     ),
     r'box3JjWorkwayCol3': PropertySchema(
-      id: 6,
+      id: 15,
       name: r'box3JjWorkwayCol3',
       type: IsarType.string,
     ),
     r'box3JjWorkwayCol4': PropertySchema(
-      id: 7,
+      id: 16,
       name: r'box3JjWorkwayCol4',
       type: IsarType.string,
     ),
     r'box3PercentageCol1': PropertySchema(
-      id: 8,
+      id: 17,
       name: r'box3PercentageCol1',
       type: IsarType.string,
     ),
     r'box3PercentageCol2': PropertySchema(
-      id: 9,
+      id: 18,
       name: r'box3PercentageCol2',
       type: IsarType.string,
     ),
     r'box3PercentageCol3': PropertySchema(
-      id: 10,
+      id: 19,
       name: r'box3PercentageCol3',
       type: IsarType.string,
     ),
     r'box3PercentageCol4': PropertySchema(
-      id: 11,
+      id: 20,
       name: r'box3PercentageCol4',
       type: IsarType.string,
     ),
+    r'box3RowHeaders': PropertySchema(
+      id: 21,
+      name: r'box3RowHeaders',
+      type: IsarType.stringList,
+    ),
     r'box3TargetCol1': PropertySchema(
-      id: 12,
+      id: 22,
       name: r'box3TargetCol1',
       type: IsarType.string,
     ),
     r'box3TargetCol2': PropertySchema(
-      id: 13,
+      id: 23,
       name: r'box3TargetCol2',
       type: IsarType.string,
     ),
     r'box3TargetCol3': PropertySchema(
-      id: 14,
+      id: 24,
       name: r'box3TargetCol3',
       type: IsarType.string,
     ),
     r'box3TargetCol4': PropertySchema(
-      id: 15,
+      id: 25,
       name: r'box3TargetCol4',
       type: IsarType.string,
     ),
     r'box3YyCol1': PropertySchema(
-      id: 16,
+      id: 26,
       name: r'box3YyCol1',
       type: IsarType.string,
     ),
     r'box3YyCol2': PropertySchema(
-      id: 17,
+      id: 27,
       name: r'box3YyCol2',
       type: IsarType.string,
     ),
     r'box3YyCol3': PropertySchema(
-      id: 18,
+      id: 28,
       name: r'box3YyCol3',
       type: IsarType.string,
     ),
     r'box3YyCol4': PropertySchema(
-      id: 19,
+      id: 29,
       name: r'box3YyCol4',
       type: IsarType.string,
     ),
     r'box3ZzCol1': PropertySchema(
-      id: 20,
+      id: 30,
       name: r'box3ZzCol1',
       type: IsarType.string,
     ),
     r'box3ZzCol2': PropertySchema(
-      id: 21,
+      id: 31,
       name: r'box3ZzCol2',
       type: IsarType.string,
     ),
     r'box3ZzCol3': PropertySchema(
-      id: 22,
+      id: 32,
       name: r'box3ZzCol3',
       type: IsarType.string,
     ),
     r'box3ZzCol4': PropertySchema(
-      id: 23,
+      id: 33,
       name: r'box3ZzCol4',
       type: IsarType.string,
     ),
     r'box4Achieved': PropertySchema(
-      id: 24,
+      id: 34,
       name: r'box4Achieved',
       type: IsarType.string,
     ),
     r'box4Balance': PropertySchema(
-      id: 25,
+      id: 35,
       name: r'box4Balance',
       type: IsarType.string,
     ),
     r'box4Target': PropertySchema(
-      id: 26,
+      id: 36,
       name: r'box4Target',
       type: IsarType.string,
     ),
     r'earned': PropertySchema(
-      id: 27,
+      id: 37,
       name: r'earned',
       type: IsarType.string,
     ),
     r'fireHealthPa': PropertySchema(
-      id: 28,
+      id: 38,
       name: r'fireHealthPa',
       type: IsarType.string,
     ),
     r'life': PropertySchema(
-      id: 29,
+      id: 39,
       name: r'life',
       type: IsarType.string,
     ),
     r'month': PropertySchema(
-      id: 30,
+      id: 40,
       name: r'month',
       type: IsarType.long,
     ),
     r'newBusiness': PropertySchema(
-      id: 31,
+      id: 41,
       name: r'newBusiness',
       type: IsarType.string,
     ),
     r'topicHeaders': PropertySchema(
-      id: 32,
+      id: 42,
       name: r'topicHeaders',
       type: IsarType.stringList,
     ),
     r'topicRows': PropertySchema(
-      id: 33,
+      id: 43,
       name: r'topicRows',
       type: IsarType.objectList,
       target: r'TopicTableRow',
     ),
     r'updatedAt': PropertySchema(
-      id: 34,
+      id: 44,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'urgent': PropertySchema(
-      id: 35,
+      id: 45,
       name: r'urgent',
       type: IsarType.string,
     ),
     r'year': PropertySchema(
-      id: 36,
+      id: 46,
       name: r'year',
       type: IsarType.long,
     )
@@ -260,6 +310,21 @@ int _performanceRecordEstimateSize(
   bytesCount += 3 + object.box2Row1Days.length * 3;
   bytesCount += 3 + object.box2Row2Days.length * 3;
   bytesCount += 3 + object.box2TotalWorkingDay.length * 3;
+  bytesCount += 3 + object.box3Col6Col1.length * 3;
+  bytesCount += 3 + object.box3Col6Col2.length * 3;
+  bytesCount += 3 + object.box3Col6Col3.length * 3;
+  bytesCount += 3 + object.box3Col6Col4.length * 3;
+  bytesCount += 3 + object.box3Col7Col1.length * 3;
+  bytesCount += 3 + object.box3Col7Col2.length * 3;
+  bytesCount += 3 + object.box3Col7Col3.length * 3;
+  bytesCount += 3 + object.box3Col7Col4.length * 3;
+  bytesCount += 3 + object.box3ColHeaders.length * 3;
+  {
+    for (var i = 0; i < object.box3ColHeaders.length; i++) {
+      final value = object.box3ColHeaders[i];
+      bytesCount += value.length * 3;
+    }
+  }
   bytesCount += 3 + object.box3JjWorkwayCol1.length * 3;
   bytesCount += 3 + object.box3JjWorkwayCol2.length * 3;
   bytesCount += 3 + object.box3JjWorkwayCol3.length * 3;
@@ -268,6 +333,13 @@ int _performanceRecordEstimateSize(
   bytesCount += 3 + object.box3PercentageCol2.length * 3;
   bytesCount += 3 + object.box3PercentageCol3.length * 3;
   bytesCount += 3 + object.box3PercentageCol4.length * 3;
+  bytesCount += 3 + object.box3RowHeaders.length * 3;
+  {
+    for (var i = 0; i < object.box3RowHeaders.length; i++) {
+      final value = object.box3RowHeaders[i];
+      bytesCount += value.length * 3;
+    }
+  }
   bytesCount += 3 + object.box3TargetCol1.length * 3;
   bytesCount += 3 + object.box3TargetCol2.length * 3;
   bytesCount += 3 + object.box3TargetCol3.length * 3;
@@ -317,44 +389,54 @@ void _performanceRecordSerialize(
   writer.writeString(offsets[1], object.box2Row1Days);
   writer.writeString(offsets[2], object.box2Row2Days);
   writer.writeString(offsets[3], object.box2TotalWorkingDay);
-  writer.writeString(offsets[4], object.box3JjWorkwayCol1);
-  writer.writeString(offsets[5], object.box3JjWorkwayCol2);
-  writer.writeString(offsets[6], object.box3JjWorkwayCol3);
-  writer.writeString(offsets[7], object.box3JjWorkwayCol4);
-  writer.writeString(offsets[8], object.box3PercentageCol1);
-  writer.writeString(offsets[9], object.box3PercentageCol2);
-  writer.writeString(offsets[10], object.box3PercentageCol3);
-  writer.writeString(offsets[11], object.box3PercentageCol4);
-  writer.writeString(offsets[12], object.box3TargetCol1);
-  writer.writeString(offsets[13], object.box3TargetCol2);
-  writer.writeString(offsets[14], object.box3TargetCol3);
-  writer.writeString(offsets[15], object.box3TargetCol4);
-  writer.writeString(offsets[16], object.box3YyCol1);
-  writer.writeString(offsets[17], object.box3YyCol2);
-  writer.writeString(offsets[18], object.box3YyCol3);
-  writer.writeString(offsets[19], object.box3YyCol4);
-  writer.writeString(offsets[20], object.box3ZzCol1);
-  writer.writeString(offsets[21], object.box3ZzCol2);
-  writer.writeString(offsets[22], object.box3ZzCol3);
-  writer.writeString(offsets[23], object.box3ZzCol4);
-  writer.writeString(offsets[24], object.box4Achieved);
-  writer.writeString(offsets[25], object.box4Balance);
-  writer.writeString(offsets[26], object.box4Target);
-  writer.writeString(offsets[27], object.earned);
-  writer.writeString(offsets[28], object.fireHealthPa);
-  writer.writeString(offsets[29], object.life);
-  writer.writeLong(offsets[30], object.month);
-  writer.writeString(offsets[31], object.newBusiness);
-  writer.writeStringList(offsets[32], object.topicHeaders);
+  writer.writeString(offsets[4], object.box3Col6Col1);
+  writer.writeString(offsets[5], object.box3Col6Col2);
+  writer.writeString(offsets[6], object.box3Col6Col3);
+  writer.writeString(offsets[7], object.box3Col6Col4);
+  writer.writeString(offsets[8], object.box3Col7Col1);
+  writer.writeString(offsets[9], object.box3Col7Col2);
+  writer.writeString(offsets[10], object.box3Col7Col3);
+  writer.writeString(offsets[11], object.box3Col7Col4);
+  writer.writeStringList(offsets[12], object.box3ColHeaders);
+  writer.writeString(offsets[13], object.box3JjWorkwayCol1);
+  writer.writeString(offsets[14], object.box3JjWorkwayCol2);
+  writer.writeString(offsets[15], object.box3JjWorkwayCol3);
+  writer.writeString(offsets[16], object.box3JjWorkwayCol4);
+  writer.writeString(offsets[17], object.box3PercentageCol1);
+  writer.writeString(offsets[18], object.box3PercentageCol2);
+  writer.writeString(offsets[19], object.box3PercentageCol3);
+  writer.writeString(offsets[20], object.box3PercentageCol4);
+  writer.writeStringList(offsets[21], object.box3RowHeaders);
+  writer.writeString(offsets[22], object.box3TargetCol1);
+  writer.writeString(offsets[23], object.box3TargetCol2);
+  writer.writeString(offsets[24], object.box3TargetCol3);
+  writer.writeString(offsets[25], object.box3TargetCol4);
+  writer.writeString(offsets[26], object.box3YyCol1);
+  writer.writeString(offsets[27], object.box3YyCol2);
+  writer.writeString(offsets[28], object.box3YyCol3);
+  writer.writeString(offsets[29], object.box3YyCol4);
+  writer.writeString(offsets[30], object.box3ZzCol1);
+  writer.writeString(offsets[31], object.box3ZzCol2);
+  writer.writeString(offsets[32], object.box3ZzCol3);
+  writer.writeString(offsets[33], object.box3ZzCol4);
+  writer.writeString(offsets[34], object.box4Achieved);
+  writer.writeString(offsets[35], object.box4Balance);
+  writer.writeString(offsets[36], object.box4Target);
+  writer.writeString(offsets[37], object.earned);
+  writer.writeString(offsets[38], object.fireHealthPa);
+  writer.writeString(offsets[39], object.life);
+  writer.writeLong(offsets[40], object.month);
+  writer.writeString(offsets[41], object.newBusiness);
+  writer.writeStringList(offsets[42], object.topicHeaders);
   writer.writeObjectList<TopicTableRow>(
-    offsets[33],
+    offsets[43],
     allOffsets,
     TopicTableRowSchema.serialize,
     object.topicRows,
   );
-  writer.writeDateTime(offsets[34], object.updatedAt);
-  writer.writeString(offsets[35], object.urgent);
-  writer.writeLong(offsets[36], object.year);
+  writer.writeDateTime(offsets[44], object.updatedAt);
+  writer.writeString(offsets[45], object.urgent);
+  writer.writeLong(offsets[46], object.year);
 }
 
 PerformanceRecord _performanceRecordDeserialize(
@@ -368,46 +450,56 @@ PerformanceRecord _performanceRecordDeserialize(
   object.box2Row1Days = reader.readString(offsets[1]);
   object.box2Row2Days = reader.readString(offsets[2]);
   object.box2TotalWorkingDay = reader.readString(offsets[3]);
-  object.box3JjWorkwayCol1 = reader.readString(offsets[4]);
-  object.box3JjWorkwayCol2 = reader.readString(offsets[5]);
-  object.box3JjWorkwayCol3 = reader.readString(offsets[6]);
-  object.box3JjWorkwayCol4 = reader.readString(offsets[7]);
-  object.box3PercentageCol1 = reader.readString(offsets[8]);
-  object.box3PercentageCol2 = reader.readString(offsets[9]);
-  object.box3PercentageCol3 = reader.readString(offsets[10]);
-  object.box3PercentageCol4 = reader.readString(offsets[11]);
-  object.box3TargetCol1 = reader.readString(offsets[12]);
-  object.box3TargetCol2 = reader.readString(offsets[13]);
-  object.box3TargetCol3 = reader.readString(offsets[14]);
-  object.box3TargetCol4 = reader.readString(offsets[15]);
-  object.box3YyCol1 = reader.readString(offsets[16]);
-  object.box3YyCol2 = reader.readString(offsets[17]);
-  object.box3YyCol3 = reader.readString(offsets[18]);
-  object.box3YyCol4 = reader.readString(offsets[19]);
-  object.box3ZzCol1 = reader.readString(offsets[20]);
-  object.box3ZzCol2 = reader.readString(offsets[21]);
-  object.box3ZzCol3 = reader.readString(offsets[22]);
-  object.box3ZzCol4 = reader.readString(offsets[23]);
-  object.box4Achieved = reader.readString(offsets[24]);
-  object.box4Balance = reader.readString(offsets[25]);
-  object.box4Target = reader.readString(offsets[26]);
-  object.earned = reader.readString(offsets[27]);
-  object.fireHealthPa = reader.readString(offsets[28]);
+  object.box3Col6Col1 = reader.readString(offsets[4]);
+  object.box3Col6Col2 = reader.readString(offsets[5]);
+  object.box3Col6Col3 = reader.readString(offsets[6]);
+  object.box3Col6Col4 = reader.readString(offsets[7]);
+  object.box3Col7Col1 = reader.readString(offsets[8]);
+  object.box3Col7Col2 = reader.readString(offsets[9]);
+  object.box3Col7Col3 = reader.readString(offsets[10]);
+  object.box3Col7Col4 = reader.readString(offsets[11]);
+  object.box3ColHeaders = reader.readStringList(offsets[12]) ?? [];
+  object.box3JjWorkwayCol1 = reader.readString(offsets[13]);
+  object.box3JjWorkwayCol2 = reader.readString(offsets[14]);
+  object.box3JjWorkwayCol3 = reader.readString(offsets[15]);
+  object.box3JjWorkwayCol4 = reader.readString(offsets[16]);
+  object.box3PercentageCol1 = reader.readString(offsets[17]);
+  object.box3PercentageCol2 = reader.readString(offsets[18]);
+  object.box3PercentageCol3 = reader.readString(offsets[19]);
+  object.box3PercentageCol4 = reader.readString(offsets[20]);
+  object.box3RowHeaders = reader.readStringList(offsets[21]) ?? [];
+  object.box3TargetCol1 = reader.readString(offsets[22]);
+  object.box3TargetCol2 = reader.readString(offsets[23]);
+  object.box3TargetCol3 = reader.readString(offsets[24]);
+  object.box3TargetCol4 = reader.readString(offsets[25]);
+  object.box3YyCol1 = reader.readString(offsets[26]);
+  object.box3YyCol2 = reader.readString(offsets[27]);
+  object.box3YyCol3 = reader.readString(offsets[28]);
+  object.box3YyCol4 = reader.readString(offsets[29]);
+  object.box3ZzCol1 = reader.readString(offsets[30]);
+  object.box3ZzCol2 = reader.readString(offsets[31]);
+  object.box3ZzCol3 = reader.readString(offsets[32]);
+  object.box3ZzCol4 = reader.readString(offsets[33]);
+  object.box4Achieved = reader.readString(offsets[34]);
+  object.box4Balance = reader.readString(offsets[35]);
+  object.box4Target = reader.readString(offsets[36]);
+  object.earned = reader.readString(offsets[37]);
+  object.fireHealthPa = reader.readString(offsets[38]);
   object.id = id;
-  object.life = reader.readString(offsets[29]);
-  object.month = reader.readLong(offsets[30]);
-  object.newBusiness = reader.readString(offsets[31]);
-  object.topicHeaders = reader.readStringList(offsets[32]) ?? [];
+  object.life = reader.readString(offsets[39]);
+  object.month = reader.readLong(offsets[40]);
+  object.newBusiness = reader.readString(offsets[41]);
+  object.topicHeaders = reader.readStringList(offsets[42]) ?? [];
   object.topicRows = reader.readObjectList<TopicTableRow>(
-        offsets[33],
+        offsets[43],
         TopicTableRowSchema.deserialize,
         allOffsets,
         TopicTableRow(),
       ) ??
       [];
-  object.updatedAt = reader.readDateTime(offsets[34]);
-  object.urgent = reader.readString(offsets[35]);
-  object.year = reader.readLong(offsets[36]);
+  object.updatedAt = reader.readDateTime(offsets[44]);
+  object.urgent = reader.readString(offsets[45]);
+  object.year = reader.readLong(offsets[46]);
   return object;
 }
 
@@ -443,7 +535,7 @@ P _performanceRecordDeserializeProp<P>(
     case 11:
       return (reader.readString(offset)) as P;
     case 12:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringList(offset) ?? []) as P;
     case 13:
       return (reader.readString(offset)) as P;
     case 14:
@@ -461,7 +553,7 @@ P _performanceRecordDeserializeProp<P>(
     case 20:
       return (reader.readString(offset)) as P;
     case 21:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringList(offset) ?? []) as P;
     case 22:
       return (reader.readString(offset)) as P;
     case 23:
@@ -479,12 +571,32 @@ P _performanceRecordDeserializeProp<P>(
     case 29:
       return (reader.readString(offset)) as P;
     case 30:
-      return (reader.readLong(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 31:
       return (reader.readString(offset)) as P;
     case 32:
-      return (reader.readStringList(offset) ?? []) as P;
+      return (reader.readString(offset)) as P;
     case 33:
+      return (reader.readString(offset)) as P;
+    case 34:
+      return (reader.readString(offset)) as P;
+    case 35:
+      return (reader.readString(offset)) as P;
+    case 36:
+      return (reader.readString(offset)) as P;
+    case 37:
+      return (reader.readString(offset)) as P;
+    case 38:
+      return (reader.readString(offset)) as P;
+    case 39:
+      return (reader.readString(offset)) as P;
+    case 40:
+      return (reader.readLong(offset)) as P;
+    case 41:
+      return (reader.readString(offset)) as P;
+    case 42:
+      return (reader.readStringList(offset) ?? []) as P;
+    case 43:
       return (reader.readObjectList<TopicTableRow>(
             offset,
             TopicTableRowSchema.deserialize,
@@ -492,11 +604,11 @@ P _performanceRecordDeserializeProp<P>(
             TopicTableRow(),
           ) ??
           []) as P;
-    case 34:
+    case 44:
       return (reader.readDateTime(offset)) as P;
-    case 35:
+    case 45:
       return (reader.readString(offset)) as P;
-    case 36:
+    case 46:
       return (reader.readLong(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1528,6 +1640,1320 @@ extension PerformanceRecordQueryFilter
         property: r'box2TotalWorkingDay',
         value: '',
       ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col1EqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'box3Col6Col1',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col1GreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'box3Col6Col1',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col1LessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'box3Col6Col1',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col1Between(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'box3Col6Col1',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col1StartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'box3Col6Col1',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col1EndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'box3Col6Col1',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col1Contains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'box3Col6Col1',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col1Matches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'box3Col6Col1',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col1IsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'box3Col6Col1',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col1IsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'box3Col6Col1',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col2EqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'box3Col6Col2',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col2GreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'box3Col6Col2',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col2LessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'box3Col6Col2',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col2Between(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'box3Col6Col2',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col2StartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'box3Col6Col2',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col2EndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'box3Col6Col2',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col2Contains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'box3Col6Col2',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col2Matches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'box3Col6Col2',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col2IsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'box3Col6Col2',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col2IsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'box3Col6Col2',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col3EqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'box3Col6Col3',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col3GreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'box3Col6Col3',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col3LessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'box3Col6Col3',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col3Between(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'box3Col6Col3',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col3StartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'box3Col6Col3',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col3EndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'box3Col6Col3',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col3Contains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'box3Col6Col3',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col3Matches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'box3Col6Col3',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col3IsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'box3Col6Col3',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col3IsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'box3Col6Col3',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col4EqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'box3Col6Col4',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col4GreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'box3Col6Col4',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col4LessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'box3Col6Col4',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col4Between(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'box3Col6Col4',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col4StartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'box3Col6Col4',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col4EndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'box3Col6Col4',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col4Contains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'box3Col6Col4',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col4Matches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'box3Col6Col4',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col4IsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'box3Col6Col4',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col6Col4IsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'box3Col6Col4',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col1EqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'box3Col7Col1',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col1GreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'box3Col7Col1',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col1LessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'box3Col7Col1',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col1Between(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'box3Col7Col1',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col1StartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'box3Col7Col1',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col1EndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'box3Col7Col1',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col1Contains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'box3Col7Col1',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col1Matches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'box3Col7Col1',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col1IsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'box3Col7Col1',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col1IsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'box3Col7Col1',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col2EqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'box3Col7Col2',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col2GreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'box3Col7Col2',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col2LessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'box3Col7Col2',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col2Between(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'box3Col7Col2',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col2StartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'box3Col7Col2',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col2EndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'box3Col7Col2',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col2Contains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'box3Col7Col2',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col2Matches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'box3Col7Col2',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col2IsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'box3Col7Col2',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col2IsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'box3Col7Col2',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col3EqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'box3Col7Col3',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col3GreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'box3Col7Col3',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col3LessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'box3Col7Col3',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col3Between(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'box3Col7Col3',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col3StartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'box3Col7Col3',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col3EndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'box3Col7Col3',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col3Contains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'box3Col7Col3',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col3Matches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'box3Col7Col3',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col3IsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'box3Col7Col3',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col3IsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'box3Col7Col3',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col4EqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'box3Col7Col4',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col4GreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'box3Col7Col4',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col4LessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'box3Col7Col4',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col4Between(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'box3Col7Col4',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col4StartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'box3Col7Col4',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col4EndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'box3Col7Col4',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col4Contains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'box3Col7Col4',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col4Matches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'box3Col7Col4',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col4IsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'box3Col7Col4',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3Col7Col4IsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'box3Col7Col4',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3ColHeadersElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'box3ColHeaders',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3ColHeadersElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'box3ColHeaders',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3ColHeadersElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'box3ColHeaders',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3ColHeadersElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'box3ColHeaders',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3ColHeadersElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'box3ColHeaders',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3ColHeadersElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'box3ColHeaders',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3ColHeadersElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'box3ColHeaders',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3ColHeadersElementMatches(String pattern,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'box3ColHeaders',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3ColHeadersElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'box3ColHeaders',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3ColHeadersElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'box3ColHeaders',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3ColHeadersLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'box3ColHeaders',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3ColHeadersIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'box3ColHeaders',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3ColHeadersIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'box3ColHeaders',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3ColHeadersLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'box3ColHeaders',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3ColHeadersLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'box3ColHeaders',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3ColHeadersLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'box3ColHeaders',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
     });
   }
 
@@ -2616,6 +4042,232 @@ extension PerformanceRecordQueryFilter
         property: r'box3PercentageCol4',
         value: '',
       ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3RowHeadersElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'box3RowHeaders',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3RowHeadersElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'box3RowHeaders',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3RowHeadersElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'box3RowHeaders',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3RowHeadersElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'box3RowHeaders',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3RowHeadersElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'box3RowHeaders',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3RowHeadersElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'box3RowHeaders',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3RowHeadersElementContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'box3RowHeaders',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3RowHeadersElementMatches(String pattern,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'box3RowHeaders',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3RowHeadersElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'box3RowHeaders',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3RowHeadersElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'box3RowHeaders',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3RowHeadersLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'box3RowHeaders',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3RowHeadersIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'box3RowHeaders',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3RowHeadersIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'box3RowHeaders',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3RowHeadersLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'box3RowHeaders',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3RowHeadersLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'box3RowHeaders',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterFilterCondition>
+      box3RowHeadersLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'box3RowHeaders',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
     });
   }
 
@@ -5950,6 +7602,118 @@ extension PerformanceRecordQuerySortBy
   }
 
   QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      sortByBox3Col6Col1() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col6Col1', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      sortByBox3Col6Col1Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col6Col1', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      sortByBox3Col6Col2() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col6Col2', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      sortByBox3Col6Col2Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col6Col2', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      sortByBox3Col6Col3() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col6Col3', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      sortByBox3Col6Col3Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col6Col3', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      sortByBox3Col6Col4() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col6Col4', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      sortByBox3Col6Col4Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col6Col4', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      sortByBox3Col7Col1() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col7Col1', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      sortByBox3Col7Col1Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col7Col1', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      sortByBox3Col7Col2() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col7Col2', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      sortByBox3Col7Col2Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col7Col2', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      sortByBox3Col7Col3() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col7Col3', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      sortByBox3Col7Col3Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col7Col3', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      sortByBox3Col7Col4() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col7Col4', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      sortByBox3Col7Col4Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col7Col4', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
       sortByBox3JjWorkwayCol1() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'box3JjWorkwayCol1', Sort.asc);
@@ -6443,6 +8207,118 @@ extension PerformanceRecordQuerySortThenBy
   }
 
   QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      thenByBox3Col6Col1() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col6Col1', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      thenByBox3Col6Col1Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col6Col1', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      thenByBox3Col6Col2() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col6Col2', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      thenByBox3Col6Col2Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col6Col2', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      thenByBox3Col6Col3() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col6Col3', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      thenByBox3Col6Col3Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col6Col3', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      thenByBox3Col6Col4() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col6Col4', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      thenByBox3Col6Col4Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col6Col4', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      thenByBox3Col7Col1() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col7Col1', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      thenByBox3Col7Col1Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col7Col1', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      thenByBox3Col7Col2() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col7Col2', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      thenByBox3Col7Col2Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col7Col2', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      thenByBox3Col7Col3() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col7Col3', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      thenByBox3Col7Col3Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col7Col3', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      thenByBox3Col7Col4() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col7Col4', Sort.asc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
+      thenByBox3Col7Col4Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'box3Col7Col4', Sort.desc);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QAfterSortBy>
       thenByBox3JjWorkwayCol1() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'box3JjWorkwayCol1', Sort.asc);
@@ -6923,6 +8799,69 @@ extension PerformanceRecordQueryWhereDistinct
   }
 
   QueryBuilder<PerformanceRecord, PerformanceRecord, QDistinct>
+      distinctByBox3Col6Col1({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'box3Col6Col1', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QDistinct>
+      distinctByBox3Col6Col2({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'box3Col6Col2', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QDistinct>
+      distinctByBox3Col6Col3({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'box3Col6Col3', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QDistinct>
+      distinctByBox3Col6Col4({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'box3Col6Col4', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QDistinct>
+      distinctByBox3Col7Col1({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'box3Col7Col1', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QDistinct>
+      distinctByBox3Col7Col2({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'box3Col7Col2', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QDistinct>
+      distinctByBox3Col7Col3({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'box3Col7Col3', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QDistinct>
+      distinctByBox3Col7Col4({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'box3Col7Col4', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QDistinct>
+      distinctByBox3ColHeaders() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'box3ColHeaders');
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QDistinct>
       distinctByBox3JjWorkwayCol1({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'box3JjWorkwayCol1',
@@ -6983,6 +8922,13 @@ extension PerformanceRecordQueryWhereDistinct
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'box3PercentageCol4',
           caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, PerformanceRecord, QDistinct>
+      distinctByBox3RowHeaders() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'box3RowHeaders');
     });
   }
 
@@ -7196,6 +9142,69 @@ extension PerformanceRecordQueryProperty
   }
 
   QueryBuilder<PerformanceRecord, String, QQueryOperations>
+      box3Col6Col1Property() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'box3Col6Col1');
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, String, QQueryOperations>
+      box3Col6Col2Property() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'box3Col6Col2');
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, String, QQueryOperations>
+      box3Col6Col3Property() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'box3Col6Col3');
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, String, QQueryOperations>
+      box3Col6Col4Property() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'box3Col6Col4');
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, String, QQueryOperations>
+      box3Col7Col1Property() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'box3Col7Col1');
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, String, QQueryOperations>
+      box3Col7Col2Property() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'box3Col7Col2');
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, String, QQueryOperations>
+      box3Col7Col3Property() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'box3Col7Col3');
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, String, QQueryOperations>
+      box3Col7Col4Property() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'box3Col7Col4');
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, List<String>, QQueryOperations>
+      box3ColHeadersProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'box3ColHeaders');
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, String, QQueryOperations>
       box3JjWorkwayCol1Property() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'box3JjWorkwayCol1');
@@ -7248,6 +9257,13 @@ extension PerformanceRecordQueryProperty
       box3PercentageCol4Property() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'box3PercentageCol4');
+    });
+  }
+
+  QueryBuilder<PerformanceRecord, List<String>, QQueryOperations>
+      box3RowHeadersProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'box3RowHeaders');
     });
   }
 

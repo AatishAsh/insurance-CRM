@@ -480,93 +480,99 @@ const CustomerSchema = CollectionSchema(
       name: r'reminderNote5',
       type: IsarType.string,
     ),
-    r'rider': PropertySchema(
+    r'reminders': PropertySchema(
       id: 92,
+      name: r'reminders',
+      type: IsarType.objectList,
+      target: r'CustomerReminderItem',
+    ),
+    r'rider': PropertySchema(
+      id: 93,
       name: r'rider',
       type: IsarType.string,
     ),
     r'riskCover': PropertySchema(
-      id: 93,
+      id: 94,
       name: r'riskCover',
       type: IsarType.string,
     ),
     r'selfAadhaarNumber': PropertySchema(
-      id: 94,
+      id: 95,
       name: r'selfAadhaarNumber',
       type: IsarType.string,
     ),
     r'selfCompany': PropertySchema(
-      id: 95,
+      id: 96,
       name: r'selfCompany',
       type: IsarType.string,
     ),
     r'selfPolicyNumber': PropertySchema(
-      id: 96,
+      id: 97,
       name: r'selfPolicyNumber',
       type: IsarType.string,
     ),
     r'selfSumAssured1': PropertySchema(
-      id: 97,
+      id: 98,
       name: r'selfSumAssured1',
       type: IsarType.string,
     ),
     r'selfSumAssured2': PropertySchema(
-      id: 98,
+      id: 99,
       name: r'selfSumAssured2',
       type: IsarType.string,
     ),
     r'selfYearOfIssue': PropertySchema(
-      id: 99,
+      id: 100,
       name: r'selfYearOfIssue',
       type: IsarType.string,
     ),
     r'sisterAge': PropertySchema(
-      id: 100,
+      id: 101,
       name: r'sisterAge',
       type: IsarType.string,
     ),
     r'spouseAge': PropertySchema(
-      id: 101,
+      id: 102,
       name: r'spouseAge',
       type: IsarType.string,
     ),
     r'spouseCompany': PropertySchema(
-      id: 102,
+      id: 103,
       name: r'spouseCompany',
       type: IsarType.string,
     ),
     r'spouseDOB': PropertySchema(
-      id: 103,
+      id: 104,
       name: r'spouseDOB',
       type: IsarType.dateTime,
     ),
     r'spouseName': PropertySchema(
-      id: 104,
+      id: 105,
       name: r'spouseName',
       type: IsarType.string,
     ),
     r'spousePolicyNumber': PropertySchema(
-      id: 105,
+      id: 106,
       name: r'spousePolicyNumber',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 106,
+      id: 107,
       name: r'updatedAt',
       type: IsarType.dateTime,
     ),
     r'uuid': PropertySchema(
-      id: 107,
+      id: 108,
       name: r'uuid',
       type: IsarType.string,
     ),
     r'weddingAnniversary': PropertySchema(
-      id: 108,
+      id: 109,
       name: r'weddingAnniversary',
       type: IsarType.dateTime,
     ),
     r'weight': PropertySchema(
-      id: 109,
+      id: 110,
       name: r'weight',
       type: IsarType.string,
     )
@@ -646,6 +652,7 @@ const CustomerSchema = CollectionSchema(
   links: {},
   embeddedSchemas: {
     r'CustomerPlanItem': CustomerPlanItemSchema,
+    r'CustomerReminderItem': CustomerReminderItemSchema,
     r'CustomerReferenceItem': CustomerReferenceItemSchema,
     r'CustomerDocument': CustomerDocumentSchema
   },
@@ -1133,6 +1140,15 @@ int _customerEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  bytesCount += 3 + object.reminders.length * 3;
+  {
+    final offsets = allOffsets[CustomerReminderItem]!;
+    for (var i = 0; i < object.reminders.length; i++) {
+      final value = object.reminders[i];
+      bytesCount +=
+          CustomerReminderItemSchema.estimateSize(value, offsets, allOffsets);
+    }
+  }
   {
     final value = object.rider;
     if (value != null) {
@@ -1334,24 +1350,30 @@ void _customerSerialize(
   writer.writeString(offsets[89], object.reminderNote3);
   writer.writeString(offsets[90], object.reminderNote4);
   writer.writeString(offsets[91], object.reminderNote5);
-  writer.writeString(offsets[92], object.rider);
-  writer.writeString(offsets[93], object.riskCover);
-  writer.writeString(offsets[94], object.selfAadhaarNumber);
-  writer.writeString(offsets[95], object.selfCompany);
-  writer.writeString(offsets[96], object.selfPolicyNumber);
-  writer.writeString(offsets[97], object.selfSumAssured1);
-  writer.writeString(offsets[98], object.selfSumAssured2);
-  writer.writeString(offsets[99], object.selfYearOfIssue);
-  writer.writeString(offsets[100], object.sisterAge);
-  writer.writeString(offsets[101], object.spouseAge);
-  writer.writeString(offsets[102], object.spouseCompany);
-  writer.writeDateTime(offsets[103], object.spouseDOB);
-  writer.writeString(offsets[104], object.spouseName);
-  writer.writeString(offsets[105], object.spousePolicyNumber);
-  writer.writeDateTime(offsets[106], object.updatedAt);
-  writer.writeString(offsets[107], object.uuid);
-  writer.writeDateTime(offsets[108], object.weddingAnniversary);
-  writer.writeString(offsets[109], object.weight);
+  writer.writeObjectList<CustomerReminderItem>(
+    offsets[92],
+    allOffsets,
+    CustomerReminderItemSchema.serialize,
+    object.reminders,
+  );
+  writer.writeString(offsets[93], object.rider);
+  writer.writeString(offsets[94], object.riskCover);
+  writer.writeString(offsets[95], object.selfAadhaarNumber);
+  writer.writeString(offsets[96], object.selfCompany);
+  writer.writeString(offsets[97], object.selfPolicyNumber);
+  writer.writeString(offsets[98], object.selfSumAssured1);
+  writer.writeString(offsets[99], object.selfSumAssured2);
+  writer.writeString(offsets[100], object.selfYearOfIssue);
+  writer.writeString(offsets[101], object.sisterAge);
+  writer.writeString(offsets[102], object.spouseAge);
+  writer.writeString(offsets[103], object.spouseCompany);
+  writer.writeDateTime(offsets[104], object.spouseDOB);
+  writer.writeString(offsets[105], object.spouseName);
+  writer.writeString(offsets[106], object.spousePolicyNumber);
+  writer.writeDateTime(offsets[107], object.updatedAt);
+  writer.writeString(offsets[108], object.uuid);
+  writer.writeDateTime(offsets[109], object.weddingAnniversary);
+  writer.writeString(offsets[110], object.weight);
 }
 
 Customer _customerDeserialize(
@@ -1472,24 +1494,31 @@ Customer _customerDeserialize(
   object.reminderNote3 = reader.readStringOrNull(offsets[89]);
   object.reminderNote4 = reader.readStringOrNull(offsets[90]);
   object.reminderNote5 = reader.readStringOrNull(offsets[91]);
-  object.rider = reader.readStringOrNull(offsets[92]);
-  object.riskCover = reader.readStringOrNull(offsets[93]);
-  object.selfAadhaarNumber = reader.readStringOrNull(offsets[94]);
-  object.selfCompany = reader.readStringOrNull(offsets[95]);
-  object.selfPolicyNumber = reader.readStringOrNull(offsets[96]);
-  object.selfSumAssured1 = reader.readStringOrNull(offsets[97]);
-  object.selfSumAssured2 = reader.readStringOrNull(offsets[98]);
-  object.selfYearOfIssue = reader.readStringOrNull(offsets[99]);
-  object.sisterAge = reader.readStringOrNull(offsets[100]);
-  object.spouseAge = reader.readStringOrNull(offsets[101]);
-  object.spouseCompany = reader.readStringOrNull(offsets[102]);
-  object.spouseDOB = reader.readDateTimeOrNull(offsets[103]);
-  object.spouseName = reader.readStringOrNull(offsets[104]);
-  object.spousePolicyNumber = reader.readStringOrNull(offsets[105]);
-  object.updatedAt = reader.readDateTime(offsets[106]);
-  object.uuid = reader.readString(offsets[107]);
-  object.weddingAnniversary = reader.readDateTimeOrNull(offsets[108]);
-  object.weight = reader.readStringOrNull(offsets[109]);
+  object.reminders = reader.readObjectList<CustomerReminderItem>(
+        offsets[92],
+        CustomerReminderItemSchema.deserialize,
+        allOffsets,
+        CustomerReminderItem(),
+      ) ??
+      [];
+  object.rider = reader.readStringOrNull(offsets[93]);
+  object.riskCover = reader.readStringOrNull(offsets[94]);
+  object.selfAadhaarNumber = reader.readStringOrNull(offsets[95]);
+  object.selfCompany = reader.readStringOrNull(offsets[96]);
+  object.selfPolicyNumber = reader.readStringOrNull(offsets[97]);
+  object.selfSumAssured1 = reader.readStringOrNull(offsets[98]);
+  object.selfSumAssured2 = reader.readStringOrNull(offsets[99]);
+  object.selfYearOfIssue = reader.readStringOrNull(offsets[100]);
+  object.sisterAge = reader.readStringOrNull(offsets[101]);
+  object.spouseAge = reader.readStringOrNull(offsets[102]);
+  object.spouseCompany = reader.readStringOrNull(offsets[103]);
+  object.spouseDOB = reader.readDateTimeOrNull(offsets[104]);
+  object.spouseName = reader.readStringOrNull(offsets[105]);
+  object.spousePolicyNumber = reader.readStringOrNull(offsets[106]);
+  object.updatedAt = reader.readDateTime(offsets[107]);
+  object.uuid = reader.readString(offsets[108]);
+  object.weddingAnniversary = reader.readDateTimeOrNull(offsets[109]);
+  object.weight = reader.readStringOrNull(offsets[110]);
   return object;
 }
 
@@ -1703,7 +1732,13 @@ P _customerDeserializeProp<P>(
     case 91:
       return (reader.readStringOrNull(offset)) as P;
     case 92:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readObjectList<CustomerReminderItem>(
+            offset,
+            CustomerReminderItemSchema.deserialize,
+            allOffsets,
+            CustomerReminderItem(),
+          ) ??
+          []) as P;
     case 93:
       return (reader.readStringOrNull(offset)) as P;
     case 94:
@@ -1725,18 +1760,20 @@ P _customerDeserializeProp<P>(
     case 102:
       return (reader.readStringOrNull(offset)) as P;
     case 103:
-      return (reader.readDateTimeOrNull(offset)) as P;
-    case 104:
       return (reader.readStringOrNull(offset)) as P;
+    case 104:
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 105:
       return (reader.readStringOrNull(offset)) as P;
     case 106:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 107:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 108:
-      return (reader.readDateTimeOrNull(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 109:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 110:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -14830,6 +14867,94 @@ extension CustomerQueryFilter
     });
   }
 
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      remindersLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'reminders',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> remindersIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'reminders',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      remindersIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'reminders',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      remindersLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'reminders',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      remindersLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'reminders',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition>
+      remindersLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'reminders',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
   QueryBuilder<Customer, Customer, QAfterFilterCondition> riderIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -17283,6 +17408,13 @@ extension CustomerQueryObject
       FilterQuery<CustomerReferenceItem> q) {
     return QueryBuilder.apply(this, (query) {
       return query.object(q, r'references');
+    });
+  }
+
+  QueryBuilder<Customer, Customer, QAfterFilterCondition> remindersElement(
+      FilterQuery<CustomerReminderItem> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.object(q, r'reminders');
     });
   }
 }
@@ -21205,6 +21337,13 @@ extension CustomerQueryProperty
     });
   }
 
+  QueryBuilder<Customer, List<CustomerReminderItem>, QQueryOperations>
+      remindersProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'reminders');
+    });
+  }
+
   QueryBuilder<Customer, String?, QQueryOperations> riderProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'rider');
@@ -21740,18 +21879,23 @@ const CustomerPlanItemSchema = Schema(
       name: r'planSumAssured',
       type: IsarType.string,
     ),
-    r'premium': PropertySchema(
+    r'planTitle': PropertySchema(
       id: 3,
+      name: r'planTitle',
+      type: IsarType.string,
+    ),
+    r'premium': PropertySchema(
+      id: 4,
       name: r'premium',
       type: IsarType.string,
     ),
     r'productName': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'productName',
       type: IsarType.string,
     ),
     r'rider': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'rider',
       type: IsarType.string,
     )
@@ -21776,6 +21920,12 @@ int _customerPlanItemEstimateSize(
   }
   {
     final value = object.planSumAssured;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.planTitle;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
     }
@@ -21810,9 +21960,10 @@ void _customerPlanItemSerialize(
   writer.writeString(offsets[0], object.mode);
   writer.writeDateTime(offsets[1], object.planDate);
   writer.writeString(offsets[2], object.planSumAssured);
-  writer.writeString(offsets[3], object.premium);
-  writer.writeString(offsets[4], object.productName);
-  writer.writeString(offsets[5], object.rider);
+  writer.writeString(offsets[3], object.planTitle);
+  writer.writeString(offsets[4], object.premium);
+  writer.writeString(offsets[5], object.productName);
+  writer.writeString(offsets[6], object.rider);
 }
 
 CustomerPlanItem _customerPlanItemDeserialize(
@@ -21825,9 +21976,10 @@ CustomerPlanItem _customerPlanItemDeserialize(
   object.mode = reader.readStringOrNull(offsets[0]);
   object.planDate = reader.readDateTimeOrNull(offsets[1]);
   object.planSumAssured = reader.readStringOrNull(offsets[2]);
-  object.premium = reader.readStringOrNull(offsets[3]);
-  object.productName = reader.readStringOrNull(offsets[4]);
-  object.rider = reader.readStringOrNull(offsets[5]);
+  object.planTitle = reader.readStringOrNull(offsets[3]);
+  object.premium = reader.readStringOrNull(offsets[4]);
+  object.productName = reader.readStringOrNull(offsets[5]);
+  object.rider = reader.readStringOrNull(offsets[6]);
   return object;
 }
 
@@ -21849,6 +22001,8 @@ P _customerPlanItemDeserializeProp<P>(
     case 4:
       return (reader.readStringOrNull(offset)) as P;
     case 5:
+      return (reader.readStringOrNull(offset)) as P;
+    case 6:
       return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -22234,6 +22388,160 @@ extension CustomerPlanItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'planSumAssured',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerPlanItem, CustomerPlanItem, QAfterFilterCondition>
+      planTitleIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'planTitle',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerPlanItem, CustomerPlanItem, QAfterFilterCondition>
+      planTitleIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'planTitle',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerPlanItem, CustomerPlanItem, QAfterFilterCondition>
+      planTitleEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'planTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerPlanItem, CustomerPlanItem, QAfterFilterCondition>
+      planTitleGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'planTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerPlanItem, CustomerPlanItem, QAfterFilterCondition>
+      planTitleLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'planTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerPlanItem, CustomerPlanItem, QAfterFilterCondition>
+      planTitleBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'planTitle',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerPlanItem, CustomerPlanItem, QAfterFilterCondition>
+      planTitleStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'planTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerPlanItem, CustomerPlanItem, QAfterFilterCondition>
+      planTitleEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'planTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerPlanItem, CustomerPlanItem, QAfterFilterCondition>
+      planTitleContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'planTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerPlanItem, CustomerPlanItem, QAfterFilterCondition>
+      planTitleMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'planTitle',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerPlanItem, CustomerPlanItem, QAfterFilterCondition>
+      planTitleIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'planTitle',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerPlanItem, CustomerPlanItem, QAfterFilterCondition>
+      planTitleIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'planTitle',
         value: '',
       ));
     });
@@ -23276,3 +23584,487 @@ extension CustomerReferenceItemQueryFilter on QueryBuilder<
 
 extension CustomerReferenceItemQueryObject on QueryBuilder<
     CustomerReferenceItem, CustomerReferenceItem, QFilterCondition> {}
+
+// coverage:ignore-file
+// ignore_for_file: duplicate_ignore, non_constant_identifier_names, constant_identifier_names, invalid_use_of_protected_member, unnecessary_cast, prefer_const_constructors, lines_longer_than_80_chars, require_trailing_commas, inference_failure_on_function_invocation, unnecessary_parenthesis, unnecessary_raw_strings, unnecessary_null_checks, join_return_with_assignment, prefer_final_locals, avoid_js_rounded_ints, avoid_positional_boolean_parameters, always_specify_types
+
+const CustomerReminderItemSchema = Schema(
+  name: r'CustomerReminderItem',
+  id: -1974047657690477695,
+  properties: {
+    r'note': PropertySchema(
+      id: 0,
+      name: r'note',
+      type: IsarType.string,
+    ),
+    r'reminderDate': PropertySchema(
+      id: 1,
+      name: r'reminderDate',
+      type: IsarType.dateTime,
+    ),
+    r'reminderTitle': PropertySchema(
+      id: 2,
+      name: r'reminderTitle',
+      type: IsarType.string,
+    )
+  },
+  estimateSize: _customerReminderItemEstimateSize,
+  serialize: _customerReminderItemSerialize,
+  deserialize: _customerReminderItemDeserialize,
+  deserializeProp: _customerReminderItemDeserializeProp,
+);
+
+int _customerReminderItemEstimateSize(
+  CustomerReminderItem object,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  var bytesCount = offsets.last;
+  {
+    final value = object.note;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.reminderTitle;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  return bytesCount;
+}
+
+void _customerReminderItemSerialize(
+  CustomerReminderItem object,
+  IsarWriter writer,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  writer.writeString(offsets[0], object.note);
+  writer.writeDateTime(offsets[1], object.reminderDate);
+  writer.writeString(offsets[2], object.reminderTitle);
+}
+
+CustomerReminderItem _customerReminderItemDeserialize(
+  Id id,
+  IsarReader reader,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  final object = CustomerReminderItem();
+  object.note = reader.readStringOrNull(offsets[0]);
+  object.reminderDate = reader.readDateTimeOrNull(offsets[1]);
+  object.reminderTitle = reader.readStringOrNull(offsets[2]);
+  return object;
+}
+
+P _customerReminderItemDeserializeProp<P>(
+  IsarReader reader,
+  int propertyId,
+  int offset,
+  Map<Type, List<int>> allOffsets,
+) {
+  switch (propertyId) {
+    case 0:
+      return (reader.readStringOrNull(offset)) as P;
+    case 1:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 2:
+      return (reader.readStringOrNull(offset)) as P;
+    default:
+      throw IsarError('Unknown property with id $propertyId');
+  }
+}
+
+extension CustomerReminderItemQueryFilter on QueryBuilder<CustomerReminderItem,
+    CustomerReminderItem, QFilterCondition> {
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> noteIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'note',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> noteIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'note',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> noteEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'note',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> noteGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'note',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> noteLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'note',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> noteBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'note',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> noteStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'note',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> noteEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'note',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+          QAfterFilterCondition>
+      noteContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'note',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+          QAfterFilterCondition>
+      noteMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'note',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> noteIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'note',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> noteIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'note',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> reminderDateIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'reminderDate',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> reminderDateIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'reminderDate',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> reminderDateEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'reminderDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> reminderDateGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'reminderDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> reminderDateLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'reminderDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> reminderDateBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'reminderDate',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> reminderTitleIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'reminderTitle',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> reminderTitleIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'reminderTitle',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> reminderTitleEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'reminderTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> reminderTitleGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'reminderTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> reminderTitleLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'reminderTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> reminderTitleBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'reminderTitle',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> reminderTitleStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'reminderTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> reminderTitleEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'reminderTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+          QAfterFilterCondition>
+      reminderTitleContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'reminderTitle',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+          QAfterFilterCondition>
+      reminderTitleMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'reminderTitle',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> reminderTitleIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'reminderTitle',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerReminderItem, CustomerReminderItem,
+      QAfterFilterCondition> reminderTitleIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'reminderTitle',
+        value: '',
+      ));
+    });
+  }
+}
+
+extension CustomerReminderItemQueryObject on QueryBuilder<CustomerReminderItem,
+    CustomerReminderItem, QFilterCondition> {}

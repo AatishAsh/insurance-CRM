@@ -33,14 +33,16 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
   late TextEditingController _box2Row2DaysController;
   late TextEditingController _box2TotalWorkingDayController;
 
-  // Box 3 Controllers (5 Column Headers x 4 Input Rows)
+  // Box 3 Controllers (7 Column Headers x 4 Input Rows)
   late List<TextEditingController> _box3JjWorkwayControllers;
   late List<TextEditingController> _box3TargetControllers;
   late List<TextEditingController> _box3YyControllers;
   late List<TextEditingController> _box3ZzControllers;
   late List<TextEditingController> _box3PercentageControllers;
+  late List<TextEditingController> _box3Col6Controllers;
+  late List<TextEditingController> _box3Col7Controllers;
 
-  // Box 3 Focus Nodes for Excel / Spreadsheet style Keyboard Navigation (5 Cols x 4 Rows)
+  // Box 3 Focus Nodes for Excel / Spreadsheet style Keyboard Navigation (7 Cols x 4 Rows)
   late List<List<FocusNode>> _box3FocusNodes;
 
   // Box 4 Controllers (For MDRT)
@@ -71,16 +73,18 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
     _box2Row2DaysController = TextEditingController();
     _box2TotalWorkingDayController = TextEditingController();
 
-    // Box 3 Controllers Init (5 Column Headers x 4 Input Rows)
+    // Box 3 Controllers Init (7 Column Headers x 4 Input Rows)
     _box3JjWorkwayControllers = List.generate(4, (_) => TextEditingController());
     _box3TargetControllers = List.generate(4, (_) => TextEditingController());
     _box3YyControllers = List.generate(4, (_) => TextEditingController());
     _box3ZzControllers = List.generate(4, (_) => TextEditingController());
     _box3PercentageControllers = List.generate(4, (_) => TextEditingController());
+    _box3Col6Controllers = List.generate(4, (_) => TextEditingController());
+    _box3Col7Controllers = List.generate(4, (_) => TextEditingController());
 
-    // Box 3 Focus Nodes Init (5 Cols x 4 Rows Grid)
+    // Box 3 Focus Nodes Init (7 Cols x 4 Rows Grid)
     _box3FocusNodes = List.generate(
-      5,
+      7,
       (colIdx) => List.generate(4, (rowIdx) {
         final node = FocusNode();
         node.addListener(() {
@@ -135,6 +139,12 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
     for (var c in _box3PercentageControllers) {
       c.dispose();
     }
+    for (var c in _box3Col6Controllers) {
+      c.dispose();
+    }
+    for (var c in _box3Col7Controllers) {
+      c.dispose();
+    }
 
     // Box 3 Focus Nodes Dispose
     for (var col in _box3FocusNodes) {
@@ -169,6 +179,10 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
         return _box3ZzControllers[rowIdx];
       case 4:
         return _box3PercentageControllers[rowIdx];
+      case 5:
+        return _box3Col6Controllers[rowIdx];
+      case 6:
+        return _box3Col7Controllers[rowIdx];
       default:
         return _box3JjWorkwayControllers[rowIdx];
     }
@@ -178,16 +192,16 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
   void _focusCell(int colIdx, int rowIdx) {
     if (rowIdx >= 4) {
       rowIdx = 0;
-      colIdx = (colIdx + 1) % 5;
+      colIdx = (colIdx + 1) % 7;
     } else if (rowIdx < 0) {
       rowIdx = 3;
-      colIdx = (colIdx - 1 + 5) % 5;
+      colIdx = (colIdx - 1 + 7) % 7;
     }
 
-    if (colIdx >= 5) {
+    if (colIdx >= 7) {
       colIdx = 0;
     } else if (colIdx < 0) {
-      colIdx = 4;
+      colIdx = 6;
     }
 
     _box3FocusNodes[colIdx][rowIdx].requestFocus();
@@ -240,12 +254,26 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
       record.box3PercentageCol3,
       record.box3PercentageCol4,
     ];
+    final box3Col6Values = [
+      record.box3Col6Col1,
+      record.box3Col6Col2,
+      record.box3Col6Col3,
+      record.box3Col6Col4,
+    ];
+    final box3Col7Values = [
+      record.box3Col7Col1,
+      record.box3Col7Col2,
+      record.box3Col7Col3,
+      record.box3Col7Col4,
+    ];
 
     _syncRowControllers(_box3JjWorkwayControllers, box3JjWorkwayValues);
     _syncRowControllers(_box3TargetControllers, box3TargetValues);
     _syncRowControllers(_box3YyControllers, box3YyValues);
     _syncRowControllers(_box3ZzControllers, box3ZzValues);
     _syncRowControllers(_box3PercentageControllers, box3PercentageValues);
+    _syncRowControllers(_box3Col6Controllers, box3Col6Values);
+    _syncRowControllers(_box3Col7Controllers, box3Col7Values);
   }
 
   void _syncRowControllers(List<TextEditingController> controllers, List<String> values) {
@@ -718,22 +746,9 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.table_rows_rounded, color: Colors.blueAccent, size: 22),
-                    ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Monthly Activity & Topic Matrix',
-                      style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.black87),
-                    ),
-                  ],
+                const Text(
+                  'Monthly Activity & Topic Matrix',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Colors.black87),
                 ),
 
                 // Add Entry Button
@@ -840,15 +855,9 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                                 decoration: BoxDecoration(
                                   border: Border(right: BorderSide(color: Colors.blue.shade200)),
                                 ),
-                                child: const Row(
-                                  children: [
-                                    Icon(Icons.calendar_today_rounded, size: 15, color: Colors.blueAccent),
-                                    SizedBox(width: 6),
-                                    Text(
-                                      'Date',
-                                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent, fontSize: 13),
-                                    ),
-                                  ],
+                                child: const Text(
+                                  'Date',
+                                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueAccent, fontSize: 13),
                                 ),
                               ),
 
@@ -866,30 +875,22 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                                       _showRenameTopicDialog(context, c, topicHeaders[c], notifier);
                                     },
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
                                       decoration: BoxDecoration(
                                         color: Colors.white,
                                         borderRadius: BorderRadius.circular(6),
                                         border: Border.all(color: Colors.blue.shade200),
                                       ),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              topicHeaders[c],
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.blue.shade900,
-                                                fontSize: 12,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Icon(Icons.edit_outlined, size: 14, color: Colors.blue.shade700),
-                                        ],
+                                      child: Text(
+                                        topicHeaders[c],
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.blue.shade900,
+                                          fontSize: 12,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ),
@@ -1147,7 +1148,7 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Enter a new title for column #${colIdx + 2} in this month\'s table:',
+              'Enter a new title for column #${colIdx + 2}:',
               style: const TextStyle(fontSize: 13, color: Colors.black87),
             ),
             const SizedBox(height: 12),
@@ -1361,11 +1362,32 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
     );
   }
 
-  // Section 3: JJ Workway & Targets Card
+  // Section 3: JJ Workway & Targets Card (7 Columns x 4 Input Rows)
   Widget _buildBoxThreeCard(BuildContext context, PerformanceNotifier notifier) {
+    final selectedYear = ref.watch(selectedPerformanceYearProvider);
+    final selectedMonth = ref.watch(selectedPerformanceMonthProvider);
+    final providerKey = '${selectedYear}_$selectedMonth';
+    final performanceRecord = ref.watch(performanceRecordProvider(providerKey));
+
+    final defaultColTitles = ['JJ workway', 'Target', 'YY', 'ZZ', 'Percentage', 'Column 6', 'Column 7'];
+    final colTitles = List<String>.generate(7, (i) {
+      if (i < performanceRecord.box3ColHeaders.length && performanceRecord.box3ColHeaders[i].trim().isNotEmpty) {
+        return performanceRecord.box3ColHeaders[i];
+      }
+      return defaultColTitles[i];
+    });
+
+    final defaultRowTitles = ['Row 1', 'Row 2', 'Row 3', 'Row 4'];
+    final rowTitles = List<String>.generate(4, (i) {
+      if (i < performanceRecord.box3RowHeaders.length && performanceRecord.box3RowHeaders[i].trim().isNotEmpty) {
+        return performanceRecord.box3RowHeaders[i];
+      }
+      return defaultRowTitles[i];
+    });
+
     final columns = [
       {
-        'title': 'JJ workway',
+        'title': colTitles[0],
         'icon': Icons.alt_route_rounded,
         'controllers': _box3JjWorkwayControllers,
         'prefixKey': 'box3JjWorkwayCol',
@@ -1373,7 +1395,7 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
         'fgColor': AppColors.badgeIndigoText,
       },
       {
-        'title': 'Target',
+        'title': colTitles[1],
         'icon': Icons.track_changes_rounded,
         'controllers': _box3TargetControllers,
         'prefixKey': 'box3TargetCol',
@@ -1381,7 +1403,7 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
         'fgColor': AppColors.badgeRoseText,
       },
       {
-        'title': 'YY',
+        'title': colTitles[2],
         'icon': Icons.analytics_outlined,
         'controllers': _box3YyControllers,
         'prefixKey': 'box3YyCol',
@@ -1389,7 +1411,7 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
         'fgColor': AppColors.badgeAmberText,
       },
       {
-        'title': 'ZZ',
+        'title': colTitles[3],
         'icon': Icons.assessment_outlined,
         'controllers': _box3ZzControllers,
         'prefixKey': 'box3ZzCol',
@@ -1397,12 +1419,28 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
         'fgColor': AppColors.badgeCyanText,
       },
       {
-        'title': 'Percentage',
+        'title': colTitles[4],
         'icon': Icons.percent_rounded,
         'controllers': _box3PercentageControllers,
         'prefixKey': 'box3PercentageCol',
         'bgColor': AppColors.badgeGreenBg,
         'fgColor': AppColors.badgeGreenText,
+      },
+      {
+        'title': colTitles[5],
+        'icon': Icons.view_column_rounded,
+        'controllers': _box3Col6Controllers,
+        'prefixKey': 'box3Col6Col',
+        'bgColor': AppColors.badgeBlueBg,
+        'fgColor': AppColors.badgeBlueText,
+      },
+      {
+        'title': colTitles[6],
+        'icon': Icons.table_chart_outlined,
+        'controllers': _box3Col7Controllers,
+        'prefixKey': 'box3Col7Col',
+        'bgColor': AppColors.badgeVioletBg,
+        'fgColor': AppColors.badgeVioletText,
       },
     ];
 
@@ -1418,68 +1456,77 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Card Header
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppColors.badgeCyanBg,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.table_chart_rounded, color: AppColors.cyanAccent, size: 20),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppColors.badgeCyanBg,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.table_chart_rounded, color: AppColors.cyanAccent, size: 20),
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'JJ Workway & Targets',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.headingText),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 10),
-                const Text(
-                  'JJ Workway & Targets',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.headingText),
+                Text(
+                  '7 Columns Matrix',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.blue.shade700),
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
 
-            // Spreadsheet Keyboard-Navigable Matrix (5 Columns x 4 Rows)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: columns.asMap().entries.map((entry) {
-                final int colIdx = entry.key;
-                final col = entry.value;
-                final String title = col['title'] as String;
-                final IconData icon = col['icon'] as IconData;
-                final List<TextEditingController> controllers = col['controllers'] as List<TextEditingController>;
-                final String prefixKey = col['prefixKey'] as String;
+            // Spreadsheet Keyboard-Navigable Matrix (7 Columns x 4 Rows)
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: columns.asMap().entries.map((entry) {
+                  final int colIdx = entry.key;
+                  final col = entry.value;
+                  final String title = col['title'] as String;
+                  final IconData icon = col['icon'] as IconData;
+                  final List<TextEditingController> controllers = col['controllers'] as List<TextEditingController>;
+                  final String prefixKey = col['prefixKey'] as String;
 
-                return Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 3.0),
+                  return Container(
+                    width: 140,
+                    padding: const EdgeInsets.symmetric(horizontal: 4.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Column Header Badge
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.blue.shade50,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.blue.shade200),
-                          ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(icon, size: 16, color: Colors.blueAccent),
-                              const SizedBox(height: 4),
-                              Text(
-                                title,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blueAccent,
-                                  fontSize: 11,
-                                ),
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                        // Column Header Badge (Editable)
+                        InkWell(
+                          onTap: () => _showRenameBox3ColDialog(context, colIdx, title, notifier),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.blue.shade200),
+                            ),
+                            child: Text(
+                              title,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blueAccent,
+                                fontSize: 12,
                               ),
-                            ],
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -1542,8 +1589,6 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                                 },
                                 style: const TextStyle(fontSize: 12),
                                 decoration: InputDecoration(
-                                  labelText: 'R${rowIdx + 1}',
-                                  labelStyle: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                                   isDense: true,
                                   contentPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
                                   border: OutlineInputBorder(
@@ -1566,12 +1611,144 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                         }),
                       ],
                     ),
-                  ),
-                );
-              }).toList(),
+                  );
+                }).toList(),
+              ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // Rename Box 3 Column Dialog
+  void _showRenameBox3ColDialog(
+    BuildContext context,
+    int colIdx,
+    String currentTitle,
+    PerformanceNotifier notifier,
+  ) {
+    final controller = TextEditingController(text: currentTitle);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: Row(
+          children: [
+            const Icon(Icons.edit_note_rounded, color: Colors.blueAccent),
+            const SizedBox(width: 8),
+            Text('Rename Column #${colIdx + 1}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Enter a custom title for this target matrix column:',
+              style: TextStyle(fontSize: 13, color: Colors.black87),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Column Header',
+                hintText: 'e.g. Target, Achieved, Notes...',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+              onSubmitted: (val) {
+                if (val.trim().isNotEmpty) {
+                  notifier.updateBox3ColHeader(colIdx, val.trim());
+                }
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final newTitle = controller.text.trim();
+              if (newTitle.isNotEmpty) {
+                notifier.updateBox3ColHeader(colIdx, newTitle);
+              }
+              Navigator.pop(context);
+            },
+            child: const Text('Save Header'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Rename Box 3 Row Heading Dialog
+  void _showRenameBox3RowDialog(
+    BuildContext context,
+    int rowIdx,
+    String currentTitle,
+    PerformanceNotifier notifier,
+  ) {
+    final controller = TextEditingController(text: currentTitle);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: Row(
+          children: [
+            const Icon(Icons.edit_rounded, color: Colors.blueAccent),
+            const SizedBox(width: 8),
+            Text('Rename Row Heading #${rowIdx + 1}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Enter a custom label for this target matrix row heading:',
+              style: TextStyle(fontSize: 13, color: Colors.black87),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Row Heading Label',
+                hintText: 'e.g. Life Insurance, Health, General...',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+              onSubmitted: (val) {
+                if (val.trim().isNotEmpty) {
+                  notifier.updateBox3RowHeader(rowIdx, val.trim());
+                }
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final newTitle = controller.text.trim();
+              if (newTitle.isNotEmpty) {
+                notifier.updateBox3RowHeader(rowIdx, newTitle);
+              }
+              Navigator.pop(context);
+            },
+            child: const Text('Save Row Heading'),
+          ),
+        ],
       ),
     );
   }

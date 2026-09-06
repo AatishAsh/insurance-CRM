@@ -265,6 +265,7 @@ class BackupService {
       'assignedCompanyId': c.assignedCompanyId,
       'documents': c.documents.map((d) => {'documentName': d.documentName, 'fileName': d.fileName}).toList(),
       'plans': c.plans.map((p) => {
+        'planTitle': p.planTitle,
         'productName': p.productName,
         'premium': p.premium,
         'mode': p.mode,
@@ -276,6 +277,11 @@ class BackupService {
         'name': r.name,
         'mobile': r.mobile,
         'age': r.age,
+      }).toList(),
+      'reminders': c.reminders.map((rem) => {
+        'reminderTitle': rem.reminderTitle,
+        'reminderDate': rem.reminderDate?.toIso8601String(),
+        'note': rem.note,
       }).toList(),
     };
   }
@@ -384,6 +390,7 @@ class BackupService {
     if (json['plans'] != null) {
       c.plans = (json['plans'] as List)
           .map((p) => CustomerPlanItem()
+            ..planTitle = p['planTitle'] as String?
             ..productName = p['productName'] as String?
             ..premium = p['premium'] as String?
             ..mode = p['mode'] as String?
@@ -400,6 +407,14 @@ class BackupService {
             ..age = r['age'] as String?)
           .toList();
     }
+    if (json['reminders'] != null) {
+      c.reminders = (json['reminders'] as List)
+          .map((rem) => CustomerReminderItem()
+            ..reminderTitle = rem['reminderTitle'] as String?
+            ..reminderDate = rem['reminderDate'] != null ? DateTime.parse(rem['reminderDate'] as String) : null
+            ..note = rem['note'] as String?)
+          .toList();
+    }
     return c;
   }
 
@@ -408,6 +423,7 @@ class BackupService {
       'uuid': c.uuid,
       'name': c.name,
       'referenceNumber': c.referenceNumber,
+      'tabIndex': c.tabIndex,
       'updatedAt': c.updatedAt.toIso8601String(),
       'isDeleted': c.isDeleted,
     };
@@ -418,6 +434,7 @@ class BackupService {
     c.uuid = json['uuid'] as String;
     c.name = json['name'] as String;
     c.referenceNumber = json['referenceNumber'] as String?;
+    c.tabIndex = json['tabIndex'] as int? ?? 0;
     c.updatedAt = DateTime.parse(json['updatedAt'] as String);
     c.isDeleted = json['isDeleted'] as bool? ?? false;
     return c;
@@ -536,6 +553,16 @@ class BackupService {
       'box3PercentageCol2': p.box3PercentageCol2,
       'box3PercentageCol3': p.box3PercentageCol3,
       'box3PercentageCol4': p.box3PercentageCol4,
+      'box3Col6Col1': p.box3Col6Col1,
+      'box3Col6Col2': p.box3Col6Col2,
+      'box3Col6Col3': p.box3Col6Col3,
+      'box3Col6Col4': p.box3Col6Col4,
+      'box3Col7Col1': p.box3Col7Col1,
+      'box3Col7Col2': p.box3Col7Col2,
+      'box3Col7Col3': p.box3Col7Col3,
+      'box3Col7Col4': p.box3Col7Col4,
+      'box3ColHeaders': p.box3ColHeaders,
+      'box3RowHeaders': p.box3RowHeaders,
       'box4Balance': p.box4Balance,
       'box4Target': p.box4Target,
       'box4Achieved': p.box4Achieved,
@@ -581,6 +608,16 @@ class BackupService {
     p.box3PercentageCol2 = json['box3PercentageCol2'] as String? ?? '';
     p.box3PercentageCol3 = json['box3PercentageCol3'] as String? ?? '';
     p.box3PercentageCol4 = json['box3PercentageCol4'] as String? ?? '';
+    p.box3Col6Col1 = json['box3Col6Col1'] as String? ?? '';
+    p.box3Col6Col2 = json['box3Col6Col2'] as String? ?? '';
+    p.box3Col6Col3 = json['box3Col6Col3'] as String? ?? '';
+    p.box3Col6Col4 = json['box3Col6Col4'] as String? ?? '';
+    p.box3Col7Col1 = json['box3Col7Col1'] as String? ?? '';
+    p.box3Col7Col2 = json['box3Col7Col2'] as String? ?? '';
+    p.box3Col7Col3 = json['box3Col7Col3'] as String? ?? '';
+    p.box3Col7Col4 = json['box3Col7Col4'] as String? ?? '';
+    p.box3ColHeaders = (json['box3ColHeaders'] as List?)?.map((e) => e as String).toList() ?? [];
+    p.box3RowHeaders = (json['box3RowHeaders'] as List?)?.map((e) => e as String).toList() ?? [];
     p.box4Balance = json['box4Balance'] as String? ?? '';
     p.box4Target = json['box4Target'] as String? ?? '';
     p.box4Achieved = json['box4Achieved'] as String? ?? '';

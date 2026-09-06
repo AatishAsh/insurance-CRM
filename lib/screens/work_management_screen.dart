@@ -17,7 +17,9 @@ class WorkManagementScreen extends ConsumerStatefulWidget {
 class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
   @override
   Widget build(BuildContext context) {
-    final companiesAsync = ref.watch(companiesProvider);
+    final selectedTabIndex = ref.watch(selectedWorkTabIndexProvider);
+    final tabNames = ref.watch(workTabNamesProvider);
+    final companiesAsync = ref.watch(companiesForSelectedTabProvider);
     final selectedCompanyId = ref.watch(selectedCompanyIdProvider);
 
     final List<Color> avatarColors = [
@@ -28,13 +30,35 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
       AppColors.amberAccent,
     ];
 
+    // Automatically select the first company in the active tab if current selectedCompanyId is not in this tab
+    companiesAsync.whenData((companies) {
+      if (companies.isNotEmpty) {
+        final existsInTab = companies.any((c) => c.id == selectedCompanyId);
+        if (!existsInTab) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              ref.read(selectedCompanyIdProvider.notifier).state = companies.first.id;
+            }
+          });
+        }
+      } else if (selectedCompanyId != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            ref.read(selectedCompanyIdProvider.notifier).state = null;
+          }
+        });
+      }
+    });
+
+    final currentTabTitle = tabNames.length > selectedTabIndex ? tabNames[selectedTabIndex] : 'Tab ${selectedTabIndex + 1}';
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Row(
         children: [
-          // Sidebar for Company Selection
+          // Sidebar for Company Selection & Tabs
           Container(
-            width: 220,
+            width: 250,
             decoration: const BoxDecoration(
               color: AppColors.cardSurface,
               border: Border(right: BorderSide(color: AppColors.cardBorder, width: 1)),
@@ -42,9 +66,9 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
             ),
             child: Column(
               children: [
-                // Header
+                // Header with current tab name and rename option
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
                   child: Row(
                     children: [
                       Container(
@@ -55,32 +79,144 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                         ),
                         child: const Icon(Icons.business_rounded, color: AppColors.cyanAccent, size: 18),
                       ),
-                      const SizedBox(width: 10),
-                      const Text(
-                        'COMPANIES',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          color: AppColors.headingText,
-                          letterSpacing: 1.0,
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          currentTabTitle.toUpperCase(),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: AppColors.headingText,
+                            letterSpacing: 0.8,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.edit_outlined, size: 16, color: AppColors.skyBlue),
+                        tooltip: 'Rename Tab',
+                        onPressed: () => _showRenameTabDialog(selectedTabIndex, currentTabTitle),
+                        constraints: const BoxConstraints(),
+                        padding: EdgeInsets.zero,
                       ),
                     ],
                   ),
                 ),
+                // 3 Company Tabs Selector
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: List.generate(3, (index) {
+                      final isTabSelected = selectedTabIndex == index;
+                      final tabTitle = tabNames.length > index ? tabNames[index] : 'Tab ${index + 1}';
+
+                      return Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            ref.read(selectedWorkTabIndexProvider.notifier).state = index;
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isTabSelected ? AppColors.skyBlue : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: isTabSelected
+                                  ? [BoxShadow(color: AppColors.skyBlue.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))]
+                                  : [],
+                            ),
+                            child: Center(
+                              child: Text(
+                                tabTitle,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: isTabSelected ? FontWeight.bold : FontWeight.w600,
+                                  color: isTabSelected ? Colors.white : AppColors.mutedText,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
                 const Divider(height: 1),
+                // Scrollable Companies List + Add Company button at the end
                 Expanded(
                   child: companiesAsync.when(
                     data: (companies) {
-                      if (companies.isEmpty) {
-                        return const Center(
-                          child: Text('No companies', style: TextStyle(color: AppColors.mutedText, fontSize: 12)),
-                        );
-                      }
                       return ListView.builder(
                         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                        itemCount: companies.length,
+                        itemCount: companies.length + 1,
                         itemBuilder: (context, index) {
+                          // Render "+ Add Company" option at the end of the list
+                          if (index == companies.length) {
+                            final count = companies.length;
+                            final isMaxReached = count >= 15;
+
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 4.0),
+                              child: InkWell(
+                                onTap: () {
+                                  if (isMaxReached) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Maximum limit of 15 companies reached for this tab.'),
+                                        backgroundColor: AppColors.roseAccent,
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
+                                  } else {
+                                    _showAddCompanyDialog(selectedTabIndex);
+                                  }
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                                  decoration: BoxDecoration(
+                                    color: isMaxReached ? Colors.grey.withOpacity(0.05) : AppColors.skyBlue.withOpacity(0.08),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: isMaxReached ? Colors.grey.withOpacity(0.3) : AppColors.skyBlue.withOpacity(0.4),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        isMaxReached ? Icons.block_rounded : Icons.add_circle_outline,
+                                        size: 16,
+                                        color: isMaxReached ? Colors.grey : AppColors.skyBlue,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Flexible(
+                                        child: Text(
+                                          isMaxReached ? 'Max Limit (15/15)' : 'Add Company ($count/15)',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: isMaxReached ? Colors.grey : AppColors.skyBlue,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }
+
+                          // Render Company Item
                           final company = companies[index];
                           final isSelected = selectedCompanyId == company.id;
                           final avatarColor = avatarColors[company.name.hashCode.abs() % avatarColors.length];
@@ -178,6 +314,103 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
               foregroundColor: Colors.white,
             )
           : null,
+    );
+  }
+
+  void _showRenameTabDialog(int tabIndex, String currentName) {
+    final controller = TextEditingController(text: currentName);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Rename Tab ${tabIndex + 1}'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Tab Name',
+            hintText: 'e.g. Life Insurance',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (controller.text.trim().isNotEmpty) {
+                await ref.read(workTabNamesProvider.notifier).renameTab(tabIndex, controller.text.trim());
+                if (context.mounted) Navigator.pop(context);
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddCompanyDialog(int tabIndex) {
+    final nameController = TextEditingController();
+    final refController = TextEditingController();
+    final tabNames = ref.read(workTabNamesProvider);
+    final tabName = tabNames.length > tabIndex ? tabNames[tabIndex] : 'Tab ${tabIndex + 1}';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Add Company to $tabName'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Company Name *',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: refController,
+              decoration: const InputDecoration(
+                labelText: 'Reference Number (Optional)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final name = nameController.text.trim();
+              if (name.isNotEmpty) {
+                try {
+                  final db = ref.read(databaseServiceProvider);
+                  await db.addCompanyToTab(name, tabIndex, referenceNumber: refController.text.trim());
+                  ref.invalidate(companiesForSelectedTabProvider);
+                  ref.invalidate(companiesProvider);
+                  if (context.mounted) Navigator.pop(context);
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(e.toString().replaceAll('Exception: ', '')), backgroundColor: Colors.red),
+                    );
+                  }
+                }
+              }
+            },
+            child: const Text('Add Company'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -310,74 +543,74 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
         child: ListTile(
           onTap: () => _showAddTaskDialog(task.companyId ?? 0, task),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        leading: Icon(statusIcon, color: statusColor, size: 28),
-        title: Text(
-          task.description,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            decoration: task.status == 'Completed' ? TextDecoration.lineThrough : null,
-            color: task.status == 'Completed' ? Colors.grey : Colors.black87,
+          leading: Icon(statusIcon, color: statusColor, size: 28),
+          title: Text(
+            task.description,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              decoration: task.status == 'Completed' ? TextDecoration.lineThrough : null,
+              color: task.status == 'Completed' ? Colors.grey : Colors.black87,
+            ),
           ),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 6.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                children: [
-                  _buildBadge('Priority: ${task.priority}', priorityColor),
-                  _buildBadge('Method: ${task.communicationMethod ?? "N/A"}', Colors.blueGrey),
-                  if (task.assignedTo != null && task.assignedTo!.isNotEmpty)
-                    _buildBadge('To: ${task.assignedTo}', Colors.indigo),
-                  if (task.carryForwardRequired)
-                    _buildBadge('Carry Forward', Colors.purple),
-                ],
-              ),
-              if (task.remarks != null && task.remarks!.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                Text(
-                  'Remarks: ${task.remarks}',
-                  style: const TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 6.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    _buildBadge('Priority: ${task.priority}', priorityColor),
+                    _buildBadge('Method: ${task.communicationMethod ?? "N/A"}', Colors.blueGrey),
+                    if (task.assignedTo != null && task.assignedTo!.isNotEmpty)
+                      _buildBadge('To: ${task.assignedTo}', Colors.indigo),
+                    if (task.carryForwardRequired)
+                      _buildBadge('Carry Forward', Colors.purple),
+                  ],
                 ),
+                if (task.remarks != null && task.remarks!.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    'Remarks: ${task.remarks}',
+                    style: const TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic),
+                  ),
+                ],
               ],
+            ),
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Quick Status Toggle Dropdown
+              DropdownButton<String>(
+                value: task.status,
+                underline: const SizedBox(),
+                icon: const Icon(Icons.arrow_drop_down, color: Colors.blueAccent),
+                items: ['Pending', 'Completed', 'Under Process', 'No Response'].map((String s) {
+                  return DropdownMenuItem<String>(
+                    value: s,
+                    child: Text(s, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                  );
+                }).toList(),
+                onChanged: (newStatus) async {
+                  if (newStatus != null) {
+                    final db = ref.read(databaseServiceProvider);
+                    task.status = newStatus;
+                    await db.saveTask(task);
+                    ref.invalidate(taskListProvider);
+                  }
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
+                onPressed: () => _deleteTask(task),
+              ),
             ],
           ),
         ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Quick Status Toggle Dropdown
-            DropdownButton<String>(
-              value: task.status,
-              underline: const SizedBox(),
-              icon: const Icon(Icons.arrow_drop_down, color: Colors.blueAccent),
-              items: ['Pending', 'Completed', 'Under Process', 'No Response'].map((String s) {
-                return DropdownMenuItem<String>(
-                  value: s,
-                  child: Text(s, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                );
-              }).toList(),
-              onChanged: (newStatus) async {
-                if (newStatus != null) {
-                  final db = ref.read(databaseServiceProvider);
-                  task.status = newStatus;
-                  await db.saveTask(task);
-                  ref.invalidate(taskListProvider);
-                }
-              },
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-              onPressed: () => _deleteTask(task),
-            ),
-          ],
-        ),
       ),
-    ),
-  );
+    );
   }
 
   Widget _buildBadge(String label, Color color) {
@@ -420,6 +653,7 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                 final newName = controller.text.trim();
                 company.referenceNumber = refController.text.trim();
                 await db.renameCompany(company, oldName, newName);
+                ref.invalidate(companiesForSelectedTabProvider);
                 ref.invalidate(companiesProvider);
                 if (context.mounted) Navigator.pop(context);
               }
