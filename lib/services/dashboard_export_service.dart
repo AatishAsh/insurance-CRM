@@ -12,21 +12,21 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 import '../models/customer.dart';
+import '../models/daily_note.dart';
 import '../providers/events_provider.dart';
 
 class DashboardExportService {
   /// Generates a professional PDF report of today's event summary and opens the system Share/Print dialog.
-  static Future<void> shareDashboardPdf(List<TodayEventSummaryItem> items) async {
+  static Future<void> shareDashboardPdf(List<TodayEventSummaryItem> items, {List<DailyNote>? dailyNotes}) async {
+    final notes = dailyNotes ?? [];
     final pdf = pw.Document();
     final today = DateTime.now();
     final dateStr = DateFormat('EEEE, dd MMMM yyyy').format(today);
 
-    final birthdayCount = items.where((i) => i.type == TodayEventType.birthday).length;
-    final anniversaryCount = items.where((i) => i.type == TodayEventType.anniversary).length;
-    final paCount = items.where((i) => i.type == TodayEventType.personalAccident).length;
     final reminderCount = items.where((i) => i.type == TodayEventType.reminder).length;
     final taskCount = items.where((i) => i.type == TodayEventType.workTask).length;
     final marketingCount = items.where((i) => i.type == TodayEventType.marketing).length;
+    final noteCount = notes.length;
 
     pw.MemoryImage? logoImage;
     try {
@@ -119,24 +119,20 @@ class DashboardExportService {
                 pw.TableRow(
                   decoration: const pw.BoxDecoration(color: PdfColors.grey100),
                   children: [
-                    _buildTableCell('Total Events', isHeader: true),
-                    _buildTableCell('Birthdays', isHeader: true),
-                    _buildTableCell('Anniversaries', isHeader: true),
+                    _buildTableCell('Total Items', isHeader: true),
                     _buildTableCell('Reminders', isHeader: true),
-                    _buildTableCell('Accidents', isHeader: true),
                     _buildTableCell('Work Tasks', isHeader: true),
-                    _buildTableCell('Marketing', isHeader: true),
+                    _buildTableCell('Marketing Leads', isHeader: true),
+                    _buildTableCell('Day Task Notes', isHeader: true),
                   ],
                 ),
                 pw.TableRow(
                   children: [
-                    _buildTableCell('${items.length}', isBold: true),
-                    _buildTableCell('$birthdayCount'),
-                    _buildTableCell('$anniversaryCount'),
+                    _buildTableCell('${items.length + noteCount}', isBold: true),
                     _buildTableCell('$reminderCount'),
-                    _buildTableCell('$paCount'),
                     _buildTableCell('$taskCount'),
                     _buildTableCell('$marketingCount'),
+                    _buildTableCell('$noteCount'),
                   ],
                 ),
               ],
@@ -186,6 +182,60 @@ class DashboardExportService {
                         _buildTableCell(item.title),
                         _buildTableCell(item.subtitle),
                         _buildTableCell(item.isCompleted ? 'Completed' : 'Scheduled'),
+                      ],
+                    );
+                  }).toList(),
+                ],
+              ),
+
+            pw.SizedBox(height: 24),
+
+            // Day Task Notes Section
+            pw.Text(
+              'Day Task Notes & Checklist (${notes.length} Notes)',
+              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900),
+            ),
+            pw.SizedBox(height: 8),
+
+            if (notes.isEmpty)
+              pw.Container(
+                padding: const pw.EdgeInsets.all(14),
+                alignment: pw.Alignment.center,
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(color: PdfColors.grey300),
+                  borderRadius: pw.BorderRadius.circular(6),
+                ),
+                child: pw.Text(
+                  'No day task notes recorded for tomorrow.',
+                  style: pw.TextStyle(fontSize: 11, color: PdfColors.grey700, fontStyle: pw.FontStyle.italic),
+                ),
+              )
+            else
+              pw.Table(
+                border: pw.TableBorder.all(color: PdfColors.grey300),
+                columnWidths: {
+                  0: const pw.FlexColumnWidth(1.2),
+                  1: const pw.FlexColumnWidth(1.5),
+                  2: const pw.FlexColumnWidth(5.5),
+                },
+                children: [
+                  pw.TableRow(
+                    decoration: const pw.BoxDecoration(color: PdfColors.amber100),
+                    children: [
+                      _buildTableCell('Status', isHeader: true),
+                      _buildTableCell('Category', isHeader: true),
+                      _buildTableCell('Task Note Details', isHeader: true),
+                    ],
+                  ),
+                  ...notes.map((note) {
+                    final catText = (note.category != null && note.category!.trim().isNotEmpty)
+                        ? note.category!.trim().toUpperCase()
+                        : 'GENERAL';
+                    return pw.TableRow(
+                      children: [
+                        _buildTableCell(note.isCompleted ? '[X] Done' : '[  ] Pending', isBold: true),
+                        _buildTableCell(catText),
+                        _buildTableCell(note.content),
                       ],
                     );
                   }).toList(),

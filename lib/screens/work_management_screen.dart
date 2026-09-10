@@ -6,6 +6,7 @@ import '../models/company.dart';
 import '../providers/work_provider.dart';
 import '../services/database_service.dart';
 import '../theme/app_colors.dart';
+import '../widgets/key_cycle_dropdown.dart';
 
 class WorkManagementScreen extends ConsumerStatefulWidget {
   const WorkManagementScreen({super.key});
@@ -30,25 +31,16 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
       AppColors.amberAccent,
     ];
 
-    // Automatically select the first company in the active tab if current selectedCompanyId is not in this tab
-    companiesAsync.whenData((companies) {
-      if (companies.isNotEmpty) {
-        final existsInTab = companies.any((c) => c.id == selectedCompanyId);
-        if (!existsInTab) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              ref.read(selectedCompanyIdProvider.notifier).state = companies.first.id;
-            }
-          });
-        }
-      } else if (selectedCompanyId != null) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) {
-            ref.read(selectedCompanyIdProvider.notifier).state = null;
-          }
-        });
+    // Compute effective company ID synchronously
+    final activeCompanies = companiesAsync.value ?? [];
+    int? effectiveCompanyId = selectedCompanyId;
+    if (activeCompanies.isNotEmpty) {
+      if (effectiveCompanyId == null || !activeCompanies.any((c) => c.id == effectiveCompanyId)) {
+        effectiveCompanyId = activeCompanies.first.id;
       }
-    });
+    } else {
+      effectiveCompanyId = null;
+    }
 
     final currentTabTitle = tabNames.length > selectedTabIndex ? tabNames[selectedTabIndex] : 'Tab ${selectedTabIndex + 1}';
 
@@ -290,7 +282,7 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
           ),
           // Main Work Tracking Area
           Expanded(
-            child: selectedCompanyId == null
+            child: effectiveCompanyId == null
                 ? const Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -301,13 +293,13 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                       ],
                     ),
                   )
-                : _buildWorkTracker(selectedCompanyId),
+                : _buildWorkTracker(effectiveCompanyId),
           ),
         ],
       ),
-      floatingActionButton: selectedCompanyId != null
+      floatingActionButton: effectiveCompanyId != null
           ? FloatingActionButton.extended(
-              onPressed: () => _showAddTaskDialog(selectedCompanyId),
+              onPressed: () => _showAddTaskDialog(effectiveCompanyId!),
               label: const Text('Add Task', style: TextStyle(fontWeight: FontWeight.bold)),
               icon: const Icon(Icons.add),
               backgroundColor: AppColors.skyBlue,
@@ -417,56 +409,120 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
   Widget _buildWorkTracker(int companyId) {
     final tasksAsync = ref.watch(taskListProvider);
     final selectedDate = ref.watch(selectedDateProvider);
+    final showAllHistory = ref.watch(showAllWorkHistoryProvider);
 
     return Column(
       children: [
-        // Header
+        // Header & Filter Control Bar
         Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          child: Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 10,
             children: [
-              const Text(
-                'Work History & Log',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              // Date Navigation
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.chevron_left),
-                    onPressed: () {
-                      ref.read(selectedDateProvider.notifier).state =
-                          selectedDate.subtract(const Duration(days: 1));
-                    },
+                  const Text(
+                    'Work History & Log',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                  TextButton.icon(
-                    onPressed: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: selectedDate,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2100),
-                      );
-                      if (picked != null) {
-                        ref.read(selectedDateProvider.notifier).state = picked;
-                      }
-                    },
-                    icon: const Icon(Icons.calendar_today, size: 16),
-                    label: Text(
-                      DateFormat('dd MMM yyyy').format(selectedDate),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                  const SizedBox(width: 12),
+                  // Filter Mode Selector (All History vs Single Date)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade200,
+                      borderRadius: BorderRadius.circular(20),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.chevron_right),
-                    onPressed: () {
-                      ref.read(selectedDateProvider.notifier).state =
-                          selectedDate.add(const Duration(days: 1));
-                    },
+                    padding: const EdgeInsets.all(3),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        InkWell(
+                          onTap: () => ref.read(showAllWorkHistoryProvider.notifier).state = true,
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: showAllHistory ? AppColors.primaryBlue : Colors.transparent,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text(
+                              'All History',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: showAllHistory ? Colors.white : Colors.black87,
+                              ),
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () => ref.read(showAllWorkHistoryProvider.notifier).state = false,
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: !showAllHistory ? AppColors.primaryBlue : Colors.transparent,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text(
+                              'Filter Date',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: !showAllHistory ? Colors.white : Colors.black87,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
+
+              // Date Navigation (Active when Filter Date is selected)
+              if (!showAllHistory)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.chevron_left),
+                      onPressed: () {
+                        ref.read(selectedDateProvider.notifier).state =
+                            selectedDate.subtract(const Duration(days: 1));
+                      },
+                    ),
+                    TextButton.icon(
+                      onPressed: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: selectedDate,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2100),
+                        );
+                        if (picked != null) {
+                          ref.read(selectedDateProvider.notifier).state = picked;
+                        }
+                      },
+                      icon: const Icon(Icons.calendar_today, size: 16),
+                      label: Text(
+                        DateFormat('dd MMM yyyy').format(selectedDate),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.chevron_right),
+                      onPressed: () {
+                        ref.read(selectedDateProvider.notifier).state =
+                            selectedDate.add(const Duration(days: 1));
+                      },
+                    ),
+                  ],
+                ),
             ],
           ),
         ),
@@ -482,7 +538,18 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                     children: [
                       Icon(Icons.assignment_turned_in_outlined, size: 48, color: Colors.grey[400]),
                       const SizedBox(height: 12),
-                      const Text('No tasks registered for this company on this day.'),
+                      Text(
+                        showAllHistory
+                            ? 'No work tasks registered for this company.'
+                            : 'No tasks registered for this company on ${DateFormat('dd MMM yyyy').format(selectedDate)}.',
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: () => _showAddTaskDialog(companyId),
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Add Work Task Entry'),
+                      ),
                     ],
                   ),
                 );
@@ -587,7 +654,7 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               // Quick Status Toggle Dropdown
-              DropdownButton<String>(
+              KeyCycleDropdownButton<String>(
                 value: task.status,
                 underline: const SizedBox(),
                 icon: const Icon(Icons.arrow_drop_down, color: Colors.blueAccent),
@@ -609,6 +676,7 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
               IconButton(
                 icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
                 onPressed: () => _deleteTask(task),
+                tooltip: 'Delete Log',
               ),
             ],
           ),
@@ -736,7 +804,7 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                       decoration: const InputDecoration(labelText: 'Task Description *', border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 14),
-                    DropdownButtonFormField<String>(
+                    KeyCycleDropdownFormField<String>(
                       value: status,
                       decoration: const InputDecoration(labelText: 'Initial Status', border: OutlineInputBorder()),
                       items: ['Pending', 'Completed', 'Under Process', 'No Response']
@@ -747,7 +815,7 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                       },
                     ),
                     const SizedBox(height: 14),
-                    DropdownButtonFormField<String>(
+                    KeyCycleDropdownFormField<String>(
                       value: priority,
                       decoration: const InputDecoration(labelText: 'Priority Level', border: OutlineInputBorder()),
                       items: ['Normal', 'Important', 'Urgent']
@@ -758,7 +826,7 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                       },
                     ),
                     const SizedBox(height: 14),
-                    DropdownButtonFormField<String>(
+                    KeyCycleDropdownFormField<String>(
                       value: method,
                       decoration: const InputDecoration(labelText: 'Communication Channel', border: OutlineInputBorder()),
                       items: ['In Person', 'WhatsApp', 'Email', 'Call']

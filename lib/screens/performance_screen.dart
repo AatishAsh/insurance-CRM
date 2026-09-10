@@ -6,6 +6,7 @@ import '../models/performance_record.dart';
 import '../providers/performance_provider.dart';
 import '../theme/app_colors.dart';
 import '../widgets/brand_background.dart';
+import '../widgets/key_cycle_dropdown.dart';
 
 class PerformanceScreen extends ConsumerStatefulWidget {
   const PerformanceScreen({super.key});
@@ -511,8 +512,8 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                               ),
                             ),
                             const SizedBox(width: 6),
-                            DropdownButtonHideUnderline(
-                              child: DropdownButton<int>(
+                             DropdownButtonHideUnderline(
+                              child: KeyCycleDropdownButton<int>(
                                 value: selectedYear,
                                 isDense: true,
                                 icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.blueAccent, size: 18),
@@ -590,7 +591,7 @@ class _PerformanceScreenState extends ConsumerState<PerformanceScreen> {
                                 border: Border.all(color: Colors.blue.shade200),
                               ),
                               child: DropdownButtonHideUnderline(
-                                child: DropdownButton<int>(
+                                child: KeyCycleDropdownButton<int>(
                                   value: selectedMonth,
                                   isDense: true,
                                   icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.blueAccent, size: 18),

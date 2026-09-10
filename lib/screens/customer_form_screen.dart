@@ -16,6 +16,7 @@ import '../providers/settings_provider.dart';
 import '../widgets/date_input_formatter.dart';
 import '../widgets/segmented_date_input_field.dart';
 import '../widgets/aadhaar_number_formatter.dart';
+import '../widgets/key_cycle_dropdown.dart';
 
 class CustomerFormScreen extends ConsumerStatefulWidget {
   final Customer? customer;
@@ -657,7 +658,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                 children: [
                   const Text('Select document label:'),
                   const SizedBox(height: 8),
-                  DropdownButtonFormField<String>(
+                  KeyCycleDropdownFormField<String>(
                     items: labels.map((l) => DropdownMenuItem(value: l, child: Text(l))).toList(),
                     onChanged: (val) {
                       selectedLabel = val;
@@ -979,7 +980,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
-      child: DropdownButtonFormField<String>(
+      child: KeyCycleDropdownFormField<String>(
         value: value.isEmpty ? null : value,
         items: items,
         onChanged: (val) {
@@ -1384,7 +1385,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                             ),
                             Padding(
                               padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 8.0),
-                              child: DropdownButtonFormField<String>(
+                              child: KeyCycleDropdownFormField<String>(
                                 key: ValueKey('child_comp_${index}_$effectiveCount'),
                                 value: initialComp.isEmpty ? null : initialComp,
                                 items: effectiveCompOptions.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
@@ -1510,7 +1511,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                                 ),
                                 onChanged: (val) => plan.premium = val,
                               ),
-                              DropdownButtonFormField<String>(
+                              KeyCycleDropdownFormField<String>(
                                 value: (plan.mode != null && ['Yearly', 'Half-Yearly', 'Quarterly', 'Monthly', 'Single', 'Other'].contains(plan.mode))
                                     ? plan.mode
                                     : null,

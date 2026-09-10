@@ -10,6 +10,7 @@ import '../models/insurance_company.dart';
 import '../models/work_task.dart';
 import '../models/marketing_lead.dart';
 import '../models/performance_record.dart';
+import '../models/daily_note.dart';
 
 
 final databaseServiceProvider = Provider<DatabaseService>((ref) {
@@ -25,7 +26,7 @@ class DatabaseService {
   static Future<DatabaseService> init() async {
     final dir = await getApplicationDocumentsDirectory();
     final isarInstance = await Isar.open(
-      [CustomerSchema, CompanySchema, InsuranceCompanySchema, WorkTaskSchema, MarketingLeadSchema, PerformanceRecordSchema],
+      [CustomerSchema, CompanySchema, InsuranceCompanySchema, WorkTaskSchema, MarketingLeadSchema, PerformanceRecordSchema, DailyNoteSchema],
       directory: dir.path,
       inspector: true, // Enables Isar Inspector in debug mode
     );
@@ -344,7 +345,16 @@ class DatabaseService {
 
   // --- WORK TASK OPERATIONS ---
 
-  Future<List<WorkTask>> getTasksForCompany(int companyId, DateTime date) async {
+  Future<List<WorkTask>> getTasksForCompany(int companyId, [DateTime? date]) async {
+    if (date == null) {
+      return await isar.workTasks
+          .filter()
+          .companyIdEqualTo(companyId)
+          .isDeletedEqualTo(false)
+          .sortByWorkDateDesc()
+          .findAll();
+    }
+    
     final startOfDay = DateTime(date.year, date.month, date.day);
     final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59, 999);
     
@@ -353,6 +363,7 @@ class DatabaseService {
         .companyIdEqualTo(companyId)
         .workDateBetween(startOfDay, endOfDay)
         .isDeletedEqualTo(false)
+        .sortByWorkDateDesc()
         .findAll();
   }
 
@@ -1446,6 +1457,60 @@ class DatabaseService {
           await isar.performanceRecords.put(record);
         }
       }
+    });
+  }
+
+  // --- DAILY NOTES OPERATIONS ---
+
+  String _getDateKey(DateTime date) {
+    final localDate = date.toLocal();
+    return "${localDate.year}-${localDate.month.toString().padLeft(2, '0')}-${localDate.day.toString().padLeft(2, '0')}";
+  }
+
+  Future<List<DailyNote>> getDailyNotesForDate(DateTime date) async {
+    final key = _getDateKey(date);
+    return await isar.dailyNotes.filter().dateKeyEqualTo(key).sortByCreatedAt().findAll();
+  }
+
+  Future<void> saveDailyNote(String content, DateTime date, {String? category, int? existingId}) async {
+    final cleanContent = content.trim();
+    if (cleanContent.isEmpty) return;
+    final key = _getDateKey(date);
+
+    DailyNote note;
+    if (existingId != null) {
+      final found = await isar.dailyNotes.get(existingId);
+      note = found ?? DailyNote();
+    } else {
+      note = DailyNote()
+        ..noteId = _uuid.v4()
+        ..createdAt = DateTime.now();
+    }
+
+    note.dateKey = key;
+    note.content = cleanContent;
+    note.category = (category != null && category.trim().isNotEmpty) ? category.trim() : null;
+    note.updatedAt = DateTime.now();
+
+    await isar.writeTxn(() async {
+      await isar.dailyNotes.put(note);
+    });
+  }
+
+  Future<void> toggleDailyNoteCompleted(int id) async {
+    final note = await isar.dailyNotes.get(id);
+    if (note != null) {
+      note.isCompleted = !note.isCompleted;
+      note.updatedAt = DateTime.now();
+      await isar.writeTxn(() async {
+        await isar.dailyNotes.put(note);
+      });
+    }
+  }
+
+  Future<void> deleteDailyNote(int id) async {
+    await isar.writeTxn(() async {
+      await isar.dailyNotes.delete(id);
     });
   }
 }

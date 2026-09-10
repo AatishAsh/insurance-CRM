@@ -14,6 +14,7 @@ import '../services/security_service.dart';
 import '../providers/settings_provider.dart';
 import '../theme/app_colors.dart';
 import '../widgets/brand_background.dart';
+import '../widgets/key_cycle_dropdown.dart';
 
 class SyncScreen extends ConsumerStatefulWidget {
   const SyncScreen({super.key});
@@ -667,7 +668,7 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
                               borderRadius: BorderRadius.circular(10),
                               border: Border.all(color: Colors.blue.shade200),
                             ),
-                            child: DropdownButton<int>(
+                            child: KeyCycleDropdownButton<int>(
                               value: ref.watch(autoLockTimeoutProvider),
                               icon: const Icon(Icons.timer_outlined, color: Colors.blueAccent, size: 18),
                               style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue.shade900, fontSize: 13),
@@ -725,7 +726,7 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
                       style: TextStyle(color: Colors.grey[600], fontSize: 13),
                     ),
                     const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
+                    KeyCycleDropdownFormField<String>(
                       initialValue: ref.watch(dateFormatPatternProvider),
                       decoration: const InputDecoration(
                         labelText: 'Active System Date Format',

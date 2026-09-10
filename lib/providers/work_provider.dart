@@ -66,10 +66,21 @@ final selectedCompanyIdProvider = StateProvider<int?>((ref) => null);
 
 final selectedDateProvider = StateProvider<DateTime>((ref) => DateTime.now());
 
+final showAllWorkHistoryProvider = StateProvider<bool>((ref) => true);
+
 final taskListProvider = StreamProvider<List<WorkTask>>((ref) async* {
   final db = ref.watch(databaseServiceProvider);
-  final companyId = ref.watch(selectedCompanyIdProvider);
+  var companyId = ref.watch(selectedCompanyIdProvider);
   final date = ref.watch(selectedDateProvider);
+  final showAll = ref.watch(showAllWorkHistoryProvider);
+  final selectedTabIndex = ref.watch(selectedWorkTabIndexProvider);
+
+  if (companyId == null) {
+    final companiesForTab = await db.getCompaniesForTab(selectedTabIndex);
+    if (companiesForTab.isNotEmpty) {
+      companyId = companiesForTab.first.id;
+    }
+  }
 
   if (companyId == null) {
     yield [];
@@ -79,11 +90,12 @@ final taskListProvider = StreamProvider<List<WorkTask>>((ref) async* {
   // Automatically carry forward incomplete tasks to the selected date
   await db.carryForwardIncompleteTasks(date);
 
-  yield await db.getTasksForCompany(companyId, date);
+  final filterDate = showAll ? null : date;
+  yield await db.getTasksForCompany(companyId, filterDate);
 
   // Watch for changes in Isar workTasks collection and emit updates automatically
   await for (final _ in db.isar.workTasks.watchLazy()) {
-    yield await db.getTasksForCompany(companyId, date);
+    yield await db.getTasksForCompany(companyId, filterDate);
   }
 });
 

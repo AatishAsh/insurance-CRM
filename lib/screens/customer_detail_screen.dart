@@ -14,6 +14,7 @@ import '../widgets/segmented_date_input_field.dart';
 import '../theme/app_colors.dart';
 import '../widgets/color_badge.dart';
 import '../widgets/brand_background.dart';
+import '../widgets/key_cycle_dropdown.dart';
 
 class CustomerDetailScreen extends ConsumerStatefulWidget {
   final int customerId;
@@ -124,7 +125,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                         ),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: DropdownButtonFormField<String>(
+                          child: KeyCycleDropdownFormField<String>(
                             value: mode,
                             decoration: const InputDecoration(
                               labelText: 'Mode',

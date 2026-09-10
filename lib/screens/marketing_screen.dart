@@ -11,6 +11,7 @@ import '../providers/auth_provider.dart';
 import '../widgets/rename_file_dialog.dart';
 import '../services/app_storage_service.dart';
 import '../theme/app_colors.dart';
+import '../widgets/key_cycle_dropdown.dart';
 
 // Consistent status options
 const List<String> statusOptions = [
@@ -107,6 +108,8 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
   int? _sortColumnIndex;
   bool _sortAscending = true;
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _desktopScrollController = ScrollController();
+  final ScrollController _mobileScrollController = ScrollController();
 
   @override
   void initState() {
@@ -117,6 +120,8 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _desktopScrollController.dispose();
+    _mobileScrollController.dispose();
     super.dispose();
   }
 
@@ -894,6 +899,8 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
 
   Widget _buildDesktopTable(List<MarketingLead> leads) {
     return SingleChildScrollView(
+      controller: _desktopScrollController,
+      key: const PageStorageKey('marketing_desktop_vertical_scroll'),
       scrollDirection: Axis.vertical,
       child: NotificationListener<OverscrollIndicatorNotification>(
         onNotification: (OverscrollIndicatorNotification overscroll) {
@@ -991,62 +998,46 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
                         DataCell(
                           GestureDetector(
                             onTap: () {}, // Swallows click to avoid row selection popups
-                            child: PopupMenuButton<String>(
-                              initialValue: normStatus,
-                              tooltip: 'Change Status',
-                              onSelected: (newStatus) async {
-                                final db = ref.read(databaseServiceProvider);
-                                lead.status = newStatus;
-                                lead.updatedAt = DateTime.now();
-                                await db.saveMarketingLead(lead);
-                              },
-                              itemBuilder: (BuildContext context) {
-                                return statusOptions.map((String s) {
-                                  return PopupMenuItem<String>(
-                                    value: s,
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 10,
-                                          height: 10,
-                                          decoration: BoxDecoration(
+                            child: KeyCycleDropdownButton<String>(
+                              value: normStatus,
+                              items: statusOptions.map((String s) {
+                                return DropdownMenuItem<String>(
+                                  value: s,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        width: 8,
+                                        height: 8,
+                                        decoration: BoxDecoration(
+                                          color: getStatusColor(s),
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Flexible(
+                                        child: Text(
+                                          s,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
                                             color: getStatusColor(s),
-                                            shape: BoxShape.circle,
                                           ),
                                         ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          s,
-                                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }).toList();
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                decoration: BoxDecoration(
-                                  color: getStatusColor(normStatus).withOpacity(0.08),
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: getStatusColor(normStatus).withOpacity(0.3)),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      normStatus,
-                                      style: TextStyle(
-                                        color: getStatusColor(normStatus),
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
                                       ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Icon(Icons.arrow_drop_down, color: getStatusColor(normStatus), size: 16),
-                                  ],
-                                ),
-                              ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (newStatus) async {
+                                if (newStatus != null) {
+                                  final db = ref.read(databaseServiceProvider);
+                                  lead.status = newStatus;
+                                  lead.updatedAt = DateTime.now();
+                                  await db.saveMarketingLead(lead);
+                                }
+                              },
                             ),
                           ),
                         ),
@@ -1109,6 +1100,8 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
 
   Widget _buildMobileList(List<MarketingLead> leads) {
     return ListView.builder(
+      controller: _mobileScrollController,
+      key: const PageStorageKey('marketing_mobile_list_scroll'),
       padding: const EdgeInsets.all(16),
       itemCount: leads.length,
       itemBuilder: (context, index) {
@@ -1193,63 +1186,47 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
                               // Status Dropdown on mobile card using PopupMenuButton
                               GestureDetector(
                                 onTap: () {}, // Swallows card tap
-                                child: PopupMenuButton<String>(
-                                  initialValue: normStatus,
-                                  tooltip: 'Change Status',
-                                  onSelected: (newStatus) async {
-                                    final db = ref.read(databaseServiceProvider);
-                                    lead.status = newStatus;
-                                    lead.updatedAt = DateTime.now();
-                                    await db.saveMarketingLead(lead);
-                                  },
-                                  itemBuilder: (BuildContext context) {
-                                    return statusOptions.map((String s) {
-                                      return PopupMenuItem<String>(
-                                        value: s,
-                                        child: Row(
-                                          children: [
-                                            Container(
-                                              width: 10,
-                                              height: 10,
-                                              decoration: BoxDecoration(
-                                                color: getStatusColor(s),
-                                                shape: BoxShape.circle,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              s,
-                                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    }).toList();
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: statusColor.withOpacity(0.08),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: statusColor.withOpacity(0.3)),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          normStatus,
-                                          style: TextStyle(
-                                            color: statusColor,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 2),
-                                        Icon(Icons.arrow_drop_down, color: statusColor, size: 14),
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                                child: KeyCycleDropdownButton<String>(
+                                 value: normStatus,
+                                 items: statusOptions.map((String s) {
+                                   return DropdownMenuItem<String>(
+                                     value: s,
+                                     child: Row(
+                                       mainAxisSize: MainAxisSize.min,
+                                       children: [
+                                         Container(
+                                           width: 8,
+                                           height: 8,
+                                           decoration: BoxDecoration(
+                                             color: getStatusColor(s),
+                                             shape: BoxShape.circle,
+                                           ),
+                                         ),
+                                         const SizedBox(width: 6),
+                                         Flexible(
+                                           child: Text(
+                                             s,
+                                             overflow: TextOverflow.ellipsis,
+                                             style: TextStyle(
+                                               fontSize: 11,
+                                               fontWeight: FontWeight.bold,
+                                               color: getStatusColor(s),
+                                             ),
+                                           ),
+                                         ),
+                                       ],
+                                     ),
+                                   );
+                                 }).toList(),
+                                 onChanged: (newStatus) async {
+                                   if (newStatus != null) {
+                                     final db = ref.read(databaseServiceProvider);
+                                     lead.status = newStatus;
+                                     lead.updatedAt = DateTime.now();
+                                     await db.saveMarketingLead(lead);
+                                   }
+                                 },
+                               ),
                               ),
                             ],
                           ),
@@ -1692,7 +1669,7 @@ class _AddEditMarketingLeadDialogState extends ConsumerState<AddEditMarketingLea
                         },
                       ),
                       const SizedBox(height: 16),
-                      DropdownButtonFormField<String>(
+                      KeyCycleDropdownFormField<String>(
                         value: statusOptions.contains(_status) ? _status : statusOptions.first,
                         decoration: const InputDecoration(
                           labelText: 'Status *',
