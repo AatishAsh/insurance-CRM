@@ -91,7 +91,7 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Share PDF Report',
+                    tooltip: 'Download PDF Report',
                     icon: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -103,6 +103,7 @@ class DashboardScreen extends ConsumerWidget {
                     onPressed: () => DashboardExportService.shareDashboardPdf(
                       allItems,
                       dailyNotes: ref.read(tomorrowNotesProvider).value ?? [],
+                      context: context,
                     ),
                   ),
                   const SizedBox(width: 6),

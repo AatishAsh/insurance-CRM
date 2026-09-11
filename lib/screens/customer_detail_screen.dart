@@ -374,6 +374,34 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
     );
   }
 
+  Future<void> _downloadCustomerDocument(CustomerDocument doc) async {
+    if (_localDocsDirPath == null || doc.fileName == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Document path unavailable.')),
+      );
+      return;
+    }
+    final file = File('$_localDocsDirPath/${doc.fileName}');
+    if (!file.existsSync()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Document file not found on this device.')),
+      );
+      return;
+    }
+
+    try {
+      final bytes = await file.readAsBytes();
+      final fileName = doc.fileName ?? 'customer_document.pdf';
+      await DashboardExportService.saveAndDownloadPdf(bytes, fileName, context: context);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to download document: $e')),
+        );
+      }
+    }
+  }
+
   void _previewDocument(CustomerDocument doc) {
     if (_localDocsDirPath == null || doc.fileName == null) return;
     final file = File('$_localDocsDirPath/${doc.fileName}');
@@ -408,6 +436,13 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                     icon: const Icon(Icons.close),
                     onPressed: () => Navigator.pop(context),
                   ),
+                  actions: [
+                    IconButton(
+                      icon: const Icon(Icons.download_rounded, color: AppColors.skyBlue),
+                      tooltip: 'Download File',
+                      onPressed: () => _downloadCustomerDocument(doc),
+                    ),
+                  ],
                   backgroundColor: Colors.transparent,
                   elevation: 0,
                   foregroundColor: Colors.black87,
@@ -481,9 +516,9 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
         backgroundColor: AppColors.cardSurface,
         actions: [
           IconButton(
-            tooltip: 'Share Customer Profile PDF',
+            tooltip: 'Download Customer Profile PDF',
             icon: const Icon(Icons.picture_as_pdf_rounded, color: AppColors.limeGreen),
-            onPressed: () => DashboardExportService.shareCustomerProfilePdf(c),
+            onPressed: () => DashboardExportService.shareCustomerProfilePdf(c, context: context),
           ),
           IconButton(
             tooltip: 'Edit Profile',
@@ -580,9 +615,9 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                       ),
                     ),
                     ElevatedButton.icon(
-                      onPressed: () => DashboardExportService.shareCustomerProfilePdf(c),
-                      icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
-                      label: const Text('Share PDF'),
+                      onPressed: () => DashboardExportService.shareCustomerProfilePdf(c, context: context),
+                      icon: const Icon(Icons.download_rounded, size: 18),
+                      label: const Text('Download PDF'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.badgeGreenBg,
                         foregroundColor: AppColors.limeGreen,
@@ -823,8 +858,21 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                           leading: const Icon(Icons.description, color: Colors.blue),
                           title: Text(doc.documentName ?? 'Unnamed Document'),
                           subtitle: Text(doc.fileName ?? ''),
-                          trailing: const Icon(Icons.visibility, size: 20),
-                          onTap: () => _previewDocument(doc),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.download_rounded, size: 20, color: AppColors.skyBlue),
+                                tooltip: 'Download Document',
+                                onPressed: () => _downloadCustomerDocument(doc),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.visibility, size: 20),
+                                tooltip: 'Preview File',
+                                onPressed: () => _previewDocument(doc),
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     }).toList(),

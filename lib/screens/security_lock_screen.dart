@@ -170,12 +170,11 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
         child: BrandBackground(
           child: SafeArea(
             child: Center(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
                 child: Container(
                   constraints: const BoxConstraints(maxWidth: 400),
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
                   decoration: BoxDecoration(
                     color: AppColors.cardSurface,
                     borderRadius: BorderRadius.circular(24),
@@ -189,10 +188,10 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                       // Software Logo Image
                       Image.asset(
                         'assets/images/logo.png',
-                        height: 56,
+                        height: 44,
                         fit: BoxFit.contain,
                         errorBuilder: (_, __, ___) => Container(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
@@ -205,17 +204,17 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                           ),
                           child: const Icon(
                             Icons.lock_person_rounded,
-                            size: 44,
+                            size: 36,
                             color: AppColors.skyBlue,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
                       // App Title
                       RichText(
                         text: const TextSpan(
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.5,
                           ),
@@ -226,37 +225,37 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                         ),
                       ),
                       if (isSetup) ...[
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 4),
                         const Text(
                           'Set up a 4-digit PIN to secure your data offline.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: AppColors.mutedText,
-                            fontSize: 13,
+                            fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                       ],
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
                       // Message State
                       Text(
                         _message,
                         style: TextStyle(
                           color: _hasError ? AppColors.roseAccent : AppColors.headingText,
-                          fontSize: 15,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
                       // PIN Dots Display
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: List.generate(4, (index) {
                           final filled = index < _digits.length;
                           return Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 10),
-                            width: 16,
-                            height: 16,
+                            margin: const EdgeInsets.symmetric(horizontal: 8),
+                            width: 14,
+                            height: 14,
                             decoration: BoxDecoration(
                               color: filled
                                   ? (_hasError ? AppColors.roseAccent : AppColors.limeGreen)
@@ -281,16 +280,16 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                           );
                         }),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 14),
                       // Keypad
                       GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 3,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 1.35,
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                          childAspectRatio: 1.5,
                         ),
                         itemCount: 12,
                         itemBuilder: (context, index) {
@@ -332,9 +331,9 @@ class _SecurityLockScreenState extends ConsumerState<SecurityLockScreen> {
                           );
                         },
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 12),
                       // Footer Branding
-                      const ShineCraftBrandingFooter(fontSize: 14, logoHeight: 64),
+                      const ShineCraftBrandingFooter(fontSize: 12, logoHeight: 44),
                     ],
                   ),
                 ),

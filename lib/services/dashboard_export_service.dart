@@ -17,7 +17,7 @@ import '../providers/events_provider.dart';
 
 class DashboardExportService {
   /// Generates a professional PDF report of today's event summary and opens the system Share/Print dialog.
-  static Future<void> shareDashboardPdf(List<TodayEventSummaryItem> items, {List<DailyNote>? dailyNotes}) async {
+  static Future<void> shareDashboardPdf(List<TodayEventSummaryItem> items, {List<DailyNote>? dailyNotes, BuildContext? context}) async {
     final notes = dailyNotes ?? [];
     final pdf = pw.Document();
     final today = DateTime.now();
@@ -264,10 +264,8 @@ class DashboardExportService {
     );
 
     final bytes = await pdf.save();
-    await Printing.sharePdf(
-      bytes: bytes,
-      filename: 'Today_Event_Summary_${DateFormat('yyyyMMdd').format(today)}.pdf',
-    );
+    final fileName = 'Today_Event_Summary_${DateFormat('yyyyMMdd').format(today)}.pdf';
+    await saveAndDownloadPdf(bytes, fileName, context: context);
   }
 
   /// Captures the Dashboard RepaintBoundary widget as a PNG image and opens system share/save dialog.
@@ -369,8 +367,8 @@ class DashboardExportService {
     );
   }
 
-  /// Generates an official, comprehensive PDF report for a Customer Profile and launches system print/share dialog.
-  static Future<void> shareCustomerProfilePdf(Customer customer) async {
+  /// Generates an official, comprehensive PDF report for a Customer Profile and saves/downloads it directly.
+  static Future<void> shareCustomerProfilePdf(Customer customer, {BuildContext? context}) async {
     final pdf = pw.Document();
     final today = DateTime.now();
     final dateStr = DateFormat('dd MMM yyyy, hh:mm a').format(today);
@@ -605,10 +603,61 @@ class DashboardExportService {
 
     final bytes = await pdf.save();
     final sanitizedName = customer.name.replaceAll(RegExp(r'[^\w\s]+'), '').replaceAll(' ', '_');
-    await Printing.sharePdf(
-      bytes: bytes,
-      filename: 'Customer_Profile_${sanitizedName}_${customer.customerId ?? customer.id}.pdf',
-    );
+    final fileName = 'Customer_Profile_${sanitizedName}_${customer.customerId ?? customer.id}.pdf';
+    await saveAndDownloadPdf(bytes, fileName, context: context);
+  }
+
+  /// Directly downloads/saves PDF bytes to the device's Downloads directory (or FilePicker save path) and opens it automatically.
+  static Future<String?> saveAndDownloadPdf(Uint8List pdfBytes, String defaultFileName, {BuildContext? context}) async {
+    String? savePath;
+
+    try {
+      if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
+        savePath = await FilePicker.platform.saveFile(
+          dialogTitle: 'Save PDF Report',
+          fileName: defaultFileName,
+          type: FileType.custom,
+          allowedExtensions: ['pdf'],
+        );
+      }
+    } catch (_) {}
+
+    if (savePath == null) {
+      final Directory? dir = await getDownloadsDirectory() ?? await getApplicationDocumentsDirectory();
+      if (dir != null) {
+        savePath = '${dir.path}/$defaultFileName';
+      }
+    }
+
+    if (savePath != null) {
+      final file = File(savePath);
+      await file.writeAsBytes(pdfBytes);
+
+      // Automatically open saved PDF file
+      try {
+        if (Platform.isLinux) {
+          await Process.run('xdg-open', [savePath]);
+        } else if (Platform.isMacOS) {
+          await Process.run('open', [savePath]);
+        } else if (Platform.isWindows) {
+          await Process.run('explorer', [savePath]);
+        }
+      } catch (_) {}
+
+      if (context != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('PDF downloaded and saved:\n$savePath'),
+            backgroundColor: const Color(0xFF009EE2),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+      return savePath;
+    } else {
+      await Printing.sharePdf(bytes: pdfBytes, filename: defaultFileName);
+      return null;
+    }
   }
 
   static pw.Widget _buildPdfSectionHeader(String title) {
