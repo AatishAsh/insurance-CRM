@@ -637,13 +637,13 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
   }
 
   Future<void> _pickDocument() async {
-    String? selectedLabel;
     final labels = [
       'Age Proof', 'ID Proof', 'Address Proof', 'Photo', 'School ID',
       'Form 16', 'Bank Statement', 'Bank Cheque 1', 'Bank Cheque 2',
       'Proposal Form 1', 'Proposal Form 2', 'Visiting Card', 'PAN Card Copy',
       'Other'
     ];
+    String? selectedLabel = labels.first;
 
     // First prompt for a label
     final labelSelected = await showDialog<bool>(
@@ -655,15 +655,24 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
             builder: (context, setDialogState) {
               return Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Select document label:'),
+                  const Text('Select document label:', style: TextStyle(fontWeight: FontWeight.w500)),
                   const SizedBox(height: 8),
                   KeyCycleDropdownFormField<String>(
+                    value: selectedLabel,
                     items: labels.map((l) => DropdownMenuItem(value: l, child: Text(l))).toList(),
                     onChanged: (val) {
-                      selectedLabel = val;
+                      setDialogState(() {
+                        selectedLabel = val;
+                      });
                     },
-                    decoration: const InputDecoration(border: OutlineInputBorder(), isDense: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Document Type / Label',
+                      hintText: 'Select document type',
+                      border: OutlineInputBorder(),
+                      isDense: true,
+                    ),
                   ),
                 ],
               );

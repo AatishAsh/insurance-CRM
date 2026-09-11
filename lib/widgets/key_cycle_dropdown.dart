@@ -104,9 +104,24 @@ class _KeyCycleDropdownFormFieldState<T> extends State<KeyCycleDropdownFormField
   final FocusNode _overlayFocusNode = FocusNode(debugLabel: 'KeyCycleDropdownFormFieldOverlay');
   OverlayEntry? _overlayEntry;
   final ScrollController _scrollController = ScrollController();
+  T? _localValue;
 
   FocusNode get _effectiveFocusNode => widget.focusNode ?? (_internalFocusNode ??= FocusNode());
-  T? get _effectiveValue => widget.value ?? widget.initialValue;
+  T? get _effectiveValue => _localValue ?? widget.value ?? widget.initialValue;
+
+  @override
+  void initState() {
+    super.initState();
+    _localValue = widget.value ?? widget.initialValue;
+  }
+
+  @override
+  void didUpdateWidget(covariant KeyCycleDropdownFormField<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value != oldWidget.value) {
+      _localValue = widget.value;
+    }
+  }
 
   @override
   void dispose() {
@@ -169,11 +184,12 @@ class _KeyCycleDropdownFormFieldState<T> extends State<KeyCycleDropdownFormField
     }
 
     final selectedItem = widget.items[targetItemIndex];
-    widget.onChanged?.call(selectedItem.value);
-
     if (mounted) {
-      setState(() {});
+      setState(() {
+        _localValue = selectedItem.value;
+      });
     }
+    widget.onChanged?.call(selectedItem.value);
     _overlayEntry?.markNeedsBuild();
     _scrollToIndex(targetItemIndex);
   }
@@ -244,10 +260,12 @@ class _KeyCycleDropdownFormFieldState<T> extends State<KeyCycleDropdownFormField
       nextIndex = (currentIndex + delta).clamp(0, widget.items.length - 1);
     }
     final selectedItem = widget.items[nextIndex];
-    widget.onChanged?.call(selectedItem.value);
     if (mounted) {
-      setState(() {});
+      setState(() {
+        _localValue = selectedItem.value;
+      });
     }
+    widget.onChanged?.call(selectedItem.value);
     _overlayEntry?.markNeedsBuild();
     _scrollToIndex(nextIndex);
   }
@@ -312,6 +330,11 @@ class _KeyCycleDropdownFormFieldState<T> extends State<KeyCycleDropdownFormField
                           final isSelected = item.value == _effectiveValue;
                           return InkWell(
                             onTap: () {
+                              if (mounted) {
+                                setState(() {
+                                  _localValue = item.value;
+                                });
+                              }
                               widget.onChanged?.call(item.value);
                               _removeOverlay();
                             },
@@ -474,8 +497,24 @@ class _KeyCycleDropdownButtonState<T> extends State<KeyCycleDropdownButton<T>> {
   final FocusNode _overlayFocusNode = FocusNode(debugLabel: 'KeyCycleDropdownButtonOverlay');
   OverlayEntry? _overlayEntry;
   final ScrollController _scrollController = ScrollController();
+  T? _localValue;
 
   FocusNode get _effectiveFocusNode => widget.focusNode ?? (_internalFocusNode ??= FocusNode());
+  T? get _effectiveValue => _localValue ?? widget.value;
+
+  @override
+  void initState() {
+    super.initState();
+    _localValue = widget.value;
+  }
+
+  @override
+  void didUpdateWidget(covariant KeyCycleDropdownButton<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value != oldWidget.value) {
+      _localValue = widget.value;
+    }
+  }
 
   @override
   void dispose() {
@@ -524,7 +563,7 @@ class _KeyCycleDropdownButtonState<T> extends State<KeyCycleDropdownButton<T>> {
 
     if (matchingIndices.isEmpty) return;
 
-    final currentValue = widget.value;
+    final currentValue = _effectiveValue;
     final currentIndexInMatching = matchingIndices.indexWhere(
       (idx) => widget.items[idx].value == currentValue,
     );
@@ -538,11 +577,12 @@ class _KeyCycleDropdownButtonState<T> extends State<KeyCycleDropdownButton<T>> {
     }
 
     final selectedItem = widget.items[targetItemIndex];
-    widget.onChanged?.call(selectedItem.value);
-
     if (mounted) {
-      setState(() {});
+      setState(() {
+        _localValue = selectedItem.value;
+      });
     }
+    widget.onChanged?.call(selectedItem.value);
     _overlayEntry?.markNeedsBuild();
     _scrollToIndex(targetItemIndex);
   }
@@ -605,7 +645,7 @@ class _KeyCycleDropdownButtonState<T> extends State<KeyCycleDropdownButton<T>> {
 
   void _navigateIndex(int delta) {
     if (widget.items.isEmpty || widget.onChanged == null) return;
-    final currentIndex = widget.items.indexWhere((item) => item.value == widget.value);
+    final currentIndex = widget.items.indexWhere((item) => item.value == _effectiveValue);
     int nextIndex;
     if (currentIndex == -1) {
       nextIndex = 0;
@@ -613,10 +653,12 @@ class _KeyCycleDropdownButtonState<T> extends State<KeyCycleDropdownButton<T>> {
       nextIndex = (currentIndex + delta).clamp(0, widget.items.length - 1);
     }
     final selectedItem = widget.items[nextIndex];
-    widget.onChanged?.call(selectedItem.value);
     if (mounted) {
-      setState(() {});
+      setState(() {
+        _localValue = selectedItem.value;
+      });
     }
+    widget.onChanged?.call(selectedItem.value);
     _overlayEntry?.markNeedsBuild();
     _scrollToIndex(nextIndex);
   }
@@ -635,7 +677,7 @@ class _KeyCycleDropdownButtonState<T> extends State<KeyCycleDropdownButton<T>> {
     final renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
     final size = renderBox.size;
-    final selectedIndex = widget.items.indexWhere((item) => item.value == widget.value);
+    final selectedIndex = widget.items.indexWhere((item) => item.value == _effectiveValue);
 
     _overlayEntry = OverlayEntry(
       builder: (context) {
@@ -678,9 +720,14 @@ class _KeyCycleDropdownButtonState<T> extends State<KeyCycleDropdownButton<T>> {
                         itemCount: widget.items.length,
                         itemBuilder: (context, index) {
                           final item = widget.items[index];
-                          final isSelected = item.value == widget.value;
+                          final isSelected = item.value == _effectiveValue;
                           return InkWell(
                             onTap: () {
+                              if (mounted) {
+                                setState(() {
+                                  _localValue = item.value;
+                                });
+                              }
                               widget.onChanged?.call(item.value);
                               _removeOverlay();
                             },
@@ -741,7 +788,7 @@ class _KeyCycleDropdownButtonState<T> extends State<KeyCycleDropdownButton<T>> {
     if (widget.items.isEmpty) {
       return widget.hint ?? const SizedBox();
     }
-    final selectedItemIndex = widget.items.indexWhere((item) => item.value == widget.value);
+    final selectedItemIndex = widget.items.indexWhere((item) => item.value == _effectiveValue);
     if (selectedItemIndex != -1) {
       return widget.items[selectedItemIndex].child;
     }
