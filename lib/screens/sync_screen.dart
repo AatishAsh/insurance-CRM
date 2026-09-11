@@ -30,6 +30,45 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
   final _pinFormKey = GlobalKey<FormState>();
 
   bool _isChangingPin = false;
+  int _versionTapCount = 0;
+  bool _showDeveloperTools = false;
+
+  void _handleVersionTap() {
+    if (_showDeveloperTools) {
+      setState(() {
+        _showDeveloperTools = false;
+        _versionTapCount = 0;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Developer Sandbox Tools hidden.'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    setState(() {
+      _versionTapCount++;
+      if (_versionTapCount >= 5) {
+        _showDeveloperTools = true;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Developer Sandbox Tools Unlocked!'),
+            backgroundColor: Color(0xFF009EE2),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      } else {
+        final remaining = 5 - _versionTapCount;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Tap $remaining more time${remaining > 1 ? 's' : ''} to unlock Developer Tools.'),
+            duration: const Duration(milliseconds: 700),
+          ),
+        );
+      }
+    });
+  }
 
   @override
   void initState() {
@@ -806,175 +845,214 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Testing & Sandbox Card
-            Card(
-              elevation: 0.5,
-              shape: RoundedRectangleBorder(
-                side: BorderSide(color: Colors.grey[200]!),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.terminal_outlined, color: Colors.blueAccent),
-                        SizedBox(width: 12),
-                        Text('Developer Sandbox Tools', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Load mock customer directories, configured companies, and carrying daily work logs for offline sandbox testing.',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.playlist_add),
-                          label: const Text('Seed Dummy Data'),
-                          onPressed: () async {
-                            final confirm = await showDialog<bool>(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  icon: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 40),
-                                  title: const Text(
-                                    'Erase Current Data & Seed Dummy Data?',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                                  ),
-                                  content: const Text(
-                                    'WARNING: This action cannot be undone!\n\nSeeding dummy data will PERMANENTLY ERASE all existing customers, work tasks, and marketing leads, and replace them with sample dummy data.\n\nAre you sure you want to erase your current data?',
-                                    style: TextStyle(fontSize: 14, height: 1.4),
-                                  ),
-                                  actions: [
-                                    OutlinedButton(
-                                      onPressed: () => Navigator.pop(context, false),
-                                      child: const Text('Cancel'),
-                                    ),
-                                    ElevatedButton.icon(
-                                      icon: const Icon(Icons.delete_forever, size: 18),
-                                      label: const Text('Erase & Seed Dummy Data'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.red[700],
-                                        foregroundColor: Colors.white,
-                                      ),
-                                      onPressed: () => Navigator.pop(context, true),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-
-                            if (confirm != true) return;
-
-                            final db = ref.read(databaseServiceProvider);
-                            await db.seedDummyData();
-                            
-                            // Force all lists to reload immediately
-                            ref.invalidate(customerListProvider);
-                            ref.invalidate(upcomingEventsProvider);
-                            ref.invalidate(companiesProvider);
-                            ref.invalidate(taskListProvider);
-                            ref.invalidate(todayTasksProvider);
-                            
-                            if (context.mounted) {
+            if (_showDeveloperTools) ...[
+              // Testing & Sandbox Card
+              Card(
+                elevation: 0.5,
+                shape: RoundedRectangleBorder(
+                  side: BorderSide(color: Colors.grey[200]!),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.terminal_outlined, color: Colors.blueAccent),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Text('Developer Sandbox Tools', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          ),
+                          TextButton.icon(
+                            icon: const Icon(Icons.visibility_off_outlined, size: 16),
+                            label: const Text('Hide'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.grey[700],
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _showDeveloperTools = false;
+                                _versionTapCount = 0;
+                              });
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Database reset: 5 customers, work tasks, marketing leads, and performance records seeded successfully!'),
-                                  backgroundColor: Colors.green,
+                                  content: Text('Developer Sandbox Tools hidden.'),
+                                  duration: Duration(seconds: 2),
                                 ),
                               );
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent,
-                            foregroundColor: Colors.white,
+                            },
                           ),
-                        ),
-                        OutlinedButton.icon(
-                          icon: const Icon(Icons.delete_sweep, color: Colors.redAccent),
-                          label: const Text('Clear All Data', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
-                          onPressed: () async {
-                            final confirm = await showDialog<bool>(
-                              context: context,
-                              builder: (context) {
-                                return AlertDialog(
-                                  icon: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 40),
-                                  title: const Text(
-                                    'Clear All Application Data?',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                                  ),
-                                  content: const Text(
-                                    'WARNING: This action cannot be undone!\n\nThis will PERMANENTLY ERASE all customer profiles, work tasks, marketing leads, performance records, and local document attachments from this device.\n\nAre you sure you want to clear all data?',
-                                    style: TextStyle(fontSize: 14, height: 1.4),
-                                  ),
-                                  actions: [
-                                    OutlinedButton(
-                                      onPressed: () => Navigator.pop(context, false),
-                                      child: const Text('Cancel'),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Load mock customer directories, configured companies, and carrying daily work logs for offline sandbox testing.',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.playlist_add),
+                            label: const Text('Seed Dummy Data'),
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    icon: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 40),
+                                    title: const Text(
+                                      'Erase Current Data & Seed Dummy Data?',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                                     ),
-                                    ElevatedButton.icon(
-                                      icon: const Icon(Icons.delete_forever, size: 18),
-                                      label: const Text('Clear Everything'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.red[700],
-                                        foregroundColor: Colors.white,
+                                    content: const Text(
+                                      'WARNING: This action cannot be undone!\n\nSeeding dummy data will PERMANENTLY ERASE all existing customers, work tasks, and marketing leads, and replace them with sample dummy data.\n\nAre you sure you want to erase your current data?',
+                                      style: TextStyle(fontSize: 14, height: 1.4),
+                                    ),
+                                    actions: [
+                                      OutlinedButton(
+                                        onPressed: () => Navigator.pop(context, false),
+                                        child: const Text('Cancel'),
                                       ),
-                                      onPressed: () => Navigator.pop(context, true),
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-
-                            if (confirm != true) return;
-
-                            final db = ref.read(databaseServiceProvider);
-                            await db.clearAllData();
-                            
-                            // Force all list providers to refresh
-                            ref.invalidate(customerListProvider);
-                            ref.invalidate(upcomingEventsProvider);
-                            ref.invalidate(companiesProvider);
-                            ref.invalidate(taskListProvider);
-                            ref.invalidate(todayTasksProvider);
-                            
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('All database records and document attachments cleared successfully!'),
-                                  backgroundColor: Colors.redAccent,
-                                ),
+                                      ElevatedButton.icon(
+                                        icon: const Icon(Icons.delete_forever, size: 18),
+                                        label: const Text('Erase & Seed Dummy Data'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.red[700],
+                                          foregroundColor: Colors.white,
+                                        ),
+                                        onPressed: () => Navigator.pop(context, true),
+                                      ),
+                                    ],
+                                  );
+                                },
                               );
-                            }
-                          },
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.redAccent),
+
+                              if (confirm != true) return;
+
+                              final db = ref.read(databaseServiceProvider);
+                              await db.seedDummyData();
+                              
+                              // Force all lists to reload immediately
+                              ref.invalidate(customerListProvider);
+                              ref.invalidate(upcomingEventsProvider);
+                              ref.invalidate(companiesProvider);
+                              ref.invalidate(taskListProvider);
+                              ref.invalidate(todayTasksProvider);
+                              
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Database reset: 5 customers, work tasks, marketing leads, and performance records seeded successfully!'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blueAccent,
+                              foregroundColor: Colors.white,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                          OutlinedButton.icon(
+                            icon: const Icon(Icons.delete_sweep, color: Colors.redAccent),
+                            label: const Text('Clear All Data', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    icon: const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 40),
+                                    title: const Text(
+                                      'Clear All Application Data?',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                                    ),
+                                    content: const Text(
+                                      'WARNING: This action cannot be undone!\n\nThis will PERMANENTLY ERASE all customer profiles, work tasks, marketing leads, performance records, and local document attachments from this device.\n\nAre you sure you want to clear all data?',
+                                      style: TextStyle(fontSize: 14, height: 1.4),
+                                    ),
+                                    actions: [
+                                      OutlinedButton(
+                                        onPressed: () => Navigator.pop(context, false),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      ElevatedButton.icon(
+                                        icon: const Icon(Icons.delete_forever, size: 18),
+                                        label: const Text('Clear Everything'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.red[700],
+                                          foregroundColor: Colors.white,
+                                        ),
+                                        onPressed: () => Navigator.pop(context, true),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+
+                              if (confirm != true) return;
+
+                              final db = ref.read(databaseServiceProvider);
+                              await db.clearAllData();
+                              
+                              // Force all list providers to refresh
+                              ref.invalidate(customerListProvider);
+                              ref.invalidate(upcomingEventsProvider);
+                              ref.invalidate(companiesProvider);
+                              ref.invalidate(taskListProvider);
+                              ref.invalidate(todayTasksProvider);
+                              
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('All database records and document attachments cleared successfully!'),
+                                    backgroundColor: Colors.redAccent,
+                                  ),
+                                );
+                              }
+                            },
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Colors.redAccent),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 16),
+            ],
+            const SizedBox(height: 16),
             Center(
               child: Column(
                 children: [
                   const ShineCraftBrandingFooter(fontSize: 14, logoHeight: 64),
                   const SizedBox(height: 4),
-                  Text(
-                    'JJ CRM - Offline Customer Detail Management System v2.0.1',
-                    style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                  GestureDetector(
+                    onTap: _handleVersionTap,
+                    behavior: HitTestBehavior.opaque,
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        child: Text(
+                          'JJ CRM - Offline Customer Detail Management System v2.0.1',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: _showDeveloperTools ? AppColors.skyBlue : Colors.grey[500],
+                            fontWeight: _showDeveloperTools ? FontWeight.bold : FontWeight.normal,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
