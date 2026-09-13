@@ -54,3 +54,6 @@ app.*.map.json
 
 # App-specific runtime user storage
 customer_documents/
+
+# Isar native lib copied in for probe tests (rebuilt by same-version isar)
+libisar.so

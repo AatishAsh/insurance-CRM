@@ -1687,11 +1687,13 @@ class _AddEditMarketingLeadDialogState extends ConsumerState<AddEditMarketingLea
                       ),
                       const SizedBox(height: 24),
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Visits Schedule (At least 1, at most 5)',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                          Expanded(
+                            child: Text(
+                              'Visits Schedule (At least 1, at most 5)',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                           if (_visitDates.length < 5)
                             TextButton.icon(

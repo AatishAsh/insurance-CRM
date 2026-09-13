@@ -1,0 +1,8 @@
+# Test runner configuration.
+# Probe tests carry the "probe" tag so they can be excluded from normal runs
+# (flutter test --exclude-tags probe) and executed on demand
+# (flutter test --tags probe).
+tags:
+  probe:
+    # Probe tests create real temp-dir databases and start discovery services.
+    timeout: 5m
