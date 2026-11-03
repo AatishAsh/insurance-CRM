@@ -737,7 +737,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
               _buildDetailRow("Other Remarks", c.healthRemarks),
               _buildDetailRow("Personal Accident Cover", c.hasPersonalAccident),
               if ((c.hasPersonalAccident ?? '').toLowerCase() == 'yes')
-                _buildDateRow("Date of the Incident", c.personalAccidentDate),
+                _buildDateRow("Date of Commencement (DOC)", c.personalAccidentDate),
             ]),
 
             _buildAccordionSection('Plan Details', Icons.article_outlined, [

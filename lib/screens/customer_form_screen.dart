@@ -1454,7 +1454,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                 _buildDropdownField('hasPersonalAccident', 'Personal Accident Cover?', ['No', 'Yes']),
                 if (_dropdowns['hasPersonalAccident'] == 'Yes') ...[
                   const SizedBox(height: 8),
-                  _buildDateField('personalAccidentDate', 'Date of the Incident'),
+                  _buildDateField('personalAccidentDate', 'Date of Commencement (DOC)'),
                 ],
               ]),
 

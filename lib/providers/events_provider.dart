@@ -115,10 +115,10 @@ final upcomingEventsProvider = FutureProvider<List<UpcomingEvent>>((ref) async {
           final years = today.year - customer.personalAccidentDate!.toLocal().year;
           final yearsText = years > 0 ? ' ($years Yr Anniversary)' : '';
           events.add(UpcomingEvent(
-            title: "Personal Accident Incident: ${customer.name}",
+            title: "PA Cover Renewal: ${customer.name}",
             dateText: getDaysText(diff),
             type: 'reminder',
-            details: 'Incident Date: ${DateFormat('dd MMM yyyy').format(customer.personalAccidentDate!.toLocal())}$yearsText',
+            details: 'Date of Commencement (DOC): ${DateFormat('dd MMM yyyy').format(customer.personalAccidentDate!.toLocal())}$yearsText',
             customer: customer,
             date: todayNormalized.add(Duration(days: diff)),
           ));

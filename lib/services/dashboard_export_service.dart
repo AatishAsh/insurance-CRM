@@ -720,7 +720,7 @@ class DashboardExportService {
               children: [
                 _buildPdfGridRow('Health Problems', customer.healthProblems ?? 'None', 'Lifestyle Habits', customer.lifestyleHabits ?? 'None'),
                 _buildPdfGridRow('Pregnancy Details', customer.pregnancyDetails ?? 'None', 'Other Remarks', customer.healthRemarks ?? 'None'),
-                _buildPdfGridRow('Personal Accident Cover', customer.hasPersonalAccident ?? 'No', 'Incident Date', accidentDateStr),
+                _buildPdfGridRow('Personal Accident Cover', customer.hasPersonalAccident ?? 'No', 'Date of Commencement (DOC)', accidentDateStr),
               ],
             ),
 
