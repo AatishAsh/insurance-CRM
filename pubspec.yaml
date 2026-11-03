@@ -26,7 +26,7 @@ dependencies:
   shelf: ^1.4.1
   shelf_router: ^1.1.4
   http: ^1.2.1
-  bonsoir: ^2.1.1
+  bonsoir: ^5.0.0
   uuid: ^4.3.3
   
   # UI Components

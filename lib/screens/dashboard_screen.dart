@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../models/daily_note.dart';
+import '../models/work_task.dart';
 import '../providers/customer_provider.dart';
 import '../providers/daily_notes_provider.dart';
 import '../providers/events_provider.dart';
@@ -632,6 +633,12 @@ class DashboardScreen extends ConsumerWidget {
                 },
               ),
             ),
+            const SizedBox(width: 4),
+            IconButton(
+              icon: const Icon(Icons.delete_outline_rounded, size: 20, color: Colors.redAccent),
+              tooltip: 'Delete Task',
+              onPressed: () => _confirmDeleteWorkTask(context, ref, item.workTask!),
+            ),
           ] else if (item.type == TodayEventType.marketing && item.marketingLead != null) ...[
             const SizedBox(width: 8),
             Container(
@@ -695,6 +702,50 @@ class DashboardScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  void _confirmDeleteWorkTask(BuildContext context, WidgetRef ref, WorkTask task) async {
+    final check = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
+            SizedBox(width: 8),
+            Text('Delete Task?'),
+          ],
+        ),
+        content: Text('Are you sure you want to delete "${task.description}"?'),
+        actions: [
+          OutlinedButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (check == true) {
+      final db = ref.read(databaseServiceProvider);
+      await db.deleteTask(task.id);
+      ref.invalidate(todaySummaryEventsProvider);
+      ref.invalidate(todayTasksProvider);
+      ref.invalidate(taskListProvider);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Task deleted successfully')),
+        );
+      }
+    }
   }
 
   void _openNewMarketingLeadDialog(BuildContext context, WidgetRef ref) async {

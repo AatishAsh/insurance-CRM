@@ -1,16 +1,32 @@
-# Miscellaneous
+# Miscellaneous / OS
 *.class
 *.log
 *.pyc
 *.swp
 *.tmp
 *.bak
+*~
 .DS_Store
 .atom/
 .buildlog/
 .history
 .svn/
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 migrate_working_dir/
+
+# Environment & Secret Configurations
+.env
+.env.*
+
+# Android Secrets & Keystores
+/android/key.properties
+*.jks
+*.keystore
+*.p12
+*.pem
+*.crt
 
 # IntelliJ / Android Studio
 *.iml
@@ -19,8 +35,10 @@ migrate_working_dir/
 .idea/
 .gradle/
 
-# VS Code
+# VS Code & Editors
 .vscode/
+*.sublime-project
+*.sublime-workspace
 
 # Flutter / Dart / Pub
 **/doc/api/
@@ -33,12 +51,9 @@ migrate_working_dir/
 .pub/
 /build/
 
-# Symbolication & Obfuscation
-app.*.symbols
-app.*.map.json
-
-# Android build artifacts & local config
+# Android Build Artifacts & Local Config
 /android/.gradle
+/android/build/
 /android/local.properties
 /android/app/debug
 /android/app/profile
@@ -46,11 +61,17 @@ app.*.map.json
 *.apk
 *.aab
 
-# Desktop build artifacts (Windows / Linux / macOS)
+# Desktop Build Artifacts (Windows / Linux / macOS)
 /windows/flutter/ephemeral/
 /linux/flutter/ephemeral/
 /macos/Flutter/ephemeral/
 *.exe
 
-# App-specific runtime user storage
+# Local Databases & App Runtime Storage
+*.isar
+*.isar.lock
+*.isar.management
+*.db
+*.sqlite
+*.sqlite3
 customer_documents/

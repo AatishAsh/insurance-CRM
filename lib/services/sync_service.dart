@@ -205,7 +205,7 @@ class SyncService extends ChangeNotifier {
             // Verify it isn't ourselves
             final isOurselves = service.name.contains(Platform.localHostname.replaceAll(' ', '_')) && service.port == _serverPort;
             if (!isOurselves) {
-              String hostIp = service.ip ?? 'localhost';
+              String hostIp = service.host ?? 'localhost';
               final deviceId = service.name;
               if (!_discoveredDevices.any((d) => d.id == deviceId || (d.host == hostIp && d.port == service.port))) {
                 _discoveredDevices.add(DiscoveredDevice(

@@ -347,7 +347,30 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
                             ),
                           ),
                         ],
-                        ...customers.map((cust) => _buildCustomerTile(context, ref, cust, searchQuery)),
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            if (constraints.maxWidth > 700) {
+                              final int cols = constraints.maxWidth > 1150 ? 3 : 2;
+                              return GridView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: cols,
+                                  crossAxisSpacing: 12,
+                                  mainAxisSpacing: 12,
+                                  mainAxisExtent: 140,
+                                ),
+                                itemCount: customers.length,
+                                itemBuilder: (context, index) {
+                                  return _buildCustomerTile(context, ref, customers[index], searchQuery, isGridItem: true);
+                                },
+                              );
+                            }
+                            return Column(
+                              children: customers.map((cust) => _buildCustomerTile(context, ref, cust, searchQuery)).toList(),
+                            );
+                          },
+                        ),
                       ],
                     ],
                   ),
@@ -559,7 +582,7 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
     );
   }
 
-  Widget _buildCustomerTile(BuildContext context, WidgetRef ref, Customer customer, String searchQuery) {
+  Widget _buildCustomerTile(BuildContext context, WidgetRef ref, Customer customer, String searchQuery, {bool isGridItem = false}) {
     // Generate a unique avatar color based on the hash of the customer's name
     final int hash = customer.name.hashCode;
     final List<Color> colors = [Colors.blue, Colors.purple, Colors.teal, Colors.orange, Colors.indigo, Colors.pink, Colors.red, Colors.green];
@@ -581,7 +604,7 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
 
     return Card(
       elevation: 0,
-      margin: const EdgeInsets.only(bottom: 12.0),
+      margin: EdgeInsets.only(bottom: isGridItem ? 0 : 12.0),
       shape: RoundedRectangleBorder(
         side: BorderSide(color: Colors.grey[300]!),
         borderRadius: BorderRadius.circular(12),

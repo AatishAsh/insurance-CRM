@@ -602,7 +602,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
 
   bool _isNomineeMinor(String rel) {
     final norm = rel.trim().toLowerCase();
-    return norm == 'minor daughter' || norm == 'minor son';
+    return norm.contains('minor');
   }
 
   @override
@@ -884,11 +884,6 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     customer.appointeeAge = _controllers['appointeeAge']?.text.trim().isNotEmpty == true
         ? _controllers['appointeeAge']!.text.trim()
         : _calculateAgeString(_dates['appointeeDOB']);
-    customer.reminderDate1 = _dates['reminderDate1'];
-    customer.reminderDate2 = _dates['reminderDate2'];
-    customer.reminderDate3 = _dates['reminderDate3'];
-    customer.reminderDate4 = _dates['reminderDate4'];
-    customer.reminderDate5 = _dates['reminderDate5'];
 
     // Dropdown assignments
     customer.maritalStatus = _dropdowns['maritalStatus']?.isEmpty ?? true ? null : _dropdowns['maritalStatus'];
@@ -1251,7 +1246,18 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                 _buildResponsiveRow(isDesktop, [
                   _buildField('nomineeName', 'Nominee Name'),
                   _buildDropdownField('nomineeRelationship', 'Relationship', [
-                    'Spouse', 'Father', 'Mother', 'Son', 'Daughter', 'Minor Daughter', 'Minor Son'
+                    'Spouse',
+                    'Father',
+                    'Mother',
+                    'Brother',
+                    'Sister',
+                    'Son',
+                    'Daughter',
+                    'Minor Son',
+                    'Minor Daughter',
+                    'Minor Brother',
+                    'Minor Sister',
+                    'Other',
                   ]),
                 ]),
                 _buildResponsiveRow(isDesktop, [

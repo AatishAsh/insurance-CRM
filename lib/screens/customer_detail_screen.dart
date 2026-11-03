@@ -989,38 +989,54 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
     final activePattern = ref.watch(dateFormatPatternProvider);
     final dateFormat = DateFormat(activePattern);
     final titleText = rem.reminderTitle?.isNotEmpty == true ? rem.reminderTitle! : 'Reminder #${index + 1}';
+    final hasContent = rem.reminderDate != null || (rem.note != null && rem.note!.trim().isNotEmpty);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: hasContent ? Colors.white : Colors.grey.shade50,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: hasContent ? Colors.grey[200]! : Colors.grey[300]!),
       ),
       child: Row(
         children: [
-          Icon(Icons.event, color: Colors.blue[700], size: 20),
+          Icon(
+            hasContent ? Icons.event : Icons.alarm_off_outlined,
+            color: hasContent ? Colors.blue[700] : Colors.grey[400],
+            size: 20,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$titleText: ${rem.reminderDate != null ? dateFormat.format(rem.reminderDate!) : "No date"}',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.black87),
-                ),
-                if (rem.note != null && rem.note!.trim().isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    rem.note!,
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  hasContent
+                      ? '$titleText: ${rem.reminderDate != null ? dateFormat.format(rem.reminderDate!) : "No date"}'
+                      : '$titleText: Not Set',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: hasContent ? Colors.black87 : Colors.grey[600],
                   ),
-                ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  hasContent && rem.note != null && rem.note!.trim().isNotEmpty
+                      ? rem.note!
+                      : 'No follow-up remarks set. Tap edit to schedule.',
+                  style: TextStyle(
+                    color: hasContent ? Colors.grey[600] : Colors.grey[400],
+                    fontSize: 12,
+                    fontStyle: hasContent ? FontStyle.normal : FontStyle.italic,
+                  ),
+                ),
               ],
             ),
           ),
           IconButton(
             icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.grey),
+            tooltip: 'Edit Reminder',
             onPressed: () => _showAddReminderDialog(c, index: index),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
@@ -1028,6 +1044,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
           const SizedBox(width: 12),
           IconButton(
             icon: const Icon(Icons.delete_outline, size: 18, color: Colors.redAccent),
+            tooltip: hasContent ? 'Delete Content (Clear)' : 'Remove Strip',
             onPressed: () => _deleteReminder(c, index),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
@@ -1057,62 +1074,153 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
       }
     }
 
-    final remTitle = (index >= 0 && index < currentList.length && currentList[index].reminderTitle != null && currentList[index].reminderTitle!.isNotEmpty)
+    if (index < 0 || index >= currentList.length) return;
+
+    final remTitle = (currentList[index].reminderTitle != null && currentList[index].reminderTitle!.isNotEmpty)
         ? currentList[index].reminderTitle!
         : 'Reminder #${index + 1}';
+    final hasContent = currentList[index].reminderDate != null ||
+        (currentList[index].note != null && currentList[index].note!.trim().isNotEmpty);
 
-    final check = await showDialog<bool>(
+    // If strip is already empty, offer removing the strip completely
+    if (!hasContent) {
+      final confirmRemove = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.delete_outline, color: Colors.redAccent),
+              SizedBox(width: 8),
+              Text('Remove Reminder Strip'),
+            ],
+          ),
+          content: Text('Remove "$remTitle" strip completely from profile?'),
+          actions: [
+            OutlinedButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Remove Strip'),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmRemove == true) {
+        currentList.removeAt(index);
+        await _saveUpdatedReminders(c, currentList);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('"$remTitle" strip removed.')),
+          );
+        }
+      }
+      return;
+    }
+
+    // Has content: Default and primary option is to clear only content, keeping strip
+    final choice = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
+            Icon(Icons.cleaning_services_outlined, color: Colors.blueAccent),
             SizedBox(width: 8),
-            Text('Delete Reminder'),
+            Text('Delete Reminder Content'),
           ],
         ),
-        content: Text('Are you sure you want to delete "$remTitle"?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Do you want to delete only the reminder date and follow-up notes for "$remTitle"?'),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.info_outline, size: 16, color: Colors.blue),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Delete Content Only will clear the reminder and follow-up notes while keeping the strip ready for new entries.',
+                      style: TextStyle(fontSize: 12, color: Colors.black87),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
         actions: [
-          OutlinedButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'cancel'),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, 'remove_strip'),
+            child: const Text('Delete Entire Strip'),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blueAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(context, 'clear_content'),
+            child: const Text('Delete Content Only'),
           ),
         ],
       ),
     );
 
-    if (check == true) {
-      if (index >= 0 && index < currentList.length) {
-        currentList.removeAt(index);
-      }
-      c.reminders = currentList;
-      c.reminderDate1 = currentList.isNotEmpty ? currentList[0].reminderDate : null;
-      c.reminderNote1 = currentList.isNotEmpty ? currentList[0].note : null;
-      c.reminderDate2 = currentList.length > 1 ? currentList[1].reminderDate : null;
-      c.reminderNote2 = currentList.length > 1 ? currentList[1].note : null;
-      c.reminderDate3 = currentList.length > 2 ? currentList[2].reminderDate : null;
-      c.reminderNote3 = currentList.length > 2 ? currentList[2].note : null;
-      c.reminderDate4 = currentList.length > 3 ? currentList[3].reminderDate : null;
-      c.reminderNote4 = currentList.length > 3 ? currentList[3].note : null;
-      c.reminderDate5 = currentList.length > 4 ? currentList[4].reminderDate : null;
-      c.reminderNote5 = currentList.length > 4 ? currentList[4].note : null;
-      c.updatedAt = DateTime.now();
-
-      final db = ref.read(databaseServiceProvider);
-      await db.saveCustomer(c);
-      ref.invalidate(customerListProvider);
-      ref.invalidate(upcomingEventsProvider);
-      _loadCustomerData();
-
+    if (choice == 'clear_content') {
+      currentList[index].reminderDate = null;
+      currentList[index].note = null;
+      await _saveUpdatedReminders(c, currentList);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('"$remTitle" deleted.')),
+          SnackBar(content: Text('"$remTitle" content deleted. Strip remains available.')),
+        );
+      }
+    } else if (choice == 'remove_strip') {
+      currentList.removeAt(index);
+      await _saveUpdatedReminders(c, currentList);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('"$remTitle" strip removed.')),
         );
       }
     }
+  }
+
+  Future<void> _saveUpdatedReminders(Customer c, List<CustomerReminderItem> currentList) async {
+    c.reminders = currentList;
+    c.reminderDate1 = currentList.isNotEmpty ? currentList[0].reminderDate : null;
+    c.reminderNote1 = currentList.isNotEmpty ? currentList[0].note : null;
+    c.reminderDate2 = currentList.length > 1 ? currentList[1].reminderDate : null;
+    c.reminderNote2 = currentList.length > 1 ? currentList[1].note : null;
+    c.reminderDate3 = currentList.length > 2 ? currentList[2].reminderDate : null;
+    c.reminderNote3 = currentList.length > 2 ? currentList[2].note : null;
+    c.reminderDate4 = currentList.length > 3 ? currentList[3].reminderDate : null;
+    c.reminderNote4 = currentList.length > 3 ? currentList[3].note : null;
+    c.reminderDate5 = currentList.length > 4 ? currentList[4].reminderDate : null;
+    c.reminderNote5 = currentList.length > 4 ? currentList[4].note : null;
+    c.updatedAt = DateTime.now();
+
+    final db = ref.read(databaseServiceProvider);
+    await db.saveCustomer(c);
+    ref.invalidate(customerListProvider);
+    ref.invalidate(upcomingEventsProvider);
+    ref.invalidate(todaySummaryEventsProvider);
+    _loadCustomerData();
+  }
   }
 
   void _showAddReminderDialog(Customer c, {int? index}) {

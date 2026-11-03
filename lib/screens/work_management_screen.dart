@@ -43,260 +43,426 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
     }
 
     final currentTabTitle = tabNames.length > selectedTabIndex ? tabNames[selectedTabIndex] : 'Tab ${selectedTabIndex + 1}';
+    final bool isWide = MediaQuery.of(context).size.width >= 700;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Row(
-        children: [
-          // Sidebar for Company Selection & Tabs
-          Container(
-            width: 250,
-            decoration: const BoxDecoration(
-              color: AppColors.cardSurface,
-              border: Border(right: BorderSide(color: AppColors.cardBorder, width: 1)),
-              boxShadow: [AppColors.softShadow],
-            ),
-            child: Column(
+      body: isWide
+          ? Row(
               children: [
-                // Header with current tab name and rename option
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: AppColors.badgeCyanBg,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.business_rounded, color: AppColors.cyanAccent, size: 18),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          currentTabTitle.toUpperCase(),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                            color: AppColors.headingText,
-                            letterSpacing: 0.8,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.edit_outlined, size: 16, color: AppColors.skyBlue),
-                        tooltip: 'Rename Tab',
-                        onPressed: () => _showRenameTabDialog(selectedTabIndex, currentTabTitle),
-                        constraints: const BoxConstraints(),
-                        padding: EdgeInsets.zero,
-                      ),
-                    ],
-                  ),
-                ),
-                // 3 Company Tabs Selector
+                // Sidebar for Company Selection & Tabs (Wide / Tablet mode)
                 Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(10),
+                  width: 250,
+                  decoration: const BoxDecoration(
+                    color: AppColors.cardSurface,
+                    border: Border(right: BorderSide(color: AppColors.cardBorder, width: 1)),
+                    boxShadow: [AppColors.softShadow],
                   ),
-                  child: Row(
-                    children: List.generate(3, (index) {
-                      final isTabSelected = selectedTabIndex == index;
-                      final tabTitle = tabNames.length > index ? tabNames[index] : 'Tab ${index + 1}';
-
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            ref.read(selectedWorkTabIndexProvider.notifier).state = index;
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 150),
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            decoration: BoxDecoration(
-                              color: isTabSelected ? AppColors.skyBlue : Colors.transparent,
-                              borderRadius: BorderRadius.circular(8),
-                              boxShadow: isTabSelected
-                                  ? [BoxShadow(color: AppColors.skyBlue.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))]
-                                  : [],
+                  child: Column(
+                    children: [
+                      // Header with current tab name and rename option
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: AppColors.badgeCyanBg,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.business_rounded, color: AppColors.cyanAccent, size: 18),
                             ),
-                            child: Center(
+                            const SizedBox(width: 8),
+                            Expanded(
                               child: Text(
-                                tabTitle,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: isTabSelected ? FontWeight.bold : FontWeight.w600,
-                                  color: isTabSelected ? Colors.white : AppColors.mutedText,
+                                currentTabTitle.toUpperCase(),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: AppColors.headingText,
+                                  letterSpacing: 0.8,
                                 ),
-                                maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                          ),
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined, size: 16, color: AppColors.skyBlue),
+                              tooltip: 'Rename Tab',
+                              onPressed: () => _showRenameTabDialog(selectedTabIndex, currentTabTitle),
+                              constraints: const BoxConstraints(),
+                              padding: EdgeInsets.zero,
+                            ),
+                          ],
                         ),
-                      );
-                    }),
-                  ),
-                ),
-                const Divider(height: 1),
-                // Scrollable Companies List + Add Company button at the end
-                Expanded(
-                  child: companiesAsync.when(
-                    data: (companies) {
-                      return ListView.builder(
-                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                        itemCount: companies.length + 1,
-                        itemBuilder: (context, index) {
-                          // Render "+ Add Company" option at the end of the list
-                          if (index == companies.length) {
-                            final count = companies.length;
-                            final isMaxReached = count >= 15;
+                      ),
+                      // 3 Company Tabs Selector
+                      Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          children: List.generate(3, (index) {
+                            final isTabSelected = selectedTabIndex == index;
+                            final tabTitle = tabNames.length > index ? tabNames[index] : 'Tab ${index + 1}';
 
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 4.0),
-                              child: InkWell(
+                            return Expanded(
+                              child: GestureDetector(
                                 onTap: () {
-                                  if (isMaxReached) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Maximum limit of 15 companies reached for this tab.'),
-                                        backgroundColor: AppColors.roseAccent,
-                                        duration: Duration(seconds: 2),
-                                      ),
-                                    );
-                                  } else {
-                                    _showAddCompanyDialog(selectedTabIndex);
-                                  }
+                                  ref.read(selectedWorkTabIndexProvider.notifier).state = index;
                                 },
-                                borderRadius: BorderRadius.circular(12),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 150),
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
                                   decoration: BoxDecoration(
-                                    color: isMaxReached ? Colors.grey.withOpacity(0.05) : AppColors.skyBlue.withOpacity(0.08),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: isMaxReached ? Colors.grey.withOpacity(0.3) : AppColors.skyBlue.withOpacity(0.4),
-                                      width: 1,
-                                    ),
+                                    color: isTabSelected ? AppColors.skyBlue : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(8),
+                                    boxShadow: isTabSelected
+                                        ? [BoxShadow(color: AppColors.skyBlue.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))]
+                                        : [],
                                   ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        isMaxReached ? Icons.block_rounded : Icons.add_circle_outline,
-                                        size: 16,
-                                        color: isMaxReached ? Colors.grey : AppColors.skyBlue,
+                                  child: Center(
+                                    child: Text(
+                                      tabTitle,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: isTabSelected ? FontWeight.bold : FontWeight.w600,
+                                        color: isTabSelected ? Colors.white : AppColors.mutedText,
                                       ),
-                                      const SizedBox(width: 6),
-                                      Flexible(
-                                        child: Text(
-                                          isMaxReached ? 'Max Limit (15/15)' : 'Add Company ($count/15)',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                            color: isMaxReached ? Colors.grey : AppColors.skyBlue,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                 ),
                               ),
                             );
-                          }
+                          }),
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      // Scrollable Companies List + Add Company button at the end
+                      Expanded(
+                        child: companiesAsync.when(
+                          data: (companies) {
+                            return ListView.builder(
+                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                              itemCount: companies.length + 1,
+                              itemBuilder: (context, index) {
+                                // Render "+ Add Company" option at the end of the list
+                                if (index == companies.length) {
+                                  final count = companies.length;
+                                  final isMaxReached = count >= 15;
 
-                          // Render Company Item
-                          final company = companies[index];
-                          final isSelected = selectedCompanyId == company.id;
-                          final avatarColor = avatarColors[company.name.hashCode.abs() % avatarColors.length];
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 6.0, horizontal: 4.0),
+                                    child: InkWell(
+                                      onTap: () {
+                                        if (isMaxReached) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Maximum limit of 15 companies reached for this tab.'),
+                                              backgroundColor: AppColors.roseAccent,
+                                              duration: Duration(seconds: 2),
+                                            ),
+                                          );
+                                        } else {
+                                          _showAddCompanyDialog(selectedTabIndex);
+                                        }
+                                      },
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                                        decoration: BoxDecoration(
+                                          color: isMaxReached ? Colors.grey.withOpacity(0.05) : AppColors.skyBlue.withOpacity(0.08),
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: isMaxReached ? Colors.grey.withOpacity(0.3) : AppColors.skyBlue.withOpacity(0.4),
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              isMaxReached ? Icons.block_rounded : Icons.add_circle_outline,
+                                              size: 16,
+                                              color: isMaxReached ? Colors.grey : AppColors.skyBlue,
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Flexible(
+                                              child: Text(
+                                                isMaxReached ? 'Max Limit (15/15)' : 'Add Company ($count/15)',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: isMaxReached ? Colors.grey : AppColors.skyBlue,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }
 
-                          return Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 3.0),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
-                              decoration: BoxDecoration(
-                                color: isSelected ? AppColors.badgeBlueBg : Colors.transparent,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: isSelected ? AppColors.skyBlue.withOpacity(0.3) : Colors.transparent,
-                                ),
-                              ),
-                              child: Material(
-                                color: Colors.transparent,
-                                child: ListTile(
-                                  dense: true,
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                                  leading: CircleAvatar(
-                                    radius: 16,
-                                    backgroundColor: isSelected ? avatarColor : avatarColor.withOpacity(0.15),
-                                    child: Text(
-                                      company.name.isNotEmpty ? company.name[0].toUpperCase() : 'C',
-                                      style: TextStyle(
-                                        color: isSelected ? Colors.white : avatarColor,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
+                                // Render Company Item
+                                final company = companies[index];
+                                final isSelected = selectedCompanyId == company.id;
+                                final avatarColor = avatarColors[company.name.hashCode.abs() % avatarColors.length];
+
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 3.0),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 150),
+                                    decoration: BoxDecoration(
+                                      color: isSelected ? AppColors.badgeBlueBg : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: isSelected ? AppColors.skyBlue.withOpacity(0.3) : Colors.transparent,
+                                      ),
+                                    ),
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: ListTile(
+                                        dense: true,
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                                        leading: CircleAvatar(
+                                          radius: 16,
+                                          backgroundColor: isSelected ? avatarColor : avatarColor.withOpacity(0.15),
+                                          child: Text(
+                                            company.name.isNotEmpty ? company.name[0].toUpperCase() : 'C',
+                                            style: TextStyle(
+                                              color: isSelected ? Colors.white : avatarColor,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        ),
+                                        title: Text(
+                                          company.name,
+                                          style: TextStyle(
+                                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                            fontSize: 13,
+                                            color: isSelected ? AppColors.badgeBlueText : AppColors.headingText,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        subtitle: company.referenceNumber != null && company.referenceNumber!.isNotEmpty
+                                            ? Text(
+                                                company.referenceNumber!,
+                                                style: const TextStyle(fontSize: 10, color: AppColors.mutedText),
+                                                overflow: TextOverflow.ellipsis,
+                                              )
+                                            : null,
+                                        trailing: IconButton(
+                                          icon: const Icon(Icons.edit_outlined, size: 14, color: AppColors.mutedText),
+                                          onPressed: () => _showEditCompanyDialog(company),
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                        ),
+                                        onTap: () {
+                                          ref.read(selectedCompanyIdProvider.notifier).state = company.id;
+                                        },
                                       ),
                                     ),
                                   ),
-                                  title: Text(
-                                    company.name,
-                                    style: TextStyle(
-                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                                      fontSize: 13,
-                                      color: isSelected ? AppColors.badgeBlueText : AppColors.headingText,
+                                );
+                              },
+                            );
+                          },
+                          loading: () => const Center(child: CircularProgressIndicator(color: AppColors.skyBlue)),
+                          error: (err, stack) => Center(child: Text('Error: $err', style: const TextStyle(color: AppColors.roseAccent))),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Main Work Tracking Area
+                Expanded(
+                  child: effectiveCompanyId == null
+                      ? const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.business_outlined, size: 64, color: AppColors.mutedText),
+                              SizedBox(height: 16),
+                              Text('Select a company from the left panel to manage daily tasks', style: TextStyle(color: AppColors.bodyText, fontWeight: FontWeight.w500)),
+                            ],
+                          ),
+                        )
+                      : _buildWorkTracker(effectiveCompanyId),
+                ),
+              ],
+            )
+          : Column(
+              children: [
+                // Top Compact Header & Company Selector for Mobile
+                Container(
+                  margin: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardSurface,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: const [AppColors.softShadow],
+                    border: Border.all(color: AppColors.cardBorder),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // 3 Work Tabs Bar on Mobile
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                children: List.generate(3, (index) {
+                                  final isTabSelected = selectedTabIndex == index;
+                                  final tabTitle = tabNames.length > index ? tabNames[index] : 'Tab ${index + 1}';
+
+                                  return Expanded(
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        ref.read(selectedWorkTabIndexProvider.notifier).state = index;
+                                      },
+                                      child: AnimatedContainer(
+                                        duration: const Duration(milliseconds: 150),
+                                        padding: const EdgeInsets.symmetric(vertical: 8),
+                                        decoration: BoxDecoration(
+                                          color: isTabSelected ? AppColors.skyBlue : Colors.transparent,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            tabTitle,
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: isTabSelected ? FontWeight.bold : FontWeight.w600,
+                                              color: isTabSelected ? Colors.white : AppColors.mutedText,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  subtitle: company.referenceNumber != null && company.referenceNumber!.isNotEmpty
-                                      ? Text(
-                                          company.referenceNumber!,
-                                          style: const TextStyle(fontSize: 10, color: AppColors.mutedText),
-                                          overflow: TextOverflow.ellipsis,
-                                        )
-                                      : null,
-                                  trailing: IconButton(
-                                    icon: const Icon(Icons.edit_outlined, size: 14, color: AppColors.mutedText),
-                                    onPressed: () => _showEditCompanyDialog(company),
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                  ),
-                                  onTap: () {
-                                    ref.read(selectedCompanyIdProvider.notifier).state = company.id;
+                                  );
+                                }),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          IconButton(
+                            icon: const Icon(Icons.edit_outlined, size: 18, color: AppColors.skyBlue),
+                            tooltip: 'Rename Tab',
+                            onPressed: () => _showRenameTabDialog(selectedTabIndex, currentTabTitle),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      // Dropdown Company Selector for Mobile
+                      Row(
+                        children: [
+                          const Icon(Icons.business_rounded, color: AppColors.cyanAccent, size: 20),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.badgeBlueBg,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppColors.skyBlue.withOpacity(0.3)),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: KeyCycleDropdownButton<int>(
+                                  value: effectiveCompanyId,
+                                  hint: const Text('Select Company', style: TextStyle(fontSize: 13, color: AppColors.mutedText)),
+                                  isExpanded: true,
+                                  icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.skyBlue),
+                                  items: activeCompanies.map((c) {
+                                    return DropdownMenuItem<int>(
+                                      value: c.id,
+                                      child: Text(
+                                        c.name,
+                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.headingText),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (newId) {
+                                    if (newId != null) {
+                                      ref.read(selectedCompanyIdProvider.notifier).state = newId;
+                                    }
                                   },
                                 ),
                               ),
                             ),
-                          );
-                        },
-                      );
-                    },
-                    loading: () => const Center(child: CircularProgressIndicator(color: AppColors.skyBlue)),
-                    error: (err, stack) => Center(child: Text('Error: $err', style: const TextStyle(color: AppColors.roseAccent))),
+                          ),
+                          if (effectiveCompanyId != null) ...[
+                            const SizedBox(width: 4),
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined, size: 18, color: AppColors.mutedText),
+                              tooltip: 'Edit Company',
+                              onPressed: () {
+                                final company = activeCompanies.where((c) => c.id == effectiveCompanyId).firstOrNull;
+                                if (company != null) _showEditCompanyDialog(company);
+                              },
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                          ],
+                          const SizedBox(width: 4),
+                          IconButton(
+                            icon: const Icon(Icons.add_circle_outline, size: 22, color: AppColors.skyBlue),
+                            tooltip: 'Add Company',
+                            onPressed: () {
+                              if (activeCompanies.length >= 15) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Maximum limit of 15 companies reached for this tab.'),
+                                    backgroundColor: AppColors.roseAccent,
+                                  ),
+                                );
+                              } else {
+                                _showAddCompanyDialog(selectedTabIndex);
+                              }
+                            },
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
+                ),
+                // Main Work Area on Mobile
+                Expanded(
+                  child: effectiveCompanyId == null
+                      ? const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.business_outlined, size: 64, color: AppColors.mutedText),
+                              SizedBox(height: 16),
+                              Text('Select a company from the top selector to manage daily tasks', style: TextStyle(color: AppColors.bodyText, fontWeight: FontWeight.w500)),
+                            ],
+                          ),
+                        )
+                      : _buildWorkTracker(effectiveCompanyId),
                 ),
               ],
             ),
-          ),
-          // Main Work Tracking Area
-          Expanded(
-            child: effectiveCompanyId == null
-                ? const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.business_outlined, size: 64, color: AppColors.mutedText),
-                        SizedBox(height: 16),
-                        Text('Select a company from the left panel to manage daily tasks', style: TextStyle(color: AppColors.bodyText, fontWeight: FontWeight.w500)),
-                      ],
-                    ),
-                  )
-                : _buildWorkTracker(effectiveCompanyId),
-          ),
-        ],
-      ),
       floatingActionButton: effectiveCompanyId != null
           ? FloatingActionButton.extended(
               onPressed: () => _showAddTaskDialog(effectiveCompanyId!),
