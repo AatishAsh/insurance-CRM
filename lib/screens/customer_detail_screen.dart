@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import '../models/customer.dart';
 import '../services/database_service.dart';
 import '../services/app_storage_service.dart';
@@ -402,6 +404,45 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
     }
   }
 
+  Future<void> _openCustomerDocument(CustomerDocument doc) async {
+    if (_localDocsDirPath == null || doc.fileName == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Document path unavailable.')),
+      );
+      return;
+    }
+    final file = File('$_localDocsDirPath/${doc.fileName}');
+    if (!file.existsSync()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Document file not found on this device.')),
+      );
+      return;
+    }
+
+    try {
+      if (Platform.isLinux) {
+        await Process.run('xdg-open', [file.path]);
+      } else if (Platform.isMacOS) {
+        await Process.run('open', [file.path]);
+      } else if (Platform.isWindows) {
+        await Process.run('cmd', ['/c', 'start', '', file.path]);
+      } else {
+        final uri = Uri.file(file.path);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri);
+        } else {
+          await Share.shareXFiles([XFile(file.path)], text: doc.documentName);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open file: $e')),
+        );
+      }
+    }
+  }
+
   void _previewDocument(CustomerDocument doc) {
     if (_localDocsDirPath == null || doc.fileName == null) return;
     final file = File('$_localDocsDirPath/${doc.fileName}');
@@ -438,8 +479,13 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                   ),
                   actions: [
                     IconButton(
-                      icon: const Icon(Icons.download_rounded, color: AppColors.skyBlue),
-                      tooltip: 'Download File',
+                      icon: const Icon(Icons.open_in_new_rounded, color: AppColors.skyBlue),
+                      tooltip: 'Open with System App',
+                      onPressed: () => _openCustomerDocument(doc),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.download_rounded, color: AppColors.limeGreen),
+                      tooltip: 'Download / Save File',
                       onPressed: () => _downloadCustomerDocument(doc),
                     ),
                   ],
@@ -466,16 +512,39 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                   )
                 else
                   Container(
-                    height: 200,
+                    height: 220,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     alignment: Alignment.center,
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.insert_drive_file_outlined, size: 64, color: Colors.blueAccent),
-                        const SizedBox(height: 16),
-                        Text(doc.fileName ?? 'Unknown file type', textAlign: TextAlign.center),
-                        const SizedBox(height: 8),
-                        const Text('Preview only supported for images', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                        const Icon(Icons.picture_as_pdf_rounded, size: 56, color: Colors.blueAccent),
+                        const SizedBox(height: 12),
+                        Text(
+                          doc.documentName ?? 'Attached Document',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          doc.fileName ?? '',
+                          style: const TextStyle(color: Colors.grey, fontSize: 11),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 14),
+                        ElevatedButton.icon(
+                          onPressed: () => _openCustomerDocument(doc),
+                          icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                          label: const Text('Open File in Default Viewer'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.skyBlue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -857,17 +926,23 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                         child: ListTile(
                           leading: const Icon(Icons.description, color: Colors.blue),
                           title: Text(doc.documentName ?? 'Unnamed Document'),
-                          subtitle: Text(doc.fileName ?? ''),
+                          subtitle: Text(doc.fileName ?? '', overflow: TextOverflow.ellipsis),
+                          onTap: () => _openCustomerDocument(doc),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: const Icon(Icons.download_rounded, size: 20, color: AppColors.skyBlue),
-                                tooltip: 'Download Document',
+                                icon: const Icon(Icons.open_in_new_rounded, size: 20, color: AppColors.skyBlue),
+                                tooltip: 'Open File',
+                                onPressed: () => _openCustomerDocument(doc),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.download_rounded, size: 20, color: AppColors.limeGreen),
+                                tooltip: 'Download / Save Document',
                                 onPressed: () => _downloadCustomerDocument(doc),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.visibility, size: 20),
+                                icon: const Icon(Icons.visibility, size: 20, color: Colors.grey),
                                 tooltip: 'Preview File',
                                 onPressed: () => _previewDocument(doc),
                               ),
@@ -1220,7 +1295,6 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
     ref.invalidate(upcomingEventsProvider);
     ref.invalidate(todaySummaryEventsProvider);
     _loadCustomerData();
-  }
   }
 
   void _showAddReminderDialog(Customer c, {int? index}) {

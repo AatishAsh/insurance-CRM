@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import '../models/customer.dart';
 import '../models/insurance_company.dart';
 import '../services/database_service.dart';
@@ -638,18 +640,41 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
 
   Future<void> _pickDocument() async {
     final labels = [
-      'Age Proof', 'ID Proof', 'Address Proof', 'Photo', 'School ID',
-      'Form 16', 'Bank Statement', 'Bank Cheque 1', 'Bank Cheque 2',
-      'Proposal Form 1', 'Proposal Form 2', 'Visiting Card', 'PAN Card Copy',
-      'Other'
+      'Age Proof',
+      'ID Proof',
+      'Address Proof',
+      'Photo',
+      'School ID',
+      'Form 16',
+      'Bank Statement',
+      'Bank Cheque 1',
+      'Bank Cheque 2',
+      'Proposal Form 1',
+      'Proposal Form 2',
+      'Visiting Card',
+      'PAN Card Copy',
+      'Policy Copy',
+      'Policy Copy 1',
+      'Policy Copy 2',
+      'Policy Copy 3',
+      'Policy Copy 4',
+      'Policy Copy 5',
+      'Policy Copy 6',
+      'Policy Copy 7',
+      'Policy Copy 8',
+      'Policy Copy 9',
+      'Policy Copy 10',
+      'Other',
     ];
     String? selectedLabel = labels.first;
+    final otherLabelController = TextEditingController();
 
     // First prompt for a label
     final labelSelected = await showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: const Text('Add Document Attachment'),
           content: StatefulBuilder(
             builder: (context, setDialogState) {
@@ -674,6 +699,18 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                       isDense: true,
                     ),
                   ),
+                  if (selectedLabel == 'Other') ...[
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: otherLabelController,
+                      decoration: const InputDecoration(
+                        labelText: 'Specify Document Name',
+                        hintText: 'e.g. Electricity Bill, RC Book...',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
+                  ],
                 ],
               );
             },
@@ -697,6 +734,9 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     );
 
     if (labelSelected == true && selectedLabel != null) {
+      final effectiveLabel = (selectedLabel == 'Other' && otherLabelController.text.trim().isNotEmpty)
+          ? otherLabelController.text.trim()
+          : selectedLabel!;
       // Pick File
       ref.read(isPickingFileProvider.notifier).state = true;
       try {
@@ -716,12 +756,49 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
 
           setState(() {
             _documents.add(CustomerDocument()
-              ..documentName = selectedLabel
+              ..documentName = effectiveLabel
               ..fileName = localFileName);
           });
         }
       } finally {
         ref.read(isPickingFileProvider.notifier).state = false;
+      }
+    }
+  }
+
+  Future<void> _openAttachedDocument(CustomerDocument doc) async {
+    if (doc.fileName == null) return;
+    final docsDir = await AppStorageService.getCustomerDocumentsDirectory();
+    final file = File('${docsDir.path}/${doc.fileName}');
+    if (!file.existsSync()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Document file not found on this device.')),
+        );
+      }
+      return;
+    }
+
+    try {
+      if (Platform.isLinux) {
+        await Process.run('xdg-open', [file.path]);
+      } else if (Platform.isMacOS) {
+        await Process.run('open', [file.path]);
+      } else if (Platform.isWindows) {
+        await Process.run('cmd', ['/c', 'start', '', file.path]);
+      } else {
+        final uri = Uri.file(file.path);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri);
+        } else {
+          await Share.shareXFiles([XFile(file.path)], text: doc.documentName);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open file: $e')),
+        );
       }
     }
   }
@@ -1829,13 +1906,25 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                           leading: const Icon(Icons.description, color: Colors.blue),
                           title: Text(doc.documentName ?? 'Unnamed Document'),
                           subtitle: Text(doc.fileName ?? '', overflow: TextOverflow.ellipsis),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () {
-                              setState(() {
-                                _documents.removeAt(index);
-                              });
-                            },
+                          onTap: () => _openAttachedDocument(doc),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.open_in_new_rounded, size: 20, color: AppColors.skyBlue),
+                                tooltip: 'Open File',
+                                onPressed: () => _openAttachedDocument(doc),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                tooltip: 'Remove File',
+                                onPressed: () {
+                                  setState(() {
+                                    _documents.removeAt(index);
+                                  });
+                                },
+                              ),
+                            ],
                           ),
                         ),
                       );

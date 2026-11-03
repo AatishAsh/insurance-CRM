@@ -527,7 +527,18 @@ class DashboardScreen extends ConsumerWidget {
                 ),
               );
             }
-          : null,
+          : (item.type == TodayEventType.workTask && item.workTask != null)
+              ? () {
+                  if (item.workTask!.companyId != null) {
+                    ref.read(selectedCompanyIdProvider.notifier).state = item.workTask!.companyId;
+                  }
+                  ref.read(navigationTabIndexProvider.notifier).state = 4;
+                }
+              : (item.type == TodayEventType.marketing && item.marketingLead != null)
+                  ? () {
+                      ref.read(navigationTabIndexProvider.notifier).state = 5;
+                    }
+                  : null,
       child: Row(
         children: [
           // Event Type Icon Box

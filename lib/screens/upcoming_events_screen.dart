@@ -558,8 +558,8 @@ class _UpcomingEventsScreenState extends ConsumerState<UpcomingEventsScreen> {
                         if (t.companyId != null) {
                           ref.read(selectedCompanyIdProvider.notifier).state = t.companyId;
                         }
-                        // Switch to the Work tab (Index 3)
-                        ref.read(navigationTabIndexProvider.notifier).state = 3;
+                        // Switch to the Work tab (Index 4)
+                        ref.read(navigationTabIndexProvider.notifier).state = 4;
                       },
                       borderRadius: BorderRadius.circular(12),
                       child: Padding(
@@ -690,7 +690,7 @@ class _UpcomingEventsScreenState extends ConsumerState<UpcomingEventsScreen> {
       child: InkWell(
         onTap: () {
           if (marketingLead != null) {
-            ref.read(navigationTabIndexProvider.notifier).state = 4;
+            ref.read(navigationTabIndexProvider.notifier).state = 5;
           } else if (customer != null) {
             Navigator.push(
               context,
