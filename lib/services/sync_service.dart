@@ -15,10 +15,16 @@ import '../models/customer.dart';
 import '../models/company.dart';
 import '../models/work_task.dart';
 import '../models/marketing_lead.dart';
+import '../models/daily_note.dart';
+import '../providers/customer_provider.dart';
+import '../providers/events_provider.dart';
+import '../providers/work_provider.dart';
+import '../providers/marketing_provider.dart';
+import '../providers/daily_notes_provider.dart';
 
 final syncServiceProvider = ChangeNotifierProvider<SyncService>((ref) {
   final db = ref.watch(databaseServiceProvider);
-  return SyncService(db);
+  return SyncService(db, ref);
 });
 
 class DiscoveredDevice {
@@ -32,6 +38,7 @@ class DiscoveredDevice {
 
 class SyncService extends ChangeNotifier {
   final DatabaseService _db;
+  final Ref _ref;
   
   HttpServer? _server;
   int _serverPort = 8080;
@@ -49,7 +56,18 @@ class SyncService extends ChangeNotifier {
   bool _isSyncing = false;
   String _syncStatusText = 'Idle';
 
-  SyncService(this._db);
+  SyncService(this._db, this._ref);
+
+  void _invalidateProviders() {
+    _ref.invalidate(customerListProvider);
+    _ref.invalidate(taskListProvider);
+    _ref.invalidate(todayTasksProvider);
+    _ref.invalidate(companiesForSelectedTabProvider);
+    _ref.invalidate(todaySummaryEventsProvider);
+    _ref.invalidate(upcomingEventsProvider);
+    _ref.invalidate(marketingListProvider);
+    _ref.invalidate(tomorrowNotesProvider);
+  }
 
   List<DiscoveredDevice> get discoveredDevices => _discoveredDevices;
   bool get isServerRunning => _isServerRunning;
@@ -72,12 +90,14 @@ class SyncService extends ChangeNotifier {
         final companies = await _db.isar.companys.where().findAll();
         final tasks = await _db.isar.workTasks.where().findAll();
         final leads = await _db.isar.marketingLeads.where().findAll();
+        final notes = await _db.isar.dailyNotes.where().findAll();
 
         final meta = {
           'customers': customers.map((c) => {'uuid': c.uuid, 'updatedAt': c.updatedAt.toIso8601String()}).toList(),
           'companies': companies.map((c) => {'uuid': c.uuid, 'updatedAt': c.updatedAt.toIso8601String()}).toList(),
           'tasks': tasks.map((t) => {'uuid': t.uuid, 'updatedAt': t.updatedAt.toIso8601String()}).toList(),
           'leads': leads.map((l) => {'uuid': l.uuid, 'updatedAt': l.updatedAt.toIso8601String()}).toList(),
+          'notes': notes.map((n) => {'uuid': n.noteId, 'updatedAt': (n.updatedAt ?? n.createdAt).toIso8601String()}).toList(),
         };
 
         return Response.ok(jsonEncode(meta), headers: {'Content-Type': 'application/json'});
@@ -94,6 +114,7 @@ class SyncService extends ChangeNotifier {
 
         // Acknowledge remote data & merge it
         await _mergePayload(payload);
+        _invalidateProviders();
 
         // Prepare and return local newer data
         final responsePayload = await _buildExchangePayload(payload['meta'] ?? {});
@@ -118,6 +139,32 @@ class SyncService extends ChangeNotifier {
         } else {
           return Response.notFound('File $safeName not found');
         }
+      } catch (e) {
+        return Response.internalServerError(body: 'Error: $e');
+      }
+    });
+
+    // 4. File upload endpoint
+    router.post('/sync/file/<filename>', (Request request, String filename) async {
+      try {
+        final docsDir = await AppStorageService.getCustomerDocumentsDirectory();
+        final safeName = filename.replaceAll('\\', '/').split('/').last;
+        final file = File('${docsDir.path}/$safeName');
+        final bytes = await request.read().expand((bit) => bit).toList();
+        await file.writeAsBytes(bytes, flush: true);
+        return Response.ok('File $safeName uploaded successfully');
+      } catch (e) {
+        return Response.internalServerError(body: 'Upload Error: $e');
+      }
+    });
+
+    // 5. File check endpoint
+    router.get('/sync/has_file/<filename>', (Request request, String filename) async {
+      try {
+        final docsDir = await AppStorageService.getCustomerDocumentsDirectory();
+        final safeName = filename.replaceAll('\\', '/').split('/').last;
+        final file = File('${docsDir.path}/$safeName');
+        return Response.ok(jsonEncode({'exists': await file.exists()}), headers: {'Content-Type': 'application/json'});
       } catch (e) {
         return Response.internalServerError(body: 'Error: $e');
       }
@@ -447,6 +494,7 @@ class SyncService extends ChangeNotifier {
       _syncStatusText = 'Merging updates...';
       notifyListeners();
       await _mergePayload(responsePayload);
+      _invalidateProviders();
 
       // 5. Download missing document files
       _syncStatusText = 'Checking missing files...';
@@ -528,6 +576,7 @@ class SyncService extends ChangeNotifier {
           'nomineeName': c.nomineeName,
           'nomineeRelationship': c.nomineeRelationship,
           'nomineeDOB': c.nomineeDOB?.toIso8601String(),
+          'nomineeAge': c.nomineeAge,
           'nomineeFatherName': c.nomineeFatherName,
           'nomineePan': c.nomineePan,
           'nomineeMobile1': c.nomineeMobile1,
@@ -535,6 +584,7 @@ class SyncService extends ChangeNotifier {
           'nomineeEmail': c.nomineeEmail,
           'appointeeName': c.appointeeName,
           'appointeeDOB': c.appointeeDOB?.toIso8601String(),
+          'appointeeAge': c.appointeeAge,
           'appointeeRelationship': c.appointeeRelationship,
           'appointeeOtherRelationship': c.appointeeOtherRelationship,
           'selfPolicyNumber': c.selfPolicyNumber,
@@ -625,6 +675,7 @@ class SyncService extends ChangeNotifier {
           'uuid': c.uuid,
           'name': c.name,
           'referenceNumber': c.referenceNumber,
+          'tabIndex': c.tabIndex,
           'updatedAt': c.updatedAt.toIso8601String(),
           'isDeleted': c.isDeleted,
         });
@@ -641,6 +692,7 @@ class SyncService extends ChangeNotifier {
           'description': t.description,
           'workDate': t.workDate.toIso8601String(),
           'assignedDate': t.assignedDate?.toIso8601String(),
+          'createdAt': t.createdAt?.toIso8601String(),
           'priority': t.priority,
           'assignedTo': t.assignedTo,
           'communicationMethod': t.communicationMethod,
@@ -677,12 +729,32 @@ class SyncService extends ChangeNotifier {
       }
     }
 
+    final remoteNotes = {for (var item in remoteMeta['notes'] ?? []) item['uuid'] as String: DateTime.parse(item['updatedAt'] as String)};
+    final localNotes = await _db.isar.dailyNotes.where().findAll();
+    final List<Map<String, dynamic>> sendNotes = [];
+    for (final n in localNotes) {
+      final lastTime = n.updatedAt ?? n.createdAt;
+      final remTime = remoteNotes[n.noteId];
+      if (remTime == null || lastTime.isAfter(remTime)) {
+        sendNotes.add({
+          'noteId': n.noteId,
+          'dateKey': n.dateKey,
+          'content': n.content,
+          'category': n.category,
+          'isCompleted': n.isCompleted,
+          'createdAt': n.createdAt.toIso8601String(),
+          'updatedAt': lastTime.toIso8601String(),
+        });
+      }
+    }
+
     // Build overall metadata
     final localMeta = {
       'customers': localCustomers.map((c) => {'uuid': c.uuid, 'updatedAt': c.updatedAt.toIso8601String()}).toList(),
       'companies': localCompanies.map((c) => {'uuid': c.uuid, 'updatedAt': c.updatedAt.toIso8601String()}).toList(),
       'tasks': localTasks.map((t) => {'uuid': t.uuid, 'updatedAt': t.updatedAt.toIso8601String()}).toList(),
       'leads': localLeads.map((l) => {'uuid': l.uuid, 'updatedAt': l.updatedAt.toIso8601String()}).toList(),
+      'notes': localNotes.map((n) => {'uuid': n.noteId, 'updatedAt': (n.updatedAt ?? n.createdAt).toIso8601String()}).toList(),
     };
 
     return {
@@ -690,6 +762,7 @@ class SyncService extends ChangeNotifier {
       'companies': sendCompanies,
       'tasks': sendTasks,
       'leads': sendLeads,
+      'notes': sendNotes,
       'meta': localMeta
     };
   }
@@ -709,6 +782,7 @@ class SyncService extends ChangeNotifier {
           comp.uuid = uuid;
           comp.name = json['name'] as String;
           comp.referenceNumber = json['referenceNumber'] as String?;
+          comp.tabIndex = json['tabIndex'] as int? ?? 0;
           comp.updatedAt = updatedAt;
           comp.isDeleted = json['isDeleted'] as bool? ?? false;
           await _db.isar.companys.put(comp);
@@ -784,6 +858,7 @@ class SyncService extends ChangeNotifier {
           cust.nomineeName = json['nomineeName'] as String?;
           cust.nomineeRelationship = json['nomineeRelationship'] as String?;
           cust.nomineeDOB = json['nomineeDOB'] != null ? DateTime.parse(json['nomineeDOB'] as String) : null;
+          cust.nomineeAge = json['nomineeAge'] as String?;
           cust.nomineeFatherName = json['nomineeFatherName'] as String?;
           cust.nomineePan = json['nomineePan'] as String?;
           cust.nomineeMobile1 = json['nomineeMobile1'] as String?;
@@ -791,6 +866,7 @@ class SyncService extends ChangeNotifier {
           cust.nomineeEmail = json['nomineeEmail'] as String?;
           cust.appointeeName = json['appointeeName'] as String?;
           cust.appointeeDOB = json['appointeeDOB'] != null ? DateTime.parse(json['appointeeDOB'] as String) : null;
+          cust.appointeeAge = json['appointeeAge'] as String?;
           cust.appointeeRelationship = json['appointeeRelationship'] as String?;
           cust.appointeeOtherRelationship = json['appointeeOtherRelationship'] as String?;
           cust.selfPolicyNumber = json['selfPolicyNumber'] as String?;
@@ -899,6 +975,7 @@ class SyncService extends ChangeNotifier {
           task.description = json['description'] as String;
           task.workDate = DateTime.parse(json['workDate'] as String);
           task.assignedDate = json['assignedDate'] != null ? DateTime.parse(json['assignedDate'] as String) : null;
+          task.createdAt = json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : null;
           task.priority = json['priority'] as String;
           task.assignedTo = json['assignedTo'] as String?;
           task.communicationMethod = json['communicationMethod'] as String?;
@@ -941,7 +1018,28 @@ class SyncService extends ChangeNotifier {
         }
       }
 
-      // 5. Automatic Deduplication Sweep: purge any duplicate customer clones
+      // 5. Merge Daily Notes & Tasks
+      final List<dynamic> remNotes = payload['notes'] ?? [];
+      for (final json in remNotes) {
+        final noteId = json['noteId'] as String;
+        final updatedAt = DateTime.parse(json['updatedAt'] as String);
+
+        final existing = await _db.isar.dailyNotes.filter().noteIdEqualTo(noteId).findFirst();
+        final localTime = existing != null ? (existing.updatedAt ?? existing.createdAt) : null;
+        if (existing == null || updatedAt.isAfter(localTime!)) {
+          final note = existing ?? DailyNote();
+          note.noteId = noteId;
+          note.dateKey = json['dateKey'] as String;
+          note.content = json['content'] as String;
+          note.category = json['category'] as String?;
+          note.isCompleted = json['isCompleted'] as bool? ?? false;
+          note.createdAt = json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : DateTime.now();
+          note.updatedAt = updatedAt;
+          await _db.isar.dailyNotes.put(note);
+        }
+      }
+
+      // 6. Automatic Deduplication Sweep: purge any duplicate customer clones
       final allCusts = await _db.isar.customers.where().findAll();
       final Map<String, List<Customer>> custIdMap = {};
       for (final c in allCusts) {
@@ -994,7 +1092,7 @@ class SyncService extends ChangeNotifier {
       }
     }
 
-    // 3. Download any missing files from remote server
+    // 3. Two-way attachment file sync: download missing local files & upload missing remote files
     for (final fileName in requiredFileNames) {
       final localFile = File('${docsDir.path}/$fileName');
       if (!localFile.existsSync()) {
@@ -1006,6 +1104,26 @@ class SyncService extends ChangeNotifier {
           }
         } catch (e) {
           debugPrint('Failed to download missing file $fileName: $e');
+        }
+      } else {
+        try {
+          final checkUrl = '$baseUrl/sync/has_file/$fileName';
+          final checkRes = await client.get(Uri.parse(checkUrl)).timeout(const Duration(seconds: 3));
+          if (checkRes.statusCode == 200) {
+            final checkData = jsonDecode(checkRes.body) as Map<String, dynamic>;
+            final bool remoteHasFile = checkData['exists'] as bool? ?? false;
+            if (!remoteHasFile) {
+              final uploadUrl = '$baseUrl/sync/file/$fileName';
+              final fileBytes = await localFile.readAsBytes();
+              await client.post(
+                Uri.parse(uploadUrl),
+                headers: {'Content-Type': 'application/octet-stream'},
+                body: fileBytes,
+              );
+            }
+          }
+        } catch (e) {
+          debugPrint('Failed to check or upload file $fileName: $e');
         }
       }
     }

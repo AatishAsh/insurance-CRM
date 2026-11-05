@@ -11,6 +11,7 @@ import '../models/company.dart';
 import '../models/work_task.dart';
 import '../models/marketing_lead.dart';
 import '../models/performance_record.dart';
+import '../models/daily_note.dart';
 
 final backupServiceProvider = Provider<BackupService>((ref) {
   final db = ref.watch(databaseServiceProvider);
@@ -28,12 +29,14 @@ class BackupService {
     final tasks = await db.isar.workTasks.where().findAll();
     final marketingLeads = await db.isar.marketingLeads.where().findAll();
     final performanceRecords = await db.isar.performanceRecords.where().findAll();
+    final dailyNotes = await db.isar.dailyNotes.where().findAll();
 
     final customersJson = customers.map((c) => _customerToJson(c)).toList();
     final companiesJson = companies.map((c) => _companyToJson(c)).toList();
     final tasksJson = tasks.map((t) => _taskToJson(t)).toList();
     final marketingLeadsJson = marketingLeads.map((m) => _marketingLeadToJson(m)).toList();
     final performanceRecordsJson = performanceRecords.map((p) => _performanceRecordToJson(p)).toList();
+    final dailyNotesJson = dailyNotes.map((d) => _dailyNoteToJson(d)).toList();
 
     final Map<String, dynamic> dbJsonMap = {
       'version': 2,
@@ -43,6 +46,7 @@ class BackupService {
       'tasks': tasksJson,
       'marketingLeads': marketingLeadsJson,
       'performanceRecords': performanceRecordsJson,
+      'dailyNotes': dailyNotesJson,
     };
 
     final archive = Archive();
@@ -130,6 +134,7 @@ class BackupService {
     final List<dynamic> tasksJson = backupData['tasks'] ?? [];
     final List<dynamic> marketingLeadsJson = backupData['marketingLeads'] ?? [];
     final List<dynamic> performanceRecordsJson = backupData['performanceRecords'] ?? [];
+    final List<dynamic> dailyNotesJson = backupData['dailyNotes'] ?? [];
 
     // Clear database and restore records in a single transaction
     await db.isar.writeTxn(() async {
@@ -138,6 +143,7 @@ class BackupService {
       await db.isar.workTasks.clear();
       await db.isar.marketingLeads.clear();
       await db.isar.performanceRecords.clear();
+      await db.isar.dailyNotes.clear();
 
       for (final json in companiesJson) {
         final company = _companyFromJson(json as Map<String, dynamic>);
@@ -158,6 +164,10 @@ class BackupService {
       for (final json in performanceRecordsJson) {
         final record = _performanceRecordFromJson(json as Map<String, dynamic>);
         await db.isar.performanceRecords.put(record);
+      }
+      for (final json in dailyNotesJson) {
+        final note = _dailyNoteFromJson(json as Map<String, dynamic>);
+        await db.isar.dailyNotes.put(note);
       }
     });
   }
@@ -634,5 +644,33 @@ class BackupService {
       }).toList();
     }
     return p;
+  }
+
+  Map<String, dynamic> _dailyNoteToJson(DailyNote n) {
+    return {
+      'noteId': n.noteId,
+      'dateKey': n.dateKey,
+      'content': n.content,
+      'category': n.category,
+      'isCompleted': n.isCompleted,
+      'createdAt': n.createdAt.toIso8601String(),
+      'updatedAt': n.updatedAt?.toIso8601String(),
+    };
+  }
+
+  DailyNote _dailyNoteFromJson(Map<String, dynamic> json) {
+    final n = DailyNote();
+    n.noteId = json['noteId'] as String? ?? '';
+    n.dateKey = json['dateKey'] as String? ?? '';
+    n.content = json['content'] as String? ?? '';
+    n.category = json['category'] as String?;
+    n.isCompleted = json['isCompleted'] as bool? ?? false;
+    n.createdAt = json['createdAt'] != null
+        ? DateTime.parse(json['createdAt'] as String)
+        : DateTime.now();
+    n.updatedAt = json['updatedAt'] != null
+        ? DateTime.parse(json['updatedAt'] as String)
+        : null;
+    return n;
   }
 }

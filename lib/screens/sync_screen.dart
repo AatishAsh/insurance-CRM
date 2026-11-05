@@ -1047,7 +1047,7 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         child: Text(
-                          'JJ CRM - Offline Customer Detail Management System v2.0.1',
+                          'JJ CRM - Offline Customer Detail Management System v2.1.0',
                           style: TextStyle(
                             fontSize: 11,
                             color: _showDeveloperTools ? AppColors.skyBlue : Colors.grey[500],

@@ -144,7 +144,10 @@ class MainNavigationShell extends ConsumerWidget {
                 },
               ),
             Expanded(
-              child: screens[selectedIndex],
+              child: IndexedStack(
+                index: selectedIndex,
+                children: screens,
+              ),
             ),
           ],
         ),

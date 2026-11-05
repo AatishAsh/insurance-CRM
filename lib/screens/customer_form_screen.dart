@@ -292,6 +292,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                                           ],
                                         ),
                                       );
+                                      editController.dispose();
 
                                       if (renamed != null && renamed.isNotEmpty && renamed != oldName) {
                                         try {
@@ -733,9 +734,12 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
       },
     );
 
+    final otherText = otherLabelController.text.trim();
+    otherLabelController.dispose();
+
     if (labelSelected == true && selectedLabel != null) {
-      final effectiveLabel = (selectedLabel == 'Other' && otherLabelController.text.trim().isNotEmpty)
-          ? otherLabelController.text.trim()
+      final effectiveLabel = (selectedLabel == 'Other' && otherText.isNotEmpty)
+          ? otherText
           : selectedLabel!;
       // Pick File
       ref.read(isPickingFileProvider.notifier).state = true;
