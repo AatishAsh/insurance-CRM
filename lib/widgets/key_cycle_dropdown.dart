@@ -283,11 +283,36 @@ class _KeyCycleDropdownFormFieldState<T> extends State<KeyCycleDropdownFormField
 
     final renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
-    final size = renderBox.size;
     final selectedIndex = widget.items.indexWhere((item) => item.value == _effectiveValue);
 
     _overlayEntry = OverlayEntry(
       builder: (context) {
+        final renderBox = this.context.findRenderObject() as RenderBox?;
+        if (renderBox == null || !renderBox.attached) {
+          return const SizedBox.shrink();
+        }
+        final size = renderBox.size;
+        final mediaQuery = MediaQuery.of(this.context);
+        final screenSize = mediaQuery.size;
+        final buttonPosition = renderBox.localToGlobal(Offset.zero);
+
+        final double spaceBelow = screenSize.height - (buttonPosition.dy + size.height) - mediaQuery.padding.bottom;
+        final double spaceAbove = buttonPosition.dy - mediaQuery.padding.top;
+
+        final double defaultMaxHeight = widget.menuMaxHeight ?? 260.0;
+        final bool opensUpward = spaceBelow < 220 && spaceAbove > spaceBelow;
+        final double availableSpace = opensUpward ? spaceAbove : spaceBelow;
+        final double effectiveMaxHeight = (availableSpace - 24).clamp(100.0, defaultMaxHeight);
+
+        final double menuWidth = size.width < 200 ? 200 : size.width;
+        double horizontalOffset = 0.0;
+        if (buttonPosition.dx + menuWidth > screenSize.width - 12) {
+          horizontalOffset = (screenSize.width - 12) - (buttonPosition.dx + menuWidth);
+        }
+        if (buttonPosition.dx + horizontalOffset < 12) {
+          horizontalOffset = 12 - buttonPosition.dx;
+        }
+
         return Stack(
           children: [
             Positioned.fill(
@@ -298,11 +323,13 @@ class _KeyCycleDropdownFormFieldState<T> extends State<KeyCycleDropdownFormField
               ),
             ),
             Positioned(
-              width: size.width < 200 ? 200 : size.width,
+              width: menuWidth,
               child: CompositedTransformFollower(
                 link: _layerLink,
                 showWhenUnlinked: false,
-                offset: Offset(0, size.height + 4),
+                targetAnchor: opensUpward ? Alignment.topLeft : Alignment.bottomLeft,
+                followerAnchor: opensUpward ? Alignment.bottomLeft : Alignment.topLeft,
+                offset: Offset(horizontalOffset, opensUpward ? -4 : 4),
                 child: Focus(
                   focusNode: _overlayFocusNode,
                   autofocus: true,
@@ -313,7 +340,7 @@ class _KeyCycleDropdownFormFieldState<T> extends State<KeyCycleDropdownFormField
                     color: widget.dropdownColor ?? Colors.white,
                     child: Container(
                       constraints: BoxConstraints(
-                        maxHeight: widget.menuMaxHeight ?? 260,
+                        maxHeight: effectiveMaxHeight,
                       ),
                       decoration: BoxDecoration(
                         borderRadius: widget.borderRadius ?? BorderRadius.circular(8),
@@ -676,11 +703,36 @@ class _KeyCycleDropdownButtonState<T> extends State<KeyCycleDropdownButton<T>> {
 
     final renderBox = context.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
-    final size = renderBox.size;
     final selectedIndex = widget.items.indexWhere((item) => item.value == _effectiveValue);
 
     _overlayEntry = OverlayEntry(
       builder: (context) {
+        final renderBox = this.context.findRenderObject() as RenderBox?;
+        if (renderBox == null || !renderBox.attached) {
+          return const SizedBox.shrink();
+        }
+        final size = renderBox.size;
+        final mediaQuery = MediaQuery.of(this.context);
+        final screenSize = mediaQuery.size;
+        final buttonPosition = renderBox.localToGlobal(Offset.zero);
+
+        final double spaceBelow = screenSize.height - (buttonPosition.dy + size.height) - mediaQuery.padding.bottom;
+        final double spaceAbove = buttonPosition.dy - mediaQuery.padding.top;
+
+        final double defaultMaxHeight = widget.menuMaxHeight ?? 260.0;
+        final bool opensUpward = spaceBelow < 220 && spaceAbove > spaceBelow;
+        final double availableSpace = opensUpward ? spaceAbove : spaceBelow;
+        final double effectiveMaxHeight = (availableSpace - 24).clamp(100.0, defaultMaxHeight);
+
+        final double menuWidth = size.width < 200 ? 200 : size.width;
+        double horizontalOffset = 0.0;
+        if (buttonPosition.dx + menuWidth > screenSize.width - 12) {
+          horizontalOffset = (screenSize.width - 12) - (buttonPosition.dx + menuWidth);
+        }
+        if (buttonPosition.dx + horizontalOffset < 12) {
+          horizontalOffset = 12 - buttonPosition.dx;
+        }
+
         return Stack(
           children: [
             Positioned.fill(
@@ -691,11 +743,13 @@ class _KeyCycleDropdownButtonState<T> extends State<KeyCycleDropdownButton<T>> {
               ),
             ),
             Positioned(
-              width: size.width < 200 ? 200 : size.width,
+              width: menuWidth,
               child: CompositedTransformFollower(
                 link: _layerLink,
                 showWhenUnlinked: false,
-                offset: Offset(0, size.height + 4),
+                targetAnchor: opensUpward ? Alignment.topLeft : Alignment.bottomLeft,
+                followerAnchor: opensUpward ? Alignment.bottomLeft : Alignment.topLeft,
+                offset: Offset(horizontalOffset, opensUpward ? -4 : 4),
                 child: Focus(
                   focusNode: _overlayFocusNode,
                   autofocus: true,
@@ -706,7 +760,7 @@ class _KeyCycleDropdownButtonState<T> extends State<KeyCycleDropdownButton<T>> {
                     color: widget.dropdownColor ?? Colors.white,
                     child: Container(
                       constraints: BoxConstraints(
-                        maxHeight: widget.menuMaxHeight ?? 260,
+                        maxHeight: effectiveMaxHeight,
                       ),
                       decoration: BoxDecoration(
                         borderRadius: widget.borderRadius ?? BorderRadius.circular(8),

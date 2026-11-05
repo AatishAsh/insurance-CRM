@@ -372,9 +372,12 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
       body: BrandBackground(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1200),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
             // Wi-Fi Sync Server Configuration Card
             Card(
               elevation: 0.5,
@@ -1060,6 +1063,8 @@ class _SyncScreenState extends ConsumerState<SyncScreen> {
             const SizedBox(height: 24),
           ],
         ),
+      ),
+      ),
       ),
       ),
     );

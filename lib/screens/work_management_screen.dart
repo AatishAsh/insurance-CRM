@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../models/work_task.dart';
 import '../models/company.dart';
 import '../providers/work_provider.dart';
+import '../providers/events_provider.dart';
 import '../services/database_service.dart';
 import '../theme/app_colors.dart';
 import '../widgets/key_cycle_dropdown.dart';
@@ -16,12 +17,27 @@ class WorkManagementScreen extends ConsumerStatefulWidget {
 }
 
 class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
+  final Set<int> _selectedTaskIds = {};
+
   @override
   Widget build(BuildContext context) {
     final selectedTabIndex = ref.watch(selectedWorkTabIndexProvider);
     final tabNames = ref.watch(workTabNamesProvider);
     final companiesAsync = ref.watch(companiesForSelectedTabProvider);
     final selectedCompanyId = ref.watch(selectedCompanyIdProvider);
+
+    final List<Color> tabHeaderColors = [
+      const Color(0xFF1E88E5), // Header 1: Vivid Ocean Blue
+      const Color(0xFF059669), // Header 2: Emerald Green
+      const Color(0xFF7C3AED), // Header 3: Royal Violet
+    ];
+    final List<Color> tabHeaderBgColors = [
+      const Color(0xFFE3F2FD), // Header 1 Light Background
+      const Color(0xFFECFDF5), // Header 2 Light Background
+      const Color(0xFFF5F3FF), // Header 3 Light Background
+    ];
+    final activeTabColor = tabHeaderColors[selectedTabIndex.clamp(0, tabHeaderColors.length - 1)];
+    final activeTabBgColor = tabHeaderBgColors[selectedTabIndex.clamp(0, tabHeaderBgColors.length - 1)];
 
     final List<Color> avatarColors = [
       AppColors.skyBlue,
@@ -68,26 +84,26 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                             Container(
                               padding: const EdgeInsets.all(6),
                               decoration: BoxDecoration(
-                                color: AppColors.badgeCyanBg,
+                                color: activeTabBgColor,
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Icon(Icons.business_rounded, color: AppColors.cyanAccent, size: 18),
+                              child: Icon(Icons.business_rounded, color: activeTabColor, size: 18),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
                                 currentTabTitle.toUpperCase(),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 12,
-                                  color: AppColors.headingText,
+                                  color: activeTabColor,
                                   letterSpacing: 0.8,
                                 ),
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.edit_outlined, size: 16, color: AppColors.skyBlue),
+                              icon: Icon(Icons.edit_outlined, size: 16, color: activeTabColor),
                               tooltip: 'Rename Tab',
                               onPressed: () => _showRenameTabDialog(selectedTabIndex, currentTabTitle),
                               constraints: const BoxConstraints(),
@@ -108,6 +124,7 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                           children: List.generate(3, (index) {
                             final isTabSelected = selectedTabIndex == index;
                             final tabTitle = tabNames.length > index ? tabNames[index] : 'Tab ${index + 1}';
+                            final thisTabColor = tabHeaderColors[index.clamp(0, tabHeaderColors.length - 1)];
 
                             return Expanded(
                               child: GestureDetector(
@@ -118,10 +135,10 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                                   duration: const Duration(milliseconds: 150),
                                   padding: const EdgeInsets.symmetric(vertical: 8),
                                   decoration: BoxDecoration(
-                                    color: isTabSelected ? AppColors.skyBlue : Colors.transparent,
+                                    color: isTabSelected ? thisTabColor : Colors.transparent,
                                     borderRadius: BorderRadius.circular(8),
                                     boxShadow: isTabSelected
-                                        ? [BoxShadow(color: AppColors.skyBlue.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))]
+                                        ? [BoxShadow(color: thisTabColor.withOpacity(0.35), blurRadius: 4, offset: const Offset(0, 2))]
                                         : [],
                                   ),
                                   child: Center(
@@ -328,6 +345,7 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                                 children: List.generate(3, (index) {
                                   final isTabSelected = selectedTabIndex == index;
                                   final tabTitle = tabNames.length > index ? tabNames[index] : 'Tab ${index + 1}';
+                                  final thisTabColor = tabHeaderColors[index.clamp(0, tabHeaderColors.length - 1)];
 
                                   return Expanded(
                                     child: GestureDetector(
@@ -338,8 +356,11 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                                         duration: const Duration(milliseconds: 150),
                                         padding: const EdgeInsets.symmetric(vertical: 8),
                                         decoration: BoxDecoration(
-                                          color: isTabSelected ? AppColors.skyBlue : Colors.transparent,
+                                          color: isTabSelected ? thisTabColor : Colors.transparent,
                                           borderRadius: BorderRadius.circular(8),
+                                          boxShadow: isTabSelected
+                                              ? [BoxShadow(color: thisTabColor.withOpacity(0.35), blurRadius: 4, offset: const Offset(0, 2))]
+                                              : [],
                                         ),
                                         child: Center(
                                           child: Text(
@@ -698,6 +719,11 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
           child: tasksAsync.when(
             data: (tasks) {
               if (tasks.isEmpty) {
+                if (_selectedTaskIds.isNotEmpty) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) setState(() => _selectedTaskIds.clear());
+                  });
+                }
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -720,13 +746,164 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                   ),
                 );
               }
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: tasks.length,
-                itemBuilder: (context, index) {
-                  final task = tasks[index];
-                  return _buildTaskCard(task);
-                },
+
+              final bool allSelected = tasks.isNotEmpty && tasks.every((t) => _selectedTaskIds.contains(t.id));
+              final bool noneSelected = _selectedTaskIds.isEmpty;
+              final bool? tristateVal = allSelected ? true : (noneSelected ? false : null);
+
+              return Column(
+                children: [
+                  // Gmail-style Bulk Action / Selection Toolbar
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: _selectedTaskIds.isNotEmpty ? Colors.blue.withOpacity(0.08) : Colors.grey.withOpacity(0.04),
+                      border: Border(
+                        bottom: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Checkbox(
+                          tristate: true,
+                          value: tristateVal,
+                          activeColor: AppColors.primaryBlue,
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
+                          onChanged: (bool? val) {
+                            setState(() {
+                              if (val == true) {
+                                _selectedTaskIds.clear();
+                                _selectedTaskIds.addAll(tasks.map((t) => t.id));
+                              } else {
+                                _selectedTaskIds.clear();
+                              }
+                            });
+                          },
+                        ),
+                        PopupMenuButton<String>(
+                          tooltip: 'Select tasks by status',
+                          icon: const Icon(Icons.arrow_drop_down, size: 22, color: Colors.black87),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onSelected: (String choice) {
+                            setState(() {
+                              _selectedTaskIds.clear();
+                              switch (choice) {
+                                case 'All':
+                                  _selectedTaskIds.addAll(tasks.map((t) => t.id));
+                                  break;
+                                case 'None':
+                                  _selectedTaskIds.clear();
+                                  break;
+                                case 'Pending':
+                                  _selectedTaskIds.addAll(tasks.where((t) => t.status == 'Pending').map((t) => t.id));
+                                  break;
+                                case 'Completed':
+                                  _selectedTaskIds.addAll(tasks.where((t) => t.status == 'Completed').map((t) => t.id));
+                                  break;
+                                case 'Under Process':
+                                  _selectedTaskIds.addAll(tasks.where((t) => t.status == 'Under Process').map((t) => t.id));
+                                  break;
+                                case 'No Response':
+                                  _selectedTaskIds.addAll(tasks.where((t) => t.status == 'No Response').map((t) => t.id));
+                                  break;
+                              }
+                            });
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(value: 'All', child: Text('All')),
+                            const PopupMenuItem(value: 'None', child: Text('None')),
+                            const PopupMenuDivider(),
+                            const PopupMenuItem(value: 'Pending', child: Text('Pending (Orange)')),
+                            const PopupMenuItem(value: 'Completed', child: Text('Completed (Green)')),
+                            const PopupMenuItem(value: 'Under Process', child: Text('Under Process (Blue)')),
+                            const PopupMenuItem(value: 'No Response', child: Text('No Response (Red)')),
+                          ],
+                        ),
+                        const SizedBox(width: 8),
+                        if (_selectedTaskIds.isNotEmpty) ...[
+                          Text(
+                            '${_selectedTaskIds.length} of ${tasks.length} selected',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.primaryBlue),
+                          ),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _selectedTaskIds.clear();
+                              });
+                            },
+                            child: const Text('Clear', style: TextStyle(fontSize: 12)),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton.icon(
+                            onPressed: () => _deleteSelectedTasks(tasks),
+                            icon: const Icon(Icons.delete, size: 16, color: Colors.white),
+                            label: Text('Delete (${_selectedTaskIds.length})'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                          ),
+                        ] else ...[
+                          Expanded(
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  const Text('Select: ', style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600)),
+                                  _buildQuickSelectChip('All', () {
+                                    setState(() {
+                                      _selectedTaskIds.clear();
+                                      _selectedTaskIds.addAll(tasks.map((t) => t.id));
+                                    });
+                                  }),
+                                  _buildQuickSelectChip('Pending', () {
+                                    setState(() {
+                                      _selectedTaskIds.clear();
+                                      _selectedTaskIds.addAll(tasks.where((t) => t.status == 'Pending').map((t) => t.id));
+                                    });
+                                  }, color: Colors.orange),
+                                  _buildQuickSelectChip('Completed', () {
+                                    setState(() {
+                                      _selectedTaskIds.clear();
+                                      _selectedTaskIds.addAll(tasks.where((t) => t.status == 'Completed').map((t) => t.id));
+                                    });
+                                  }, color: Colors.green),
+                                  _buildQuickSelectChip('Under Process', () {
+                                    setState(() {
+                                      _selectedTaskIds.clear();
+                                      _selectedTaskIds.addAll(tasks.where((t) => t.status == 'Under Process').map((t) => t.id));
+                                    });
+                                  }, color: Colors.blue),
+                                  _buildQuickSelectChip('No Response', () {
+                                    setState(() {
+                                      _selectedTaskIds.clear();
+                                      _selectedTaskIds.addAll(tasks.where((t) => t.status == 'No Response').map((t) => t.id));
+                                    });
+                                  }, color: Colors.red),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: tasks.length,
+                      itemBuilder: (context, index) {
+                        final task = tasks[index];
+                        return _buildTaskCard(task);
+                      },
+                    ),
+                  ),
+                ],
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
@@ -767,21 +944,56 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
     final createdDate = task.createdAt ?? task.assignedDate ?? task.workDate;
     final createdStr = DateFormat('dd MMM yyyy').format(createdDate);
 
+    final isSelected = _selectedTaskIds.contains(task.id);
+
+    final client = task.clientName;
+    final loc = task.taskLocation;
+    final timeStr = task.taskTime;
+    final docs = task.documentsRequired;
+    final extraRemarks = task.extraRemarks;
+
     return Card(
-      elevation: 0.5,
+      elevation: isSelected ? 2 : 0.5,
+      color: isSelected ? Colors.blue.withOpacity(0.04) : Colors.white,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
-        side: BorderSide(color: Colors.grey[200]!),
+        side: BorderSide(
+          color: isSelected ? AppColors.primaryBlue : Colors.grey[200]!,
+          width: isSelected ? 1.5 : 1,
+        ),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Material(
         color: Colors.transparent,
         child: ListTile(
-          onTap: () => _showAddTaskDialog(task.companyId ?? 0, task),
+          onTap: () => _showAddTaskDialog(task.companyId ?? ref.read(selectedCompanyIdProvider) ?? 0, task),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          leading: Icon(statusIcon, color: statusColor, size: 28),
+          leading: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Checkbox(
+                value: isSelected,
+                activeColor: AppColors.primaryBlue,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
+                onChanged: (bool? checked) {
+                  setState(() {
+                    if (checked == true) {
+                      _selectedTaskIds.add(task.id);
+                    } else {
+                      _selectedTaskIds.remove(task.id);
+                    }
+                  });
+                },
+              ),
+              const SizedBox(width: 4),
+              Icon(statusIcon, color: statusColor, size: 26),
+            ],
+          ),
           title: Text(
-            task.description,
+            (client.isNotEmpty && !task.description.toLowerCase().contains(client.toLowerCase()))
+                ? '$client — ${task.description}'
+                : task.description,
             style: TextStyle(
               fontWeight: FontWeight.bold,
               decoration: task.status == 'Completed' ? TextDecoration.lineThrough : null,
@@ -798,18 +1010,24 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                   runSpacing: 4,
                   children: [
                     _buildBadge('Created: $createdStr', Colors.teal),
+                    if (timeStr != null && timeStr.isNotEmpty)
+                      _buildBadge('Time: $timeStr', Colors.blue, icon: Icons.access_time_rounded),
+                    if (client.isNotEmpty)
+                      _buildBadge('Client: $client', Colors.indigo, icon: Icons.person_outline),
+                    if (loc != null && loc.isNotEmpty)
+                      _buildBadge('Location: $loc', Colors.teal, icon: Icons.location_on_outlined),
+                    if (docs != null && docs.isNotEmpty)
+                      _buildBadge('Docs: $docs', Colors.deepOrange, icon: Icons.folder_special_outlined),
                     _buildBadge('Priority: ${task.priority}', priorityColor),
                     _buildBadge('Method: ${task.communicationMethod ?? "N/A"}', Colors.blueGrey),
-                    if (task.assignedTo != null && task.assignedTo!.isNotEmpty)
-                      _buildBadge('To: ${task.assignedTo}', Colors.indigo),
                     if (task.carryForwardRequired)
                       _buildBadge('Carry Forward', Colors.purple),
                   ],
                 ),
-                if (task.remarks != null && task.remarks!.isNotEmpty) ...[
+                if (extraRemarks != null && extraRemarks.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Text(
-                    'Remarks: ${task.remarks}',
+                    'Remarks: $extraRemarks',
                     style: const TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic),
                   ),
                 ],
@@ -851,7 +1069,7 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
     );
   }
 
-  Widget _buildBadge(String label, Color color) {
+  Widget _buildBadge(String label, Color color, {IconData? icon}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
@@ -859,9 +1077,18 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: color.withOpacity(0.3), width: 0.5),
       ),
-      child: Text(
-        label,
-        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 11, color: color),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            label,
+            style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+          ),
+        ],
       ),
     );
   }
@@ -904,36 +1131,81 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
   }
 
   void _showAddTaskDialog(int companyId, [WorkTask? existingTask]) {
-    final descController = TextEditingController(text: existingTask?.description ?? '');
-    final toController = TextEditingController(text: existingTask?.assignedTo ?? '');
-    final remarkController = TextEditingController(text: existingTask?.remarks ?? '');
+    final nameController = TextEditingController(text: existingTask?.assignedTo ?? '');
+    final locationController = TextEditingController(text: existingTask?.taskLocation ?? '');
+    final purposeController = TextEditingController(text: existingTask?.purpose ?? existingTask?.description ?? '');
+    final timeController = TextEditingController(text: existingTask?.taskTime ?? '');
+    final docsController = TextEditingController(text: existingTask?.documentsRequired ?? '');
+    final remarkController = TextEditingController(text: existingTask?.extraRemarks ?? '');
     final reasonController = TextEditingController(text: existingTask?.carryForwardReason ?? '');
     
-    DateTime createdDate = existingTask?.createdAt ?? existingTask?.assignedDate ?? DateTime.now();
+    DateTime createdDate = existingTask?.createdAt ?? existingTask?.assignedDate ?? existingTask?.workDate ?? ref.read(selectedDateProvider);
     String status = existingTask?.status ?? 'Pending';
     String priority = existingTask?.priority ?? 'Normal';
-    String method = existingTask?.communicationMethod ?? 'WhatsApp';
+    String method = existingTask?.communicationMethod ?? 'In Person';
     bool carryForward = existingTask?.carryForwardRequired ?? true;
+    String? validationError;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(
-          existingTask == null ? 'New Work Task Entry' : 'Edit Work Task Entry',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: AppColors.badgeBlueBg,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(Icons.assignment_turned_in_rounded, color: AppColors.skyBlue, size: 20),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                existingTask == null ? 'New Work Task Entry' : 'Edit Work Task Entry',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
         contentPadding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
         content: SizedBox(
-          width: 500,
+          width: 550,
           child: StatefulBuilder(
             builder: (context, setDialogState) {
               return SingleChildScrollView(
-                padding: const EdgeInsets.only(top: 8, bottom: 8, left: 2, right: 2),
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if (validationError != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.red.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.error_outline, size: 16, color: Colors.red),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                validationError!,
+                                style: const TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    // Work Date / Scheduled Date Picker
                     InkWell(
                       onTap: () async {
                         final picked = await showDatePicker(
@@ -948,31 +1220,115 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                       },
                       child: InputDecorator(
                         decoration: const InputDecoration(
-                          labelText: 'Work Created Date',
+                          labelText: 'Work Date / Scheduled Date',
                           border: OutlineInputBorder(),
                           isDense: true,
                           contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                           suffixIcon: Icon(Icons.calendar_today, size: 18, color: Colors.blueAccent),
                         ),
                         child: Text(
-                          DateFormat('dd MMM yyyy').format(createdDate),
-                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                          DateFormat('EEEE, dd MMM yyyy').format(createdDate),
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.primaryBlue),
                         ),
                       ),
                     ),
                     const SizedBox(height: 14),
+
+                    // 1. Name
                     TextField(
-                      controller: descController,
-                      minLines: 2,
-                      maxLines: 5,
-                      keyboardType: TextInputType.multiline,
-                      textInputAction: TextInputAction.newline,
-                      decoration: const InputDecoration(labelText: 'Task Description *', border: OutlineInputBorder()),
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                        labelText: '1. Client / Contact Name *',
+                        hintText: 'e.g. Rajesh Sharma / ABC Corp',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person_outline, size: 20),
+                        isDense: true,
+                      ),
                     ),
                     const SizedBox(height: 14),
+
+                    // 2. Location
+                    TextField(
+                      controller: locationController,
+                      decoration: const InputDecoration(
+                        labelText: '2. Meeting / Work Location',
+                        hintText: 'e.g. Connaught Place, Branch Office, Client Home',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.location_on_outlined, size: 20),
+                        isDense: true,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // 3. Purpose
+                    TextField(
+                      controller: purposeController,
+                      minLines: 2,
+                      maxLines: 4,
+                      keyboardType: TextInputType.multiline,
+                      decoration: const InputDecoration(
+                        labelText: '3. Purpose of Work / Task *',
+                        hintText: 'e.g. Policy renewal discussion, KYC collection, proposal submission',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.assignment_outlined, size: 20),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // 4. Time
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: timeController,
+                            decoration: const InputDecoration(
+                              labelText: '4. Scheduled Time',
+                              hintText: 'e.g. 10:30 AM / 02:00 PM',
+                              border: OutlineInputBorder(),
+                              prefixIcon: Icon(Icons.access_time_rounded, size: 20),
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        OutlinedButton.icon(
+                          onPressed: () async {
+                            final picked = await showTimePicker(
+                              context: context,
+                              initialTime: TimeOfDay.now(),
+                            );
+                            if (picked != null) {
+                              setDialogState(() {
+                                timeController.text = picked.format(context);
+                              });
+                            }
+                          },
+                          icon: const Icon(Icons.schedule, size: 18),
+                          label: const Text('Pick Time'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+
+                    // 5. Documents REQUIRED
+                    TextField(
+                      controller: docsController,
+                      minLines: 2,
+                      maxLines: 4,
+                      keyboardType: TextInputType.multiline,
+                      decoration: const InputDecoration(
+                        labelText: '5. Documents REQUIRED',
+                        hintText: 'e.g. Aadhaar Card, PAN, 2 Photos, Cancelled Cheque, Renewal Notice',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.folder_special_outlined, size: 20),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Status Dropdown
                     KeyCycleDropdownFormField<String>(
                       value: status,
-                      decoration: const InputDecoration(labelText: 'Initial Status', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(labelText: 'Status', border: OutlineInputBorder(), isDense: true),
                       items: ['Pending', 'Completed', 'Under Process', 'No Response']
                           .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                           .toList(),
@@ -981,9 +1337,11 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                       },
                     ),
                     const SizedBox(height: 14),
+
+                    // Priority Dropdown
                     KeyCycleDropdownFormField<String>(
                       value: priority,
-                      decoration: const InputDecoration(labelText: 'Priority Level', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(labelText: 'Priority Level', border: OutlineInputBorder(), isDense: true),
                       items: ['Normal', 'Important', 'Urgent']
                           .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                           .toList(),
@@ -992,9 +1350,11 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                       },
                     ),
                     const SizedBox(height: 14),
+
+                    // Communication Channel
                     KeyCycleDropdownFormField<String>(
                       value: method,
-                      decoration: const InputDecoration(labelText: 'Communication Channel', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(labelText: 'Communication Channel', border: OutlineInputBorder(), isDense: true),
                       items: ['In Person', 'WhatsApp', 'Email', 'Call']
                           .map((s) => DropdownMenuItem(value: s, child: Text(s)))
                           .toList(),
@@ -1003,22 +1363,25 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                       },
                     ),
                     const SizedBox(height: 14),
-                    TextField(
-                      controller: toController,
-                      decoration: const InputDecoration(labelText: 'Assign To / Contact Person', border: OutlineInputBorder()),
-                    ),
-                    const SizedBox(height: 14),
+
+                    // Additional Remarks
                     TextField(
                       controller: remarkController,
-                      minLines: 2,
-                      maxLines: 5,
+                      minLines: 1,
+                      maxLines: 3,
                       keyboardType: TextInputType.multiline,
-                      textInputAction: TextInputAction.newline,
-                      decoration: const InputDecoration(labelText: 'Additional Remarks', border: OutlineInputBorder()),
+                      decoration: const InputDecoration(
+                        labelText: 'Additional Remarks (Optional)',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.notes_outlined, size: 20),
+                        isDense: true,
+                      ),
                     ),
                     const SizedBox(height: 10),
+
+                    // Carry forward
                     CheckboxListTile(
-                      title: const Text('Carry Forward if incomplete?', style: TextStyle(fontSize: 14)),
+                      title: const Text('Carry Forward if incomplete?', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                       subtitle: const Text('Clones task to next day if not completed', style: TextStyle(fontSize: 11)),
                       value: carryForward,
                       onChanged: (val) {
@@ -1030,17 +1393,16 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
                       const SizedBox(height: 8),
                       TextField(
                         controller: reasonController,
-                        minLines: 2,
-                        maxLines: 5,
-                        keyboardType: TextInputType.multiline,
-                        textInputAction: TextInputAction.newline,
+                        minLines: 1,
+                        maxLines: 3,
                         decoration: const InputDecoration(
                           labelText: 'Reason for Carry Forward',
                           border: OutlineInputBorder(),
                           hintText: 'e.g. Awaiting client documents',
+                          isDense: true,
                         ),
                       ),
-                    ]
+                    ],
                   ],
                 ),
               );
@@ -1049,38 +1411,145 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(
+          ElevatedButton.icon(
             onPressed: () async {
-              if (descController.text.trim().isNotEmpty) {
-                final db = ref.read(databaseServiceProvider);
-                final task = existingTask ?? WorkTask();
-                task
-                  ..companyId = companyId
-                  ..description = descController.text.trim()
-                  ..workDate = existingTask?.workDate ?? ref.read(selectedDateProvider)
-                  ..createdAt = createdDate
-                  ..assignedDate = createdDate
-                  ..priority = priority
-                  ..assignedTo = toController.text.trim().isEmpty ? null : toController.text.trim()
-                  ..communicationMethod = method
-                  ..status = status
-                  ..carryForwardRequired = carryForward
-                  ..carryForwardReason = carryForward && reasonController.text.trim().isNotEmpty
-                      ? reasonController.text.trim()
-                      : null
-                  ..remarks = remarkController.text.trim().isEmpty ? null : remarkController.text.trim()
-                  ..isDeleted = false;
+              final clientName = nameController.text.trim();
+              final purpose = purposeController.text.trim();
 
+              if (purpose.isEmpty && clientName.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Please enter Purpose of Work or Client Name.'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              final location = locationController.text.trim();
+              final timeStr = timeController.text.trim();
+              final docs = docsController.text.trim();
+              final extraNotes = remarkController.text.trim();
+
+              final combinedRemarks = formatWorkRemarks(
+                time: timeStr,
+                location: location,
+                documentsRequired: docs,
+                generalRemarks: extraNotes,
+              );
+
+              final db = ref.read(databaseServiceProvider);
+              final task = existingTask ?? WorkTask();
+              task
+                ..uuid = (existingTask != null && existingTask.uuid.isNotEmpty) ? existingTask.uuid : ''
+                ..companyId = companyId
+                ..description = purpose.isNotEmpty ? purpose : 'Work with $clientName'
+                ..assignedTo = clientName.isNotEmpty ? clientName : null
+                ..workDate = createdDate
+                ..createdAt = createdDate
+                ..assignedDate = createdDate
+                ..priority = priority
+                ..communicationMethod = method
+                ..status = status
+                ..carryForwardRequired = carryForward
+                ..carryForwardReason = carryForward && reasonController.text.trim().isNotEmpty
+                    ? reasonController.text.trim()
+                    : null
+                ..remarks = combinedRemarks.isNotEmpty ? combinedRemarks : null
+                ..isDeleted = false
+                ..updatedAt = DateTime.now();
+
+              try {
                 await db.saveTask(task);
                 ref.invalidate(taskListProvider);
-                if (context.mounted) Navigator.pop(context);
+                ref.invalidate(todayTasksProvider);
+                ref.invalidate(todaySummaryEventsProvider);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Work Task saved successfully!'),
+                      backgroundColor: Colors.green,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to save task: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               }
             },
-            child: const Text('Save Task'),
+            icon: const Icon(Icons.check, size: 18),
+            label: const Text('Save Task'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryBlue,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildQuickSelectChip(String label, VoidCallback onTap, {Color? color}) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 6.0),
+      child: ActionChip(
+        label: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: color ?? Colors.black87,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        visualDensity: VisualDensity.compact,
+        backgroundColor: (color ?? Colors.grey).withOpacity(0.1),
+        side: BorderSide(color: (color ?? Colors.grey).withOpacity(0.3), width: 0.8),
+        onPressed: onTap,
+      ),
+    );
+  }
+
+  void _deleteSelectedTasks(List<WorkTask> allTasks) async {
+    if (_selectedTaskIds.isEmpty) return;
+    final count = _selectedTaskIds.length;
+    final check = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete $count Selected Task${count > 1 ? "s" : ""}?'),
+        content: Text(
+          'Are you sure you want to permanently delete $count selected work task log${count > 1 ? "s" : ""}? Any carry-forward copies will also be removed.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete All Selected', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (check == true) {
+      final db = ref.read(databaseServiceProvider);
+      await db.deleteMultipleTasks(_selectedTaskIds.toList());
+      setState(() {
+        _selectedTaskIds.clear();
+      });
+      ref.invalidate(taskListProvider);
+      ref.invalidate(todayTasksProvider);
+      ref.invalidate(todaySummaryEventsProvider);
+    }
   }
 
   void _deleteTask(WorkTask task) async {
@@ -1102,7 +1571,12 @@ class _WorkManagementScreenState extends ConsumerState<WorkManagementScreen> {
     if (check == true) {
       final db = ref.read(databaseServiceProvider);
       await db.deleteTask(task.id);
+      setState(() {
+        _selectedTaskIds.remove(task.id);
+      });
       ref.invalidate(taskListProvider);
+      ref.invalidate(todayTasksProvider);
+      ref.invalidate(todaySummaryEventsProvider);
     }
   }
 }

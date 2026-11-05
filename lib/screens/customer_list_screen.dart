@@ -349,8 +349,17 @@ class _CustomerListScreenState extends ConsumerState<CustomerListScreen> {
                         ],
                         LayoutBuilder(
                           builder: (context, constraints) {
-                            if (constraints.maxWidth > 700) {
-                              final int cols = constraints.maxWidth > 1150 ? 3 : 2;
+                            if (constraints.maxWidth > 650) {
+                              int cols = 2;
+                              if (constraints.maxWidth > 2200) {
+                                cols = 5;
+                              } else if (constraints.maxWidth > 1600) {
+                                cols = 4;
+                              } else if (constraints.maxWidth > 1100) {
+                                cols = 3;
+                              } else {
+                                cols = 2;
+                              }
                               return GridView.builder(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),

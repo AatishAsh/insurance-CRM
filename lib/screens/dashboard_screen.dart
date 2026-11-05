@@ -787,34 +787,314 @@ class DayTaskNotesCard extends ConsumerStatefulWidget {
 }
 
 class _DayTaskNotesCardState extends ConsumerState<DayTaskNotesCard> {
-  final TextEditingController _noteController = TextEditingController();
-  String _selectedCategory = 'General';
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
+  final TextEditingController _purposeController = TextEditingController();
+  final TextEditingController _timeController = TextEditingController();
+  final TextEditingController _docsController = TextEditingController();
+
+  String _selectedCategory = 'Work';
   bool _isAdding = false;
 
   @override
   void dispose() {
-    _noteController.dispose();
+    _nameController.dispose();
+    _locationController.dispose();
+    _purposeController.dispose();
+    _timeController.dispose();
+    _docsController.dispose();
     super.dispose();
   }
 
-  void _addNote() async {
-    final text = _noteController.text.trim();
-    if (text.isEmpty) return;
+  Future<void> _pickTime(BuildContext context, TextEditingController controller) async {
+    final now = TimeOfDay.now();
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: now,
+    );
+    if (picked != null) {
+      if (!mounted) return;
+      controller.text = picked.format(context);
+    }
+  }
+
+  void _appendDoc(String doc) {
+    final current = _docsController.text.trim();
+    if (current.isEmpty) {
+      _docsController.text = doc;
+    } else if (!current.toLowerCase().contains(doc.toLowerCase())) {
+      _docsController.text = '$current, $doc';
+    }
+  }
+
+  void _addTask() async {
+    final name = _nameController.text.trim();
+    final location = _locationController.text.trim();
+    final purpose = _purposeController.text.trim();
+    final time = _timeController.text.trim();
+    final docs = _docsController.text.trim();
+
+    if (name.isEmpty && purpose.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter at least Name or Purpose for the daily task.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
 
     setState(() => _isAdding = true);
-    final db = ref.read(databaseServiceProvider);
-    await db.saveDailyNote(
-      text,
-      widget.targetDate,
-      category: _selectedCategory == 'General' ? null : _selectedCategory,
-    );
-    _noteController.clear();
-    setState(() {
-      _isAdding = false;
-      _selectedCategory = 'General';
-    });
+    try {
+      final db = ref.read(databaseServiceProvider);
+      await db.saveDailyTask(
+        date: widget.targetDate,
+        name: name,
+        location: location,
+        purpose: purpose,
+        time: time,
+        documentsRequired: docs,
+        category: _selectedCategory,
+      );
 
-    ref.invalidate(tomorrowNotesProvider);
+      _nameController.clear();
+      _locationController.clear();
+      _purposeController.clear();
+      _timeController.clear();
+      _docsController.clear();
+
+      setState(() {
+        _isAdding = false;
+        _selectedCategory = 'Work';
+      });
+
+      ref.invalidate(tomorrowNotesProvider);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Daily task saved for tomorrow!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isAdding = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save task: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showEditDialog(DailyNote note) {
+    final editName = TextEditingController(text: note.taskName);
+    final editLocation = TextEditingController(text: note.taskLocation);
+    final editPurpose = TextEditingController(text: note.taskPurpose);
+    final editTime = TextEditingController(text: note.taskTime);
+    final editDocs = TextEditingController(text: note.documentsRequired);
+    String editCategory = note.category ?? 'Work';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Row(
+            children: [
+              Icon(Icons.edit_note_rounded, color: AppColors.skyBlue),
+              SizedBox(width: 8),
+              Text('Edit Daily Task', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+            ],
+          ),
+          content: SizedBox(
+            width: 500,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: TextField(
+                          controller: editName,
+                          decoration: const InputDecoration(
+                            labelText: '1. Name',
+                            hintText: 'Client / Person name',
+                            isDense: true,
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.person_outline_rounded, size: 18),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                          controller: editTime,
+                          decoration: InputDecoration(
+                            labelText: '4. Time',
+                            hintText: 'e.g. 10:30 AM',
+                            isDense: true,
+                            border: const OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.access_time_rounded, size: 18),
+                            suffixIcon: IconButton(
+                              icon: const Icon(Icons.schedule, size: 18),
+                              onPressed: () => _pickTime(ctx, editTime),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: editLocation,
+                    decoration: const InputDecoration(
+                      labelText: '2. Location',
+                      hintText: 'Office / Branch / Place',
+                      isDense: true,
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.location_on_outlined, size: 18),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: editPurpose,
+                    decoration: const InputDecoration(
+                      labelText: '3. Purpose',
+                      hintText: 'Purpose of visit / Task to do',
+                      isDense: true,
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.assignment_outlined, size: 18),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: editDocs,
+                    decoration: const InputDecoration(
+                      labelText: '5. Documents REQUIRED',
+                      hintText: 'e.g. PAN, Aadhaar, Cheque, Photo',
+                      isDense: true,
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.folder_shared_outlined, size: 18),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    children: ['PAN Card', 'Aadhaar Card', 'Cheque', 'Photos', 'Policy Copy'].map((chip) {
+                      return ActionChip(
+                        label: Text('+ $chip', style: const TextStyle(fontSize: 11)),
+                        padding: EdgeInsets.zero,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        onPressed: () {
+                          final cur = editDocs.text.trim();
+                          setDialogState(() {
+                            if (cur.isEmpty) {
+                              editDocs.text = chip;
+                            } else if (!cur.toLowerCase().contains(chip.toLowerCase())) {
+                              editDocs.text = '$cur, $chip';
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Text('Category:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                      const SizedBox(width: 8),
+                      DropdownButton<String>(
+                        value: editCategory,
+                        items: const ['Work', 'General', 'Personal', 'Urgent', 'Follow-up', 'Reminder']
+                            .map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 13))))
+                            .toList(),
+                        onChanged: (val) {
+                          if (val != null) setDialogState(() => editCategory = val);
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.skyBlue,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                final n = editName.text.trim();
+                final p = editPurpose.text.trim();
+                if (n.isEmpty && p.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Name or Purpose is required.')),
+                  );
+                  return;
+                }
+                final db = ref.read(databaseServiceProvider);
+                await db.saveDailyTask(
+                  date: widget.targetDate,
+                  name: n,
+                  location: editLocation.text.trim(),
+                  purpose: p,
+                  time: editTime.text.trim(),
+                  documentsRequired: editDocs.text.trim(),
+                  category: editCategory,
+                  existingId: note.id,
+                );
+                ref.invalidate(tomorrowNotesProvider);
+                if (mounted) {
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Daily task updated!'), backgroundColor: Colors.green),
+                  );
+                }
+              },
+              child: const Text('Save Changes'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmDelete(DailyNote note) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Daily Task?'),
+        content: Text('Are you sure you want to delete "${note.displayTitle}"?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final db = ref.read(databaseServiceProvider);
+      await db.deleteDailyNote(note.id);
+      ref.invalidate(tomorrowNotesProvider);
+    }
   }
 
   BadgeStyle _getCategoryBadgeStyle(String cat) {
@@ -832,6 +1112,33 @@ class _DayTaskNotesCardState extends ConsumerState<DayTaskNotesCard> {
       default:
         return BadgeStyle.blue;
     }
+  }
+
+  InputDecoration _buildInputDecoration(String label, String hint, IconData icon, {Widget? suffix}) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      hintStyle: TextStyle(fontSize: 12, color: Colors.grey[400]),
+      labelStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      prefixIcon: Icon(icon, size: 18, color: AppColors.skyBlue),
+      suffixIcon: suffix,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: Colors.grey[300]!),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: BorderSide(color: Colors.grey[300]!),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: AppColors.skyBlue, width: 1.5),
+      ),
+      filled: true,
+      fillColor: Colors.white,
+    );
   }
 
   @override
@@ -852,7 +1159,7 @@ class _DayTaskNotesCardState extends ConsumerState<DayTaskNotesCard> {
                   color: AppColors.badgeAmberBg,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.sticky_note_2_rounded, color: AppColors.badgeAmberText, size: 20),
+                child: const Icon(Icons.assignment_turned_in_rounded, color: AppColors.badgeAmberText, size: 20),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -860,7 +1167,7 @@ class _DayTaskNotesCardState extends ConsumerState<DayTaskNotesCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Day Task Notes',
+                      'Tomorrow\'s Work & Daily Tasks',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -868,7 +1175,7 @@ class _DayTaskNotesCardState extends ConsumerState<DayTaskNotesCard> {
                       ),
                     ),
                     Text(
-                      'Notes & quick task checklist for $formattedDate',
+                      'Tasks & work checklist scheduled for $formattedDate',
                       style: const TextStyle(fontSize: 11.5, color: AppColors.mutedText),
                     ),
                   ],
@@ -891,106 +1198,239 @@ class _DayTaskNotesCardState extends ConsumerState<DayTaskNotesCard> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
-          // Add Note Bar with Optional Dropdown & Multiline Input
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Text(
-                    'Category:',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.bodyText),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.grey[300]!),
-                    ),
-                    child: KeyCycleDropdownButton<String>(
-                      value: _selectedCategory,
-                      underline: const SizedBox(),
-                      items: const ['General', 'Work', 'Personal', 'Urgent', 'Follow-up', 'Reminder'].map((cat) {
-                        return DropdownMenuItem<String>(
-                          value: cat,
-                          child: Text(
-                            cat,
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+          // Add Daily Task Form Container
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final isWide = constraints.maxWidth > 720;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (isWide) ...[
+                      // Wide Mode: Row 1
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: TextField(
+                              controller: _nameController,
+                              decoration: _buildInputDecoration(
+                                '1. Name',
+                                'Client / Contact name',
+                                Icons.person_outline_rounded,
+                              ),
+                            ),
                           ),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          setState(() {
-                            _selectedCategory = val;
-                          });
-                        }
-                      },
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _noteController,
-                      minLines: 2,
-                      maxLines: 5,
-                      keyboardType: TextInputType.multiline,
-                      decoration: InputDecoration(
-                        hintText: 'Add a note or quick task (press Enter for next line)...',
-                        hintStyle: TextStyle(fontSize: 13, color: Colors.grey[400]),
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[200]!),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.grey[200]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.skyBlue),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            flex: 2,
+                            child: TextField(
+                              controller: _timeController,
+                              decoration: _buildInputDecoration(
+                                '4. Time',
+                                'e.g. 10:30 AM',
+                                Icons.access_time_rounded,
+                                suffix: IconButton(
+                                  icon: const Icon(Icons.schedule, size: 18, color: AppColors.skyBlue),
+                                  onPressed: () => _pickTime(context, _timeController),
+                                  tooltip: 'Pick Time',
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            flex: 3,
+                            child: TextField(
+                              controller: _locationController,
+                              decoration: _buildInputDecoration(
+                                '2. Location',
+                                'Office / Branch / Address',
+                                Icons.location_on_outlined,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      // Wide Mode: Row 2
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            flex: 4,
+                            child: TextField(
+                              controller: _purposeController,
+                              decoration: _buildInputDecoration(
+                                '3. Purpose',
+                                'Purpose of visit / Task description',
+                                Icons.assignment_outlined,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            flex: 4,
+                            child: TextField(
+                              controller: _docsController,
+                              decoration: _buildInputDecoration(
+                                '5. Documents REQUIRED',
+                                'e.g. PAN, Aadhaar, Cheque, Photos',
+                                Icons.folder_shared_outlined,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryBlue,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            onPressed: _isAdding ? null : _addTask,
+                            icon: _isAdding
+                                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                : const Icon(Icons.add_task_rounded, size: 18),
+                            label: const Text('Add Task', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          ),
+                        ],
+                      ),
+                    ] else ...[
+                      // Compact Mode
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: TextField(
+                              controller: _nameController,
+                              decoration: _buildInputDecoration(
+                                '1. Name',
+                                'Client / Contact',
+                                Icons.person_outline_rounded,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            flex: 2,
+                            child: TextField(
+                              controller: _timeController,
+                              decoration: _buildInputDecoration(
+                                '4. Time',
+                                '10:30 AM',
+                                Icons.access_time_rounded,
+                                suffix: IconButton(
+                                  icon: const Icon(Icons.schedule, size: 18, color: AppColors.skyBlue),
+                                  onPressed: () => _pickTime(context, _timeController),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _locationController,
+                        decoration: _buildInputDecoration(
+                          '2. Location',
+                          'Office / Branch / Address',
+                          Icons.location_on_outlined,
                         ),
                       ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _purposeController,
+                        decoration: _buildInputDecoration(
+                          '3. Purpose',
+                          'Purpose / Task description',
+                          Icons.assignment_outlined,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _docsController,
+                        decoration: _buildInputDecoration(
+                          '5. Documents REQUIRED',
+                          'e.g. PAN, Aadhaar, Cheque',
+                          Icons.folder_shared_outlined,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryBlue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          ),
+                          onPressed: _isAdding ? null : _addTask,
+                          icon: _isAdding
+                              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                              : const Icon(Icons.add_task_rounded, size: 18),
+                          label: const Text('Add Task', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 6),
+                    // Document Quick Select Chips
+                    Row(
+                      children: [
+                        const Text(
+                          'Quick Docs:',
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: ['PAN Card', 'Aadhaar Card', 'Cheque', 'Photos', 'Policy Copy'].map((chip) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 4.0),
+                                  child: ActionChip(
+                                    label: Text('+ $chip', style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w500)),
+                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 0),
+                                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    visualDensity: VisualDensity.compact,
+                                    backgroundColor: Colors.white,
+                                    side: BorderSide(color: Colors.grey.shade300, width: 0.8),
+                                    onPressed: () => _appendDoc(chip),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.skyBlue,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    ),
-                    onPressed: _isAdding ? null : _addNote,
-                    icon: const Icon(Icons.add_rounded, size: 18),
-                    label: const Text('Add Note', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  ),
-                ],
-              ),
-            ],
+                  ],
+                );
+              },
+            ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
-          // Notes List
+          // Daily Tasks List
           notesAsync.when(
             data: (notes) {
               if (notes.isEmpty) {
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: Text(
-                    'No day task notes added for $formattedDate yet.',
+                    'No daily tasks added for $formattedDate yet. Add tasks above with Name, Location, Purpose, Time, and Docs Required.',
                     style: TextStyle(fontSize: 12.5, fontStyle: FontStyle.italic, color: Colors.grey[500]),
                   ),
                 );
@@ -1000,58 +1440,210 @@ class _DayTaskNotesCardState extends ConsumerState<DayTaskNotesCard> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: notes.length,
-                separatorBuilder: (_, __) => const Divider(height: 1, indent: 32),
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   final note = notes[index];
+                  final isStructured = note.isStructuredTask;
                   final hasCat = note.category != null && note.category!.trim().isNotEmpty;
 
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6.0),
+                  return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: note.isCompleted ? const Color(0xFFF8FAFC) : Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: note.isCompleted ? const Color(0xFFE2E8F0) : const Color(0xFFBFDBFE),
+                        width: note.isCompleted ? 1 : 1.2,
+                      ),
+                    ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Checkbox(
-                          value: note.isCompleted,
-                          activeColor: AppColors.skyBlue,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                          onChanged: (_) async {
-                            final db = ref.read(databaseServiceProvider);
-                            await db.toggleDailyNoteCompleted(note.id);
-                            ref.invalidate(tomorrowNotesProvider);
-                          },
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2.0),
+                          child: Checkbox(
+                            value: note.isCompleted,
+                            activeColor: AppColors.skyBlue,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                            onChanged: (_) async {
+                              final db = ref.read(databaseServiceProvider);
+                              await db.toggleDailyNoteCompleted(note.id);
+                              ref.invalidate(tomorrowNotesProvider);
+                            },
+                          ),
                         ),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (hasCat) ...[
-                                Padding(
-                                  padding: const EdgeInsets.only(bottom: 4.0, top: 4.0),
-                                  child: ColorBadge(
-                                    text: note.category!.toUpperCase(),
-                                    style: _getCategoryBadgeStyle(note.category!),
+                              if (isStructured) ...[
+                                // Header: Name + Time + Location
+                                Wrap(
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  spacing: 8,
+                                  runSpacing: 4,
+                                  children: [
+                                    if (note.taskName.isNotEmpty)
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.person_rounded, size: 15, color: AppColors.skyBlue),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            note.taskName,
+                                            style: TextStyle(
+                                              fontSize: 13.5,
+                                              fontWeight: FontWeight.bold,
+                                              color: note.isCompleted ? AppColors.mutedText : AppColors.headingText,
+                                              decoration: note.isCompleted ? TextDecoration.lineThrough : null,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    if (note.taskTime.isNotEmpty)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFEFF6FF),
+                                          borderRadius: BorderRadius.circular(6),
+                                          border: Border.all(color: const Color(0xFFDBEAFE)),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(Icons.access_time_rounded, size: 12, color: Color(0xFF2563EB)),
+                                            const SizedBox(width: 3),
+                                            Text(
+                                              note.taskTime,
+                                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF1D4ED8)),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    if (note.taskLocation.isNotEmpty)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF1F5F9),
+                                          borderRadius: BorderRadius.circular(6),
+                                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(Icons.location_on_outlined, size: 12, color: Colors.blueGrey),
+                                            const SizedBox(width: 3),
+                                            Text(
+                                              note.taskLocation,
+                                              style: const TextStyle(fontSize: 11, color: AppColors.bodyText),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    if (hasCat)
+                                      ColorBadge(
+                                        text: note.category!.toUpperCase(),
+                                        style: _getCategoryBadgeStyle(note.category!),
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                // Purpose
+                                if (note.taskPurpose.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 2.0),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Padding(
+                                          padding: EdgeInsets.only(top: 2.0),
+                                          child: Icon(Icons.assignment_outlined, size: 13, color: Colors.grey),
+                                        ),
+                                        const SizedBox(width: 5),
+                                        Expanded(
+                                          child: Text(
+                                            note.taskPurpose,
+                                            style: TextStyle(
+                                              fontSize: 12.5,
+                                              color: note.isCompleted ? AppColors.mutedText : AppColors.bodyText,
+                                              decoration: note.isCompleted ? TextDecoration.lineThrough : null,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                // Documents Required
+                                if (note.documentsRequired.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 5.0),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFFFBEB),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: const Color(0xFFFDE68A)),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.folder_shared_outlined, size: 13, color: Color(0xFFB45309)),
+                                          const SizedBox(width: 5),
+                                          Flexible(
+                                            child: Text(
+                                              'Docs Required: ${note.documentsRequired}',
+                                              style: const TextStyle(
+                                                fontSize: 11.5,
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF92400E),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                              ] else ...[
+                                // Unstructured / Legacy Note
+                                if (hasCat)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 4.0),
+                                    child: ColorBadge(
+                                      text: note.category!.toUpperCase(),
+                                      style: _getCategoryBadgeStyle(note.category!),
+                                    ),
+                                  ),
+                                Text(
+                                  note.content,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: note.isCompleted ? AppColors.mutedText : AppColors.headingText,
+                                    decoration: note.isCompleted ? TextDecoration.lineThrough : null,
                                   ),
                                 ),
                               ],
-                              Text(
-                                note.content,
-                                style: TextStyle(
-                                  fontSize: 13.5,
-                                  color: note.isCompleted ? AppColors.mutedText : AppColors.headingText,
-                                  decoration: note.isCompleted ? TextDecoration.lineThrough : null,
-                                ),
-                              ),
                             ],
                           ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.grey),
-                          tooltip: 'Delete note',
-                          onPressed: () async {
-                            final db = ref.read(databaseServiceProvider);
-                            await db.deleteDailyNote(note.id);
-                            ref.invalidate(tomorrowNotesProvider);
-                          },
+                        // Actions
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit_outlined, size: 18, color: Colors.blueAccent),
+                              tooltip: 'Edit task',
+                              onPressed: () => _showEditDialog(note),
+                              constraints: const BoxConstraints(),
+                              padding: const EdgeInsets.all(6),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.redAccent),
+                              tooltip: 'Delete task',
+                              onPressed: () => _confirmDelete(note),
+                              constraints: const BoxConstraints(),
+                              padding: const EdgeInsets.all(6),
+                            ),
+                          ],
                         ),
                       ],
                     ),

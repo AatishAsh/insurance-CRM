@@ -631,9 +631,12 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
       body: BrandBackground(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1600),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
             // Header Profile Card
             Card(
               elevation: 0,
@@ -962,6 +965,8 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
             const SizedBox(height: 100),
           ],
         ),
+      ),
+      ),
       ),
       ),
       floatingActionButton: FloatingActionButton.extended(

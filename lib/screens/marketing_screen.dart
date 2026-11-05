@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import '../models/marketing_lead.dart';
 import '../services/database_service.dart';
 import '../providers/marketing_provider.dart';
@@ -190,6 +192,61 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
     return photos;
   }
 
+  Future<void> _openAttachmentFile(File file) async {
+    if (!file.existsSync()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('File not found on device.')),
+        );
+      }
+      return;
+    }
+
+    try {
+      if (Platform.isLinux) {
+        await Process.run('xdg-open', [file.path]);
+      } else if (Platform.isMacOS) {
+        await Process.run('open', [file.path]);
+      } else if (Platform.isWindows) {
+        await Process.run('cmd', ['/c', 'start', '', file.path]);
+      } else {
+        final uri = Uri.file(file.path);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri);
+        } else {
+          await Share.shareXFiles([XFile(file.path)], text: file.path.split('/').last);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open file: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _openContainingFolder(File file) async {
+    try {
+      final parentDir = file.parent.path;
+      if (Platform.isLinux) {
+        await Process.run('xdg-open', [parentDir]);
+      } else if (Platform.isMacOS) {
+        await Process.run('open', [parentDir]);
+      } else if (Platform.isWindows) {
+        await Process.run('explorer.exe', ['/select,', file.path]);
+      } else {
+        await Share.shareXFiles([XFile(file.path)], text: file.path.split('/').last);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open folder: $e')),
+        );
+      }
+    }
+  }
+
   void _previewPhoto(String fileName, String label) {
     if (_localDocsDirPath == null) return;
     final file = File('$_localDocsDirPath/$fileName');
@@ -210,55 +267,87 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
         return Dialog(
           backgroundColor: Colors.transparent,
           child: Container(
-            padding: const EdgeInsets.all(12),
+            constraints: const BoxConstraints(maxWidth: 550),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.12),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                AppBar(
-                  title: Text(label, style: const TextStyle(fontSize: 16)),
-                  leading: IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  foregroundColor: Colors.black87,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            label,
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            fileName,
+                            style: const TextStyle(fontSize: 12, color: Colors.grey),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      tooltip: 'Close',
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
+                const Divider(height: 16),
                 if (isImage)
                   ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 450),
+                    constraints: const BoxConstraints(maxHeight: 380),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: InteractiveViewer(
                         panEnabled: true,
                         minScale: 1.0,
                         maxScale: 5.0,
-                        child: Image.file(
-                          file,
-                          fit: BoxFit.contain,
+                        child: Center(
+                          child: Image.file(
+                            file,
+                            fit: BoxFit.contain,
+                          ),
                         ),
                       ),
                     ),
                   )
                 else
                   Container(
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.04),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.blue.withOpacity(0.15)),
+                    ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.insert_drive_file, size: 64, color: Colors.blueAccent),
+                        const Icon(Icons.insert_drive_file, size: 64, color: AppColors.primaryBlue),
                         const SizedBox(height: 12),
                         Text(
-                          fileName,
+                          fileName.contains('_') ? fileName.split('_').sublist(2).join('_') : fileName,
                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         const Text(
                           'Document file saved on device',
                           style: TextStyle(color: Colors.grey, fontSize: 12),
@@ -266,7 +355,70 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
                       ],
                     ),
                   ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
+                // Storage Location Box
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.folder_outlined, size: 18, color: Colors.indigo),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Saved Location On Device:',
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.grey),
+                            ),
+                            Text(
+                              file.path,
+                              style: const TextStyle(fontSize: 11, fontFamily: 'monospace', color: Colors.black87),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.copy, size: 16, color: Colors.blueGrey),
+                        tooltip: 'Copy Path',
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: file.path));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('File path copied to clipboard')),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+                // Action Buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () => _openContainingFolder(file),
+                      icon: const Icon(Icons.folder_open, size: 16),
+                      label: const Text('Open Folder'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      onPressed: () => _openAttachmentFile(file),
+                      icon: const Icon(Icons.open_in_new, size: 16),
+                      label: const Text('Open File'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryBlue,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -328,67 +480,65 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
     required VoidCallback onTap,
     required bool isSelected,
   }) {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4.0),
-        decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.08) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? color : Colors.grey[200]!,
-            width: isSelected ? 2 : 1,
-          ),
-          boxShadow: isSelected
-              ? [BoxShadow(color: color.withOpacity(0.15), blurRadius: 8, offset: const Offset(0, 4))]
-              : [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4, offset: const Offset(0, 2))],
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 4.0),
+      decoration: BoxDecoration(
+        color: isSelected ? color.withOpacity(0.08) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isSelected ? color : Colors.grey[200]!,
+          width: isSelected ? 2 : 1,
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onTap,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: color.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(icon, color: color, size: 24),
+        boxShadow: isSelected
+            ? [BoxShadow(color: color.withOpacity(0.15), blurRadius: 8, offset: const Offset(0, 4))]
+            : [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4, offset: const Offset(0, 2))],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.1),
+                      shape: BoxShape.circle,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            value,
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: isSelected ? color : Colors.black87,
-                            ),
+                    child: Icon(icon, color: color, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          value,
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected ? color : Colors.black87,
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            title,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey[600],
-                            ),
-                            overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[600],
                           ),
-                        ],
-                      ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -648,37 +798,45 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
                       // Grid/Flex Row for Desktop
                       return Row(
                         children: [
-                          _buildStatCard(
-                            title: 'Total Leads',
-                            value: '$totalLeadsCount',
-                            icon: Icons.campaign_outlined,
-                            color: Colors.blue,
-                            isSelected: _selectedStatusFilter == 'All',
-                            onTap: () => setState(() => _selectedStatusFilter = 'All'),
+                          Expanded(
+                            child: _buildStatCard(
+                              title: 'Total Leads',
+                              value: '$totalLeadsCount',
+                              icon: Icons.campaign_outlined,
+                              color: Colors.blue,
+                              isSelected: _selectedStatusFilter == 'All',
+                              onTap: () => setState(() => _selectedStatusFilter = 'All'),
+                            ),
                           ),
-                          _buildStatCard(
-                            title: 'Confirmed',
-                            value: '$confirmedCount',
-                            icon: Icons.check_circle_outline,
-                            color: Colors.green,
-                            isSelected: _selectedStatusFilter == 'Confirmed',
-                            onTap: () => setState(() => _selectedStatusFilter = 'Confirmed'),
+                          Expanded(
+                            child: _buildStatCard(
+                              title: 'Confirmed',
+                              value: '$confirmedCount',
+                              icon: Icons.check_circle_outline,
+                              color: Colors.green,
+                              isSelected: _selectedStatusFilter == 'Confirmed',
+                              onTap: () => setState(() => _selectedStatusFilter = 'Confirmed'),
+                            ),
                           ),
-                          _buildStatCard(
-                            title: 'Pending/Hold',
-                            value: '$pendingCount',
-                            icon: Icons.hourglass_empty_outlined,
-                            color: Colors.orange,
-                            isSelected: ['Hold', 'Postponed', 'Documents Pending'].contains(_selectedStatusFilter),
-                            onTap: () => setState(() => _selectedStatusFilter = 'Hold'),
+                          Expanded(
+                            child: _buildStatCard(
+                              title: 'Pending/Hold',
+                              value: '$pendingCount',
+                              icon: Icons.hourglass_empty_outlined,
+                              color: Colors.orange,
+                              isSelected: ['Hold', 'Postponed', 'Documents Pending'].contains(_selectedStatusFilter),
+                              onTap: () => setState(() => _selectedStatusFilter = 'Hold'),
+                            ),
                           ),
-                          _buildStatCard(
-                            title: 'Dropped',
-                            value: '$droppedCount',
-                            icon: Icons.cancel_outlined,
-                            color: Colors.red,
-                            isSelected: _selectedStatusFilter == 'Dropped',
-                            onTap: () => setState(() => _selectedStatusFilter = 'Dropped'),
+                          Expanded(
+                            child: _buildStatCard(
+                              title: 'Dropped',
+                              value: '$droppedCount',
+                              icon: Icons.cancel_outlined,
+                              color: Colors.red,
+                              isSelected: _selectedStatusFilter == 'Dropped',
+                              onTap: () => setState(() => _selectedStatusFilter = 'Dropped'),
+                            ),
                           ),
                         ],
                       );
@@ -898,29 +1056,31 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
   }
 
   Widget _buildDesktopTable(List<MarketingLead> leads) {
-    return SingleChildScrollView(
-      controller: _desktopScrollController,
-      key: const PageStorageKey('marketing_desktop_vertical_scroll'),
-      scrollDirection: Axis.vertical,
-      child: NotificationListener<OverscrollIndicatorNotification>(
-        onNotification: (OverscrollIndicatorNotification overscroll) {
-          overscroll.disallowIndicator();
-          return true;
-        },
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Container(
-            padding: const EdgeInsets.all(16.0),
-            constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width - 32),
-            child: Card(
-              elevation: 0.5,
-              shape: RoundedRectangleBorder(
-                side: BorderSide(color: Colors.grey[200]!),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: DataTable(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          controller: _desktopScrollController,
+          key: const PageStorageKey('marketing_desktop_vertical_scroll'),
+          scrollDirection: Axis.vertical,
+          child: NotificationListener<OverscrollIndicatorNotification>(
+            onNotification: (OverscrollIndicatorNotification overscroll) {
+              overscroll.disallowIndicator();
+              return true;
+            },
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Container(
+                padding: const EdgeInsets.all(16.0),
+                constraints: BoxConstraints(minWidth: constraints.maxWidth),
+                child: Card(
+                  elevation: 0.5,
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(color: Colors.grey[200]!),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: DataTable(
                   sortColumnIndex: _sortColumnIndex,
                   sortAscending: _sortAscending,
                   showCheckboxColumn: false,
@@ -1096,6 +1256,8 @@ class _MarketingScreenState extends ConsumerState<MarketingScreen> {
         ),
       ),
     );
+  },
+);
   }
 
   Widget _buildMobileList(List<MarketingLead> leads) {
@@ -1508,6 +1670,40 @@ class _AddEditMarketingLeadDialogState extends ConsumerState<AddEditMarketingLea
     }
   }
 
+  Future<void> _openAttachmentFile(File file) async {
+    if (!file.existsSync()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('File not found on device.')),
+        );
+      }
+      return;
+    }
+
+    try {
+      if (Platform.isLinux) {
+        await Process.run('xdg-open', [file.path]);
+      } else if (Platform.isMacOS) {
+        await Process.run('open', [file.path]);
+      } else if (Platform.isWindows) {
+        await Process.run('cmd', ['/c', 'start', '', file.path]);
+      } else {
+        final uri = Uri.file(file.path);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri);
+        } else {
+          await Share.shareXFiles([XFile(file.path)], text: file.path.split('/').last);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open file: $e')),
+        );
+      }
+    }
+  }
+
   void _deleteLead() async {
     final confirm = await showDialog<bool>(
       context: context,
@@ -1778,11 +1974,37 @@ class _AddEditMarketingLeadDialogState extends ConsumerState<AddEditMarketingLea
                                   Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      OutlinedButton.icon(
-                                        onPressed: () => _pickPhoto(index),
-                                        icon: const Icon(Icons.attach_file_outlined, size: 16),
-                                        label: const Text('Attach Document / Photo', style: TextStyle(fontSize: 13)),
+                                      Row(
+                                        children: [
+                                          OutlinedButton.icon(
+                                            onPressed: () => _pickPhoto(index),
+                                            icon: const Icon(Icons.attach_file_outlined, size: 16),
+                                            label: const Text('Attach Document / Photo', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                                          ),
+                                          if (_visitPhotos[index].isNotEmpty) ...[
+                                            const SizedBox(width: 8),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                              decoration: BoxDecoration(
+                                                color: Colors.green.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(10),
+                                                border: Border.all(color: Colors.green.withOpacity(0.3)),
+                                              ),
+                                              child: Text(
+                                                '${_visitPhotos[index].length} Attached',
+                                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.green),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
                                       ),
+                                      if (_visitPhotos[index].isEmpty) ...[
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Tip: Attach visiting cards, proposals, or photos for this lead visit. Click any thumbnail to preview or open.',
+                                          style: TextStyle(fontSize: 11, color: Colors.grey[500], fontStyle: FontStyle.italic),
+                                        ),
+                                      ],
                                       if (_visitPhotos[index].isNotEmpty) ...[
                                         const SizedBox(height: 10),
                                         Wrap(
@@ -1800,40 +2022,51 @@ class _AddEditMarketingLeadDialogState extends ConsumerState<AddEditMarketingLea
                                             return Stack(
                                               alignment: Alignment.topRight,
                                               children: [
-                                                Container(
-                                                  margin: const EdgeInsets.only(top: 4, right: 4),
-                                                  decoration: BoxDecoration(
-                                                    border: Border.all(color: Colors.grey[300]!),
-                                                    borderRadius: BorderRadius.circular(8),
-                                                  ),
-                                                  child: ClipRRect(
-                                                    borderRadius: BorderRadius.circular(7),
-                                                    child: isImg && photoFile != null && photoFile.existsSync()
-                                                        ? Image.file(
-                                                            photoFile,
-                                                            width: 60,
-                                                            height: 60,
-                                                            fit: BoxFit.cover,
-                                                          )
-                                                        : Container(
-                                                            width: 60,
-                                                            height: 60,
-                                                            padding: const EdgeInsets.all(4),
-                                                            color: Colors.blue.withOpacity(0.08),
-                                                            child: Column(
-                                                              mainAxisAlignment: MainAxisAlignment.center,
-                                                              children: [
-                                                                const Icon(Icons.insert_drive_file, size: 22, color: Colors.blueAccent),
-                                                                const SizedBox(height: 2),
-                                                                Text(
-                                                                  photoFileName.contains('_') ? photoFileName.split('_').last : photoFileName,
-                                                                  style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
-                                                                  overflow: TextOverflow.ellipsis,
-                                                                  textAlign: TextAlign.center,
+                                                InkWell(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  onTap: () {
+                                                    if (photoFile != null && photoFile.existsSync()) {
+                                                      _openAttachmentFile(photoFile);
+                                                    }
+                                                  },
+                                                  child: Tooltip(
+                                                    message: 'Click to open $photoFileName',
+                                                    child: Container(
+                                                      margin: const EdgeInsets.only(top: 4, right: 4),
+                                                      decoration: BoxDecoration(
+                                                        border: Border.all(color: Colors.grey[300]!),
+                                                        borderRadius: BorderRadius.circular(8),
+                                                      ),
+                                                      child: ClipRRect(
+                                                        borderRadius: BorderRadius.circular(7),
+                                                        child: isImg && photoFile != null && photoFile.existsSync()
+                                                            ? Image.file(
+                                                                photoFile,
+                                                                width: 60,
+                                                                height: 60,
+                                                                fit: BoxFit.cover,
+                                                              )
+                                                            : Container(
+                                                                width: 60,
+                                                                height: 60,
+                                                                padding: const EdgeInsets.all(4),
+                                                                color: Colors.blue.withOpacity(0.08),
+                                                                child: Column(
+                                                                  mainAxisAlignment: MainAxisAlignment.center,
+                                                                  children: [
+                                                                    const Icon(Icons.insert_drive_file, size: 22, color: Colors.blueAccent),
+                                                                    const SizedBox(height: 2),
+                                                                    Text(
+                                                                      photoFileName.contains('_') ? photoFileName.split('_').last : photoFileName,
+                                                                      style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold),
+                                                                      overflow: TextOverflow.ellipsis,
+                                                                      textAlign: TextAlign.center,
+                                                                    ),
+                                                                  ],
                                                                 ),
-                                                              ],
-                                                            ),
-                                                          ),
+                                                              ),
+                                                      ),
+                                                    ),
                                                   ),
                                                 ),
                                                 GestureDetector(

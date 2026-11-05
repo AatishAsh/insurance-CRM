@@ -200,7 +200,7 @@ class _UpcomingEventsScreenState extends ConsumerState<UpcomingEventsScreen> {
 
               return LayoutBuilder(
                 builder: (context, constraints) {
-                  final isDesktop = constraints.maxWidth > 800;
+                  final isDesktop = constraints.maxWidth >= 720;
                   final calendarWidget = _buildCalendarCard(calendarDays, customers, marketingLeads);
                   final eventsWidget = _buildEventsPanel(context, selectedEvents, upcomingEventsAsync, todayTasksAsync);
 

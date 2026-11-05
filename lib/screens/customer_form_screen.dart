@@ -1140,9 +1140,12 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
           key: _formKey,
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1600),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
               // Core Required Details (always visible at top)
               Card(
                 elevation: 0,
@@ -1999,6 +2002,8 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
             ],
           ),
         ),
+      ),
+      ),
       ),
     ),
     );

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
@@ -379,7 +380,13 @@ class DatabaseService {
   }
 
   Future<void> saveTask(WorkTask task) async {
-    if (task.uuid.isEmpty) {
+    String currentUuid = '';
+    try {
+      currentUuid = task.uuid;
+    } catch (_) {
+      currentUuid = '';
+    }
+    if (currentUuid.isEmpty) {
       task.uuid = _uuid.v4();
     }
     task.updatedAt = DateTime.now();
@@ -391,12 +398,55 @@ class DatabaseService {
   Future<void> deleteTask(int id) async {
     final task = await isar.workTasks.get(id);
     if (task != null) {
-      task.isDeleted = true;
-      task.updatedAt = DateTime.now();
       await isar.writeTxn(() async {
+        task.isDeleted = true;
+        task.carryForwardRequired = false;
+        task.updatedAt = DateTime.now();
         await isar.workTasks.put(task);
+
+        // Also mark any past or future carry-forward clones of this task as deleted
+        final related = await isar.workTasks
+            .filter()
+            .companyIdEqualTo(task.companyId)
+            .descriptionEqualTo(task.description)
+            .isDeletedEqualTo(false)
+            .findAll();
+        for (final r in related) {
+          r.isDeleted = true;
+          r.carryForwardRequired = false;
+          r.updatedAt = DateTime.now();
+          await isar.workTasks.put(r);
+        }
       });
     }
+  }
+
+  Future<void> deleteMultipleTasks(List<int> ids) async {
+    final tasks = await isar.workTasks.getAll(ids);
+    await isar.writeTxn(() async {
+      for (final task in tasks) {
+        if (task != null) {
+          task.isDeleted = true;
+          task.carryForwardRequired = false;
+          task.updatedAt = DateTime.now();
+          await isar.workTasks.put(task);
+
+          // Also remove any related carry-forward clones
+          final related = await isar.workTasks
+              .filter()
+              .companyIdEqualTo(task.companyId)
+              .descriptionEqualTo(task.description)
+              .isDeletedEqualTo(false)
+              .findAll();
+          for (final r in related) {
+            r.isDeleted = true;
+            r.carryForwardRequired = false;
+            r.updatedAt = DateTime.now();
+            await isar.workTasks.put(r);
+          }
+        }
+      }
+    });
   }
 
   /// Automatically carries forward incomplete tasks that are flagged for carry forward from previous days.
@@ -418,13 +468,12 @@ class DatabaseService {
     int carriedCount = 0;
     await isar.writeTxn(() async {
       for (final oldTask in carryForwardableTasks) {
-        // Check if we already carried this task forward to the target date to avoid duplicates
+        // Check if this task was already created or handled for targetDate (including deleted) to prevent resurrection
         final alreadyCarried = await isar.workTasks
             .filter()
             .companyIdEqualTo(oldTask.companyId)
             .descriptionEqualTo(oldTask.description)
             .workDateBetween(targetStart, targetEnd)
-            .isDeletedEqualTo(false)
             .count();
 
         if (alreadyCarried == 0) {
@@ -448,6 +497,11 @@ class DatabaseService {
           await isar.workTasks.put(newTask);
           carriedCount++;
         }
+
+        // Once processed for the target date, turn off carryForwardRequired on the source task
+        oldTask.carryForwardRequired = false;
+        oldTask.updatedAt = DateTime.now();
+        await isar.workTasks.put(oldTask);
       }
     });
 
@@ -1470,6 +1524,32 @@ class DatabaseService {
   Future<List<DailyNote>> getDailyNotesForDate(DateTime date) async {
     final key = _getDateKey(date);
     return await isar.dailyNotes.filter().dateKeyEqualTo(key).sortByCreatedAt().findAll();
+  }
+
+  Future<void> saveDailyTask({
+    required DateTime date,
+    required String name,
+    required String location,
+    required String purpose,
+    required String time,
+    required String documentsRequired,
+    String? category,
+    int? existingId,
+  }) async {
+    final payload = jsonEncode({
+      'name': name.trim(),
+      'location': location.trim(),
+      'purpose': purpose.trim(),
+      'time': time.trim(),
+      'documentsRequired': documentsRequired.trim(),
+      'type': 'daily_task',
+    });
+    await saveDailyNote(
+      payload,
+      date,
+      category: (category != null && category.trim().isNotEmpty) ? category.trim() : 'Work',
+      existingId: existingId,
+    );
   }
 
   Future<void> saveDailyNote(String content, DateTime date, {String? category, int? existingId}) async {

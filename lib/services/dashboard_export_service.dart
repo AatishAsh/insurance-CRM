@@ -180,7 +180,7 @@ class DashboardExportService {
                       children: [
                         _buildTableCell(item.categoryLabel, isBold: true),
                         _buildTableCell(item.title),
-                        _buildTableCell(item.subtitle),
+                        _buildTableCell(item.time != null && item.time!.isNotEmpty ? '${item.subtitle}\nTime: ${item.time}' : item.subtitle),
                         _buildTableCell(item.isCompleted ? 'Completed' : 'Scheduled'),
                       ],
                     );
@@ -190,9 +190,9 @@ class DashboardExportService {
 
             pw.SizedBox(height: 24),
 
-            // Day Task Notes Section
+            // Tomorrow's Daily Tasks & Checklist Section
             pw.Text(
-              'Day Task Notes & Checklist (${notes.length} Notes)',
+              'Tomorrow\'s Daily Tasks & Checklist (${notes.length} Tasks)',
               style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900),
             ),
             pw.SizedBox(height: 8),
@@ -206,7 +206,7 @@ class DashboardExportService {
                   borderRadius: pw.BorderRadius.circular(6),
                 ),
                 child: pw.Text(
-                  'No day task notes recorded for tomorrow.',
+                  'No daily tasks recorded for tomorrow.',
                   style: pw.TextStyle(fontSize: 11, color: PdfColors.grey700, fontStyle: pw.FontStyle.italic),
                 ),
               )
@@ -215,29 +215,45 @@ class DashboardExportService {
                 border: pw.TableBorder.all(color: PdfColors.grey300),
                 columnWidths: {
                   0: const pw.FlexColumnWidth(1.2),
-                  1: const pw.FlexColumnWidth(1.5),
-                  2: const pw.FlexColumnWidth(5.5),
+                  1: const pw.FlexColumnWidth(1.1),
+                  2: const pw.FlexColumnWidth(2.0),
+                  3: const pw.FlexColumnWidth(1.8),
+                  4: const pw.FlexColumnWidth(3.0),
                 },
                 children: [
                   pw.TableRow(
                     decoration: const pw.BoxDecoration(color: PdfColors.amber100),
                     children: [
                       _buildTableCell('Status', isHeader: true),
-                      _buildTableCell('Category', isHeader: true),
-                      _buildTableCell('Task Note Details', isHeader: true),
+                      _buildTableCell('Time', isHeader: true),
+                      _buildTableCell('Name', isHeader: true),
+                      _buildTableCell('Location', isHeader: true),
+                      _buildTableCell('Purpose & Documents Required', isHeader: true),
                     ],
                   ),
                   ...notes.map((note) {
-                    final catText = (note.category != null && note.category!.trim().isNotEmpty)
-                        ? note.category!.trim().toUpperCase()
-                        : 'GENERAL';
-                    return pw.TableRow(
-                      children: [
-                        _buildTableCell(note.isCompleted ? '[X] Done' : '[  ] Pending', isBold: true),
-                        _buildTableCell(catText),
-                        _buildTableCell(note.content),
-                      ],
-                    );
+                    if (note.isStructuredTask) {
+                      final docsStr = note.documentsRequired.isNotEmpty ? '\nDocs: ${note.documentsRequired}' : '';
+                      return pw.TableRow(
+                        children: [
+                          _buildTableCell(note.isCompleted ? '[X] Done' : '[  ] Pending', isBold: true),
+                          _buildTableCell(note.taskTime.isNotEmpty ? note.taskTime : '-'),
+                          _buildTableCell(note.taskName.isNotEmpty ? note.taskName : '-'),
+                          _buildTableCell(note.taskLocation.isNotEmpty ? note.taskLocation : '-'),
+                          _buildTableCell('${note.taskPurpose}$docsStr'),
+                        ],
+                      );
+                    } else {
+                      return pw.TableRow(
+                        children: [
+                          _buildTableCell(note.isCompleted ? '[X] Done' : '[  ] Pending', isBold: true),
+                          _buildTableCell('-'),
+                          _buildTableCell('-'),
+                          _buildTableCell('-'),
+                          _buildTableCell(note.content),
+                        ],
+                      );
+                    }
                   }).toList(),
                 ],
               ),

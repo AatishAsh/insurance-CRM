@@ -275,16 +275,35 @@ final todaySummaryEventsProvider = FutureProvider<List<TodayEventSummaryItem>>((
     }
   }
 
-  // 2. Work Tasks Due Today
+  // 2. Work Tasks Scheduled for Tomorrow
   for (final task in tasks) {
     final taskDate = task.workDate;
     if (isSameDate(taskDate)) {
+      final loc = task.taskLocation;
+      final docs = task.documentsRequired;
+      final timeStr = task.taskTime;
+      final client = task.clientName;
+      final purpose = task.purpose;
+
+      final title = client.isNotEmpty
+          ? '$client: $purpose'
+          : purpose;
+
+      final details = <String>[];
+      if (loc != null && loc.isNotEmpty) details.add('Location: $loc');
+      if (docs != null && docs.isNotEmpty) details.add('Docs Required: $docs');
+      if (details.isEmpty) {
+        details.add('Priority: ${task.priority}');
+        details.add('Status: ${task.status}');
+      }
+
       items.add(TodayEventSummaryItem(
         id: 'task_${task.id}',
-        title: task.description,
-        subtitle: 'Priority: ${task.priority}  •  Status: ${task.status}',
+        title: title,
+        subtitle: details.join('  •  '),
         categoryLabel: 'Work Task',
         type: TodayEventType.workTask,
+        time: timeStr,
         workTask: task,
         isCompleted: task.status == 'Completed',
       ));
